@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.BuildConfig
 import com.example.audio.AudioCueManager
+import com.example.audio.ZenSoundSynthesizer
 import com.example.model.YogaFlow
 import com.example.model.YogaPose
 import com.example.model.YogaFlowRepository
@@ -339,6 +340,8 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
     // Audio cue manager instance
     val audioCueManager = AudioCueManager(application)
 
+    private val zenSoundSynthesizer = ZenSoundSynthesizer(application)
+
     // Ambient Music Manager
     val ambientMusicManager = com.example.audio.AmbientMusicManager(application)
 
@@ -584,7 +587,7 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
     fun selectFlow(yogaFlow: YogaFlow) {
         _flow.value = yogaFlow
         _currentPoseIndex.value = 0
-        _remainingTimeSec.value = 30
+        _remainingTimeSec.value = yogaFlow.poses.firstOrNull()?.holdDurationSec ?: 30
         _isSessionCompleted.value = false
         _isPlaying.value = false
         _isCountdownActive.value = false
@@ -617,7 +620,7 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
         startTimer()
         ambientMusicManager.play()
         // If we were at the very start of a pose (30 seconds), speak immediately
-        if (_remainingTimeSec.value == 30) {
+        if (_remainingTimeSec.value == (_flow.value.poses.getOrNull(_currentPoseIndex.value)?.holdDurationSec ?: 30)) {
             triggerVoiceCueForCurrentPose()
         }
     }
@@ -653,7 +656,7 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
         val nextIndex = _currentPoseIndex.value + 1
         if (nextIndex < _flow.value.poses.size) {
             _currentPoseIndex.value = nextIndex
-            _remainingTimeSec.value = 30
+            _remainingTimeSec.value = _flow.value.poses[_currentPoseIndex.value].holdDurationSec
             _isSessionCompleted.value = false
             if (_isPlaying.value) {
                 triggerVoiceCueForCurrentPose()
@@ -667,7 +670,7 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
         val prevIndex = _currentPoseIndex.value - 1
         if (prevIndex >= 0) {
             _currentPoseIndex.value = prevIndex
-            _remainingTimeSec.value = 30
+            _remainingTimeSec.value = _flow.value.poses[_currentPoseIndex.value].holdDurationSec
             _isSessionCompleted.value = false
             if (_isPlaying.value) {
                 triggerVoiceCueForCurrentPose()
@@ -678,7 +681,7 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
     fun selectPoseDirectly(index: Int) {
         if (index in _flow.value.poses.indices) {
             _currentPoseIndex.value = index
-            _remainingTimeSec.value = 30
+            _remainingTimeSec.value = _flow.value.poses[index].holdDurationSec
             _isSessionCompleted.value = false
             if (_isPlaying.value) {
                 triggerVoiceCueForCurrentPose()
@@ -717,7 +720,7 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
         audioCueManager.stop()
         ambientMusicManager.stop()
         _currentPoseIndex.value = 0
-        _remainingTimeSec.value = 30
+        _remainingTimeSec.value = _flow.value.poses.firstOrNull()?.holdDurationSec ?: 30
         _isSessionCompleted.value = false
         _isPlaying.value = false
         _isCountdownActive.value = false
@@ -732,7 +735,7 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
         audioCueManager.stop()
         ambientMusicManager.stop()
         _currentPoseIndex.value = 0
-        _remainingTimeSec.value = 30
+        _remainingTimeSec.value = _flow.value.poses.firstOrNull()?.holdDurationSec ?: 30
         _isSessionCompleted.value = false
         timerJob?.cancel()
         timerJob = null
@@ -761,7 +764,7 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
             // Move to next pose
             playTransitBeep()
             _currentPoseIndex.value = nextIndex
-            _remainingTimeSec.value = 30
+            _remainingTimeSec.value = _flow.value.poses[_currentPoseIndex.value].holdDurationSec
             triggerVoiceCueForCurrentPose()
         } else {
             // End of entire flow
@@ -871,7 +874,7 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
         countdownJob = viewModelScope.launch {
             for (i in 3 downTo 1) {
                 _countdownRemaining.value = i
-                com.example.audio.ZenSoundSynthesizer.playWoodTap()
+                zenSoundSynthesizer.playWoodTap()
                 delay(1000)
             }
             
@@ -939,7 +942,7 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun playTransitBeep() {
         try {
-            com.example.audio.ZenSoundSynthesizer.playWoodTap()
+            zenSoundSynthesizer.playWoodTap()
         } catch (e: Exception) {
             Log.e(tag, "Failed to play transit beep: ${e.message}")
         }
@@ -947,7 +950,7 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun playCompletionBeep() {
         try {
-            com.example.audio.ZenSoundSynthesizer.playWoodTap()
+            zenSoundSynthesizer.playWoodTap()
         } catch (e: Exception) {
             Log.e(tag, "Failed to play completion beep: ${e.message}")
         }
@@ -994,11 +997,7 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
         countdownJob?.cancel()
         countdownJob = null
         ambientMusicManager.stop()
-        try {
-            // removed
-        } catch (e: Exception) {
-            Log.e(tag, "Error releasing ToneGenerator: ${e.message}")
-        }
+        zenSoundSynthesizer.release()
     }
 }
 
