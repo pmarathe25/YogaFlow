@@ -7,14 +7,12 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
 import com.example.MainActivity
 import com.example.R
 import kotlinx.coroutines.*
@@ -42,19 +40,7 @@ class AmbientMusicService : Service() {
     private var loopMonitorJob: Job? = null
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
-    private val tracks: List<Track> by lazy {
-        val fields = R.raw::class.java.fields
-        fields.filter { it.name.startsWith("track_") }.map { field ->
-            val resId = field.getInt(null)
-            val nameParts = field.name.removePrefix("track_").split("_")
-            val name = nameParts.filter { it.toIntOrNull() == null }
-                .joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
-            val isMusic = !name.contains("Breath", ignoreCase = true) && !name.contains("Ocean", ignoreCase = true)
-            Track(name, resId, isMusic)
-        }.sortedBy { it.name }
-    }
-
-    data class Track(val name: String, val resId: Int, val isMusic: Boolean)
+    private val tracks: List<com.example.model.AudioTrack> by lazy { com.example.model.AudioTrack.loadTracks() }
 
     override fun onCreate() {
         super.onCreate()

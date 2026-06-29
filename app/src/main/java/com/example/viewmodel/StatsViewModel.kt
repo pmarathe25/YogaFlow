@@ -8,9 +8,6 @@ import com.example.db.YogaSessionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
 
 class StatsViewModel(application: Application) : AndroidViewModel(application) {
@@ -63,47 +60,15 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
                 
                 var xpSum = 0
                 sessions.forEach { session ->
-                    xpSum += 150
-                    xpSum += session.durationMinutes * 10
-                    val difficultyBonus = when (session.flowId) {
-                        "restorative_yin", "morning_energizer", "bedtime_wind_down" -> 30
-                        "sun_salutation", "heart_opening" -> 50
-                        "warrior_flow", "core_balance" -> 100
-                        "power_vinyasa", "ashtanga_core", "balance_mastery" -> 150
-                        else -> 30
-                    }
-                    xpSum += difficultyBonus
+                    xpSum += com.example.model.XpCalculator.calculateSessionXp(session.durationMinutes, session.flowId)
                 }
                 xpSum += totalSparksVal * 150
                 _totalXp.value = xpSum
                 
-                var level = 1
-                var levelName = "Prana Sprout"
-                var progress = 0f
-                if (xpSum <= 300) {
-                    level = 1; levelName = "Prana Sprout"; progress = xpSum.toFloat() / 300f
-                } else if (xpSum <= 900) {
-                    level = 2; levelName = "Zen Seeker"; progress = (xpSum - 300).toFloat() / 600f
-                } else if (xpSum <= 2100) {
-                    level = 3; levelName = "Flow Initiate"; progress = (xpSum - 900).toFloat() / 1200f
-                } else if (xpSum <= 4500) {
-                    level = 4; levelName = "Mindfulness Guide"; progress = (xpSum - 2100).toFloat() / 2400f
-                } else if (xpSum <= 9300) {
-                    level = 5; levelName = "Prana Master"; progress = (xpSum - 4500).toFloat() / 4800f
-                } else if (xpSum <= 18900) {
-                    level = 6; levelName = "Cosmic Flow Yogi"; progress = (xpSum - 9300).toFloat() / 9600f
-                } else if (xpSum <= 38100) {
-                    level = 7; levelName = "Inner Light Sage"; progress = (xpSum - 18900).toFloat() / 19200f
-                } else if (xpSum <= 76500) {
-                    level = 8; levelName = "Chakra Harmonizer"; progress = (xpSum - 38100).toFloat() / 38400f
-                } else if (xpSum <= 153300) {
-                    level = 9; levelName = "Nirvana Ascendant"; progress = (xpSum - 76500).toFloat() / 76800f
-                } else {
-                    level = 10; levelName = "Infinite Samadhi"; progress = 1.0f
-                }
-                _currentLevel.value = level
-                _currentLevelName.value = levelName
-                _levelProgress.value = progress.coerceIn(0f, 1f)
+                val levelDef = com.example.model.LevelDefinitions.getLevelForXp(xpSum)
+                _currentLevel.value = levelDef.level
+                _currentLevelName.value = levelDef.name
+                _levelProgress.value = com.example.model.LevelDefinitions.getLevelProgress(xpSum)
                 
                 val uniqueFlowsCount = sessions.map { it.flowId }.distinct().size
                 val hasDeepDevotee = sessions.any { it.durationMinutes >= 5 }

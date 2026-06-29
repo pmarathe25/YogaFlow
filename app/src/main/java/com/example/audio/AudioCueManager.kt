@@ -48,7 +48,7 @@ class AudioCueManager(private val context: Context) : TextToSpeech.OnInitListene
         }
     }
 
-    fun speak(apiKey: String, text: String, preferredVoice: String = "en") {
+    fun speak(text: String, preferredVoice: String = "en") {
         stop()
         speakLocalFallback(text, preferredVoice)
     }

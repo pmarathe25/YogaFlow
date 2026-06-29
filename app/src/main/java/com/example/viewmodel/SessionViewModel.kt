@@ -3,7 +3,6 @@ package com.example.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.BuildConfig
 import com.example.audio.AudioCueManager
 import com.example.audio.ZenSoundSynthesizer
 import com.example.db.YogaDatabase
@@ -221,8 +220,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
                 "sa" -> "स्वस्ति। संस्कृत ध्वनि मार्गदर्शिका।"
                 else -> "English voice guide selected."
             }
-            val apiKey = BuildConfig.GEMINI_API_KEY
-            audioCueManager.speak(apiKey, previewText, voice)
+            audioCueManager.speak(previewText, voice)
         }
     }
 
@@ -271,7 +269,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
     private fun onPoseTimeComplete() {
         val nextIndex = _currentPoseIndex.value + 1
         if (nextIndex < _flow.value.poses.size) {
-            playTransitBeep()
+            playWoodTap()
             _currentPoseIndex.value = nextIndex
             _remainingTimeSec.value = _flow.value.poses[_currentPoseIndex.value].holdDurationSec
             triggerVoiceCueForCurrentPose()
@@ -286,7 +284,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         updateWakeLockState()
         timerJob?.cancel()
         timerJob = null
-        playCompletionBeep()
+        playWoodTap()
         ambientMusicManager.stop()
 
         viewModelScope.launch {
@@ -305,13 +303,12 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         }
 
         if (_isVoiceEnabled.value) {
-            val apiKey = BuildConfig.GEMINI_API_KEY
             val message = if (_preferredVoice.value == "sa") {
                 "अभिनन्दनम्। योगसाधना समाप्ता। ओम् शान्तिः शान्तिः शान्तिः।"
             } else {
                 "Congratulations! You have completed your ${flow.value.name} practice. Namaste."
             }
-            audioCueManager.speak(apiKey, message, _preferredVoice.value)
+            audioCueManager.speak(message, _preferredVoice.value)
         }
     }
 
@@ -325,7 +322,6 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
             }
             if (!_isPlaying.value && !_isCountdownActive.value) return@launch
             val current = currentPose.value ?: return@launch
-            val apiKey = BuildConfig.GEMINI_API_KEY
             var text = if (_preferredVoice.value == "sa") {
                 FlowLoader.getSanskritPrompt(getApplication<Application>(), current.id)
                     ?: getSanskritPromptFallback(current.id)
@@ -333,7 +329,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
                 current.voicePrompt
             }
             text = text.replace(Regex("^.*? (Step \\d+:)"), "$1")
-            audioCueManager.speak(apiKey, text, _preferredVoice.value)
+            audioCueManager.speak(text, _preferredVoice.value)
         }
     }
 
@@ -415,43 +411,11 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // --- Countdown Start Implementation ---
-    
-    private fun getCountdownWord(number: Int, lang: String): String {
-        return if (lang == "sa") {
-            when (number) {
-                5 -> "पञ्च"
-                4 -> "चत्वारि"
-                3 -> "त्रीणि"
-                2 -> "द्वे"
-                1 -> "एकम्"
-                else -> ""
-            }
-        } else {
-            when (number) {
-                5 -> "Five"
-                4 -> "Four"
-                3 -> "Three"
-                2 -> "Two"
-                1 -> "One"
-                else -> ""
-            }
-        }
-    }
-
-    private fun playTransitBeep() {
+    private fun playWoodTap() {
         try {
             zenSoundSynthesizer.playWoodTap()
         } catch (e: Exception) {
-            android.util.Log.e(tag, "Failed to play transit beep: ${e.message}")
-        }
-    }
-
-    private fun playCompletionBeep() {
-        try {
-            zenSoundSynthesizer.playWoodTap()
-        } catch (e: Exception) {
-            android.util.Log.e(tag, "Failed to play completion beep: ${e.message}")
+            android.util.Log.e(tag, "Failed to play wood tap: ${e.message}")
         }
     }
 

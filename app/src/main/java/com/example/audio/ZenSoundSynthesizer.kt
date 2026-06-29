@@ -9,7 +9,6 @@ import java.nio.ByteOrder
 
 class ZenSoundSynthesizer(context: Context) {
     private val soundPool: SoundPool
-    private var bellSoundId = 0
     private var woodTapSoundId = 0
     private var isLoaded = false
 
@@ -18,7 +17,6 @@ class ZenSoundSynthesizer(context: Context) {
         soundPool.setOnLoadCompleteListener { _, _, status ->
             if (status == 0) isLoaded = true
         }
-        bellSoundId = loadSound(context, generateBellPcm(), "bell")
         woodTapSoundId = loadSound(context, generateWoodTapPcm(), "woodtap")
     }
 
@@ -30,10 +28,6 @@ class ZenSoundSynthesizer(context: Context) {
         return soundPool.load(file.absolutePath, 1)
     }
 
-    fun playBell() {
-        if (isLoaded) soundPool.play(bellSoundId, 1.0f, 1.0f, 1, 0, 1.0f)
-    }
-
     fun playWoodTap() {
         if (isLoaded) soundPool.play(woodTapSoundId, 1.0f, 1.0f, 1, 0, 1.0f)
     }
@@ -43,30 +37,6 @@ class ZenSoundSynthesizer(context: Context) {
     }
 
     companion object {
-        fun generateBellPcm(): ShortArray {
-            val sampleRate = 22050
-            val durationSec = 2.5
-            val totalSamples = (sampleRate * durationSec).toInt()
-            val buffer = ShortArray(totalSamples)
-            val f0 = 440.0
-            val harmonics = doubleArrayOf(1.0, 1.5, 1.9, 2.2, 3.0)
-            val amplitudes = doubleArrayOf(0.5, 0.25, 0.15, 0.08, 0.05)
-
-            for (i in 0 until totalSamples) {
-                val t = i.toDouble() / sampleRate
-                val decay = kotlin.math.exp(-2.0 * t)
-                var sampleVal = 0.0
-                for (h in harmonics.indices) {
-                    val freq = f0 * harmonics[h]
-                    val vibrato = 1.0 + 0.005 * kotlin.math.sin(2.0 * Math.PI * 4.0 * t)
-                    sampleVal += amplitudes[h] * kotlin.math.sin(2.0 * Math.PI * freq * vibrato * t)
-                }
-                val finalVal = (sampleVal * decay * 14000.0).coerceIn(-32768.0, 32767.0)
-                buffer[i] = finalVal.toInt().toShort()
-            }
-            return buffer
-        }
-
         fun generateWoodTapPcm(): ShortArray {
             val sampleRate = 22050
             val durationSec = 0.2
