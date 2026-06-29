@@ -58,9 +58,6 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
     val gardenItems = rpgViewModel.gardenItems
     val availableXp: StateFlow<Int> = rpgViewModel.availableXp
     val availableSparks: StateFlow<Int> = rpgViewModel.availableSparks
-    // Aliases for backward compatibility
-    val rpgAvailableKarmaXp: StateFlow<Int> = rpgViewModel.availableXp
-    val rpgAvailableSparks: StateFlow<Int> = rpgViewModel.availableSparks
     val rpgUnlockedHeroes: StateFlow<Set<String>> = rpgViewModel.rpgUnlockedHeroes
     val rpgActiveParty: StateFlow<List<String>> = rpgViewModel.rpgActiveParty
     val rpgSpentKarmaXp: StateFlow<Int> = rpgViewModel.rpgSpentKarmaXp

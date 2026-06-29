@@ -19,9 +19,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _backgroundAudioEnabled = MutableStateFlow(true)
     val backgroundAudioEnabled: StateFlow<Boolean> = _backgroundAudioEnabled.asStateFlow()
 
-    private val _isVoiceEnabled = MutableStateFlow(true)
-    val isVoiceEnabled: StateFlow<Boolean> = _isVoiceEnabled.asStateFlow()
-
     private val _preferredVoice = MutableStateFlow("en")
     val preferredVoice: StateFlow<String> = _preferredVoice.asStateFlow()
 
@@ -36,7 +33,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         _themeMode.value = SettingsManager.getThemeMode(app)
         _keepScreenAwake.value = SettingsManager.getKeepScreenAwake(app)
         _backgroundAudioEnabled.value = SettingsManager.getBackgroundAudioEnabled(app)
-        _isVoiceEnabled.value = SettingsManager.getIsVoiceEnabled(app)
         _preferredVoice.value = SettingsManager.getPreferredVoice(app)
         _isMusicMuted.value = SettingsManager.getIsMusicMuted(app)
         _currentTrackIndex.value = SettingsManager.getCurrentTrackIndex(app)
@@ -55,11 +51,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun setBackgroundAudioEnabled(enabled: Boolean) {
         _backgroundAudioEnabled.value = enabled
         SettingsManager.saveBackgroundAudioEnabled(getApplication(), enabled)
-    }
-
-    fun setIsVoiceEnabled(enabled: Boolean) {
-        _isVoiceEnabled.value = enabled
-        SettingsManager.saveIsVoiceEnabled(getApplication(), enabled)
     }
 
     fun setPreferredVoice(voice: String) {

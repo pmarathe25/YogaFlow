@@ -86,15 +86,10 @@ fun ZenGardenScreen(
     // Collect our Sanskrit RPG State from ViewModel
     val unlockedHeroes by viewModel.rpgUnlockedHeroes.collectAsStateWithLifecycle()
     val activeParty by viewModel.rpgActiveParty.collectAsStateWithLifecycle()
-    val availableXp by viewModel.rpgAvailableKarmaXp.collectAsStateWithLifecycle()
-    val availableSparks by viewModel.rpgAvailableSparks.collectAsStateWithLifecycle()
+    val availableXp by viewModel.availableXp.collectAsStateWithLifecycle()
+    val availableSparks by viewModel.availableSparks.collectAsStateWithLifecycle()
     val stats by viewModel.rpgStats.collectAsStateWithLifecycle()
     val heroLevels by viewModel.rpgHeroLevels.collectAsStateWithLifecycle()
-
-    // Load data when screen enters
-    LaunchedEffect(Unit) {
-        viewModel.loadRpgData()
-    }
 
     // Tab indices: 0 = Quest (Battle), 1 = Party Setup & Upgrades
     var activeTab by remember { mutableStateOf(0) }
