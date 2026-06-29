@@ -5,6 +5,7 @@ import org.json.JSONObject
 
 object FlowLoader {
     private var cachedFlows: List<YogaFlow>? = null
+    private var cachedSanskritPrompts: Map<Int, String>? = null
 
     fun loadFlows(context: Context): List<YogaFlow> {
         cachedFlows?.let { return it }
@@ -54,6 +55,27 @@ object FlowLoader {
 
         cachedFlows = flows
         return flows
+    }
+
+    fun loadSanskritPrompts(context: Context): Map<Int, String> {
+        cachedSanskritPrompts?.let { return it }
+        
+        val json = context.assets.open("sanskrit_prompts.json").bufferedReader().use { it.readText() }
+        val root = JSONObject(json)
+        val prompts = mutableMapOf<Int, String>()
+        
+        val keys = root.keys()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            prompts[key.toInt()] = root.getString(key)
+        }
+        
+        cachedSanskritPrompts = prompts
+        return prompts
+    }
+
+    fun getSanskritPrompt(context: Context, poseId: Int): String? {
+        return loadSanskritPrompts(context)[poseId]
     }
 
     fun getFlowById(context: Context, id: String): YogaFlow? {

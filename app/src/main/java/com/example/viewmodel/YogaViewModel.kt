@@ -808,7 +808,7 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun getSanskritPromptForPose(poseId: Int): String {
+    private fun getSanskritPromptFallback(poseId: Int): String {
         return when (poseId) {
             1 -> "प्रणामासनं कुर्यात्। करसम्पुटं हृदयस्थाने धारयन्तु। दीर्घं निःश्वस्य शान्तं भवन्तु।"
             2 -> "हस्तौत्तानासनं कुर्यात्। उद्गस्य हस्तौ ऊर्ध्वं प्रयच्छन्तु। सर्वशरीरं दीर्घतानन्तु।"
@@ -829,33 +829,11 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
             204 -> "त्रिकोणासनं कुर्यात्। पार्श्वभङ्गेन हस्त-शिखरे पश्यन्तु।"
             205 -> "बालासनं कुर्यात्। नितम्बौ पादपृष्ठे स्थापयन्तु, शिरो भूमौ नमन्तु। शान्तं भवन्तु।"
             
-            301 -> "बालासनं कुर्यात्। दीर्घश्वासेन विश्रामं लभन्तु।"
-            302 -> "सालम्बभुजङ्गासनं कुर्यात्। कूर्परौ भूमौ धारयन्तु, ऊर्ध्वं पश्यन्तु।"
-            303 -> "बद्धकोणासनं कुर्यात्। पादतलौ परस्परं संयोजयन्तु।"
-            304 -> "सुप्तमत्स्येन्द्रासनं कुर्यात्। पार्श्वपरिवर्तनेन ध्यानं कुर्यात्।"
-            305 -> "शवासनं कुर्यात्। सर्वशरीरं शिथिलीकुर्यात्, ध्यानमयस्थितौ विश्रामन्तु। ओम्, शान्तिः, शान्तिः, शान्तिः।"
+            301 -> "सालम्बभुजङ्गासनं कुर्यात्। कूर्परौ भूमौ धारयन्तु, ऊर्ध्वं पश्यन्तु।"
+            302 -> "बद्धकोणासनं कुर्यात्। पादतलौ परस्परं संयोजयन्तु।"
+            303 -> "सुप्तमत्स्येन्द्रासनं कुर्यात्। पार्श्वपरिवर्तनेन ध्यानं कुर्यात्।"
+            304 -> "शवासनं कुर्यात्। सर्वशरीरं शिथिलीकुर्यात्, ध्यानमयस्थितौ विश्रामन्तु। ओम्, शान्तिः, शान्तिः, शान्तिः।"
             else -> "ध्यानं कुर्यात्। शान्तं ध्यानं।"
-        }
-    }
-
-    fun triggerVoiceCueForCurrentPose() {
-        if (!_isVoiceEnabled.value) return
-        viewModelScope.launch {
-            var waitTime = 0
-            while (currentPose.value == null && waitTime < 2000) {
-                delay(100)
-                waitTime += 100
-            }
-            if (!_isPlaying.value && !_isCountdownActive.value) return@launch
-            val current = currentPose.value ?: return@launch
-            val apiKey = BuildConfig.GEMINI_API_KEY
-            var text = if (_preferredVoice.value == "sa") {
-                getSanskritPromptForPose(current.id)
-            } else {
-                current.voicePrompt
-            }
-            text = text.replace(Regex("^.*? (Step \\d+:)"), "$1")
-            audioCueManager.speak(apiKey, text, _preferredVoice.value)
         }
     }
 
