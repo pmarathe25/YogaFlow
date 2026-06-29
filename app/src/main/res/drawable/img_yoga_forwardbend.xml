@@ -1,0 +1,50 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    
+    <!-- Zen Circle Backdrop -->
+    <path
+        android:fillColor="#15FFB085"
+        android:pathData="M100,100 m-65,0 a65,65 0,1,1 130,0 a65,65 0,1,1 -130,0" />
+    <path
+        android:fillColor="#0DFFB085"
+        android:pathData="M100,100 m-75,0 a75,75 0,1,1 150,0 a75,75 0,1,1 -150,0" />
+
+    <!-- Stylized Natural Human Outline for Forward Fold (Uttanasana / Downward Dog) -->
+    <!-- Hips high up (apex) -->
+    <!-- Spine and head reaching down -->
+    <!-- Head near feet -->
+    <path
+        android:fillColor="#E07A5F"
+        android:pathData="M100,118 m-9,0 a9,9 0,1,1 18,0 a9,9 0,1,1 -18,0" />
+    
+    <!-- Torso folding down from hips -->
+    <path
+        android:fillColor="#E07A5F"
+        android:pathData="M115,80 C110,80 102,100 100,115 L108,115 C111,102 118,92 120,85 Z" />
+    
+    <!-- Arms reaching down to ground -->
+    <path
+        android:strokeColor="#E07A5F"
+        android:strokeWidth="7.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M115,85 C108,95 98,125 96,165" />
+
+    <!-- Legs straight, extending down to ground from high hips -->
+    <path
+        android:fillColor="#E07A5F"
+        android:pathData="M115,80 L115,165 C115,168 117,170 120,170 C123,170 124,168 124,165 L124,80 Z" />
+    <path
+        android:fillColor="#E07A5F"
+        android:pathData="M120,80 L120,165 C120,168 122,170 125,170 C128,170 130,168 130,165 L127,80 Z" />
+        
+    <!-- Ground Line -->
+    <path
+        android:strokeColor="#44E07A5F"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M60,170 L140,170" />
+</vector>

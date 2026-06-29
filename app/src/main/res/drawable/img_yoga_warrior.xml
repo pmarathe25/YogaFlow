@@ -1,0 +1,63 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    
+    <!-- Zen Circle Backdrop -->
+    <path
+        android:fillColor="#15FFB085"
+        android:pathData="M100,100 m-65,0 a65,65 0,1,1 130,0 a65,65 0,1,1 -130,0" />
+    <path
+        android:fillColor="#0DFFB085"
+        android:pathData="M100,100 m-75,0 a75,75 0,1,1 150,0 a75,75 0,1,1 -150,0" />
+
+    <!-- Stylized Natural Human Outline for Warrior Pose (Warrior I, Warrior II, Plank) -->
+    <!-- Head centered and upright -->
+    <path
+        android:fillColor="#E07A5F"
+        android:pathData="M100,50 m-9,0 a9,9 0,1,1 18,0 a9,9 0,1,1 -18,0" />
+    
+    <!-- Strong Torso upright -->
+    <path
+        android:fillColor="#E07A5F"
+        android:pathData="M100,62 C94,62 93,72 93,82 L95,115 C95,117 97,118 100,118 C103,118 105,117 105,115 L107,82 C107,72 106,62 100,62 Z" />
+    
+    <!-- Strong extended arms (horizontal like Warrior II) -->
+    <path
+        android:strokeColor="#E07A5F"
+        android:strokeWidth="7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M93,74 L55,74" />
+    <path
+        android:strokeColor="#E07A5F"
+        android:strokeWidth="7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M107,74 L145,74" />
+
+    <!-- Strong wide legs - one bent (lunge), one straight -->
+    <!-- Left bent leg (lunge) -->
+    <path
+        android:strokeColor="#E07A5F"
+        android:strokeWidth="9"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M95,112 L65,112 L65,165" />
+    
+    <!-- Right straight leg -->
+    <path
+        android:strokeColor="#E07A5F"
+        android:strokeWidth="9"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M105,112 L135,165" />
+        
+    <!-- Ground Line -->
+    <path
+        android:strokeColor="#44E07A5F"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M40,165 L160,165" />
+</vector>

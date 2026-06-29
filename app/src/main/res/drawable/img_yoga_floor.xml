@@ -1,0 +1,49 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    
+    <!-- Zen Circle Backdrop -->
+    <path
+        android:fillColor="#15FFB085"
+        android:pathData="M100,100 m-65,0 a65,65 0,1,1 130,0 a65,65 0,1,1 -130,0" />
+    <path
+        android:fillColor="#0DFFB085"
+        android:pathData="M100,100 m-75,0 a75,75 0,1,1 150,0 a75,75 0,1,1 -150,0" />
+
+    <!-- Stylized Natural Human Outline for Floor Pose (Child's Pose / Butterfly / Restorative) -->
+    <!-- Peaceful seated/kneeling figure resting -->
+    <!-- Head resting down or seated tall -->
+    <path
+        android:fillColor="#E07A5F"
+        android:pathData="M80,118 m-9,0 a9,9 0,1,1 18,0 a9,9 0,1,1 -18,0" />
+    
+    <!-- Torso sitting or folded softly -->
+    <path
+        android:fillColor="#E07A5F"
+        android:pathData="M80,128 C86,128 100,132 100,145 L100,160 L75,160 C70,160 68,155 68,150 L68,140 Z" />
+    
+    <!-- Arms resting on knees or floor -->
+    <path
+        android:strokeColor="#E07A5F"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M80,135 C90,140 110,145 115,160" />
+
+    <!-- Legs folded or tucked underneath -->
+    <path
+        android:strokeColor="#E07A5F"
+        android:strokeWidth="9"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M78,152 Q95,152 110,160 Q120,160 135,160" />
+        
+    <!-- Ground Line -->
+    <path
+        android:strokeColor="#44E07A5F"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M50,160 L150,160" />
+</vector>

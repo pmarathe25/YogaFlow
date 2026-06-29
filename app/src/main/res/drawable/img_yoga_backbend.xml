@@ -1,0 +1,54 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    
+    <!-- Zen Circle Backdrop -->
+    <path
+        android:fillColor="#15FFB085"
+        android:pathData="M100,100 m-65,0 a65,65 0,1,1 130,0 a65,65 0,1,1 -130,0" />
+    <path
+        android:fillColor="#0DFFB085"
+        android:pathData="M100,100 m-75,0 a75,75 0,1,1 150,0 a75,75 0,1,1 -150,0" />
+
+    <!-- Stylized Natural Human Outline for Backbend Pose (Raised Arms/Cobra) -->
+    <!-- Head arching back -->
+    <path
+        android:fillColor="#E07A5F"
+        android:pathData="M84,40 m-10,0 a10,10 0,1,1 20,0 a10,10 0,1,1 -20,0" />
+    
+    <!-- Torso arching backward dynamically -->
+    <path
+        android:fillColor="#E07A5F"
+        android:pathData="M84,52 C88,52 98,62 98,75 L90,115 C88,118 90,121 93,122 L101,120 C104,119 106,116 107,113 L114,75 C114,60 102,52 84,52 Z" />
+    
+    <!-- Arms sweeping upward and backward -->
+    <path
+        android:strokeColor="#E07A5F"
+        android:strokeWidth="8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M98,65 C108,50 105,30 92,20" />
+    <path
+        android:strokeColor="#E07A5F"
+        android:strokeWidth="8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M98,65 C118,52 112,32 98,22" />
+
+    <!-- Legs supporting the backbend -->
+    <path
+        android:fillColor="#E07A5F"
+        android:pathData="M93,120 L108,165 C109,168 112,170 115,170 C118,170 120,168 120,165 L101,120 Z" />
+    <path
+        android:fillColor="#E07A5F"
+        android:pathData="M101,120 L115,165 C116,168 118,170 121,170 C124,170 126,168 126,165 L107,120 Z" />
+        
+    <!-- Ground Line -->
+    <path
+        android:strokeColor="#44E07A5F"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M60,170 L140,170" />
+</vector>

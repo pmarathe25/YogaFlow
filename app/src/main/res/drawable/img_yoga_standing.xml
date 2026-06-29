@@ -1,0 +1,53 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    
+    <!-- Zen Circle Backdrop -->
+    <path
+        android:fillColor="#15FFB085"
+        android:pathData="M100,100 m-65,0 a65,65 0,1,1 130,0 a65,65 0,1,1 -130,0" />
+    <path
+        android:fillColor="#0DFFB085"
+        android:pathData="M100,100 m-75,0 a75,75 0,1,1 150,0 a75,75 0,1,1 -150,0" />
+
+    <!-- Stylized Human Outline for Standing Pose (Prayer / Mountain) -->
+    <!-- Head -->
+    <path
+        android:fillColor="#E07A5F"
+        android:pathData="M100,45 m-10,0 a10,10 0,1,1 20,0 a10,10 0,1,1 -20,0" />
+    
+    <!-- Body & Arms in Prayer -->
+    <path
+        android:fillColor="#E07A5F"
+        android:pathData="M100,58 C94,58 90,64 90,70 L90,110 C90,113 93,115 96,115 L104,115 C107,115 110,113 110,110 L110,70 C110,64 106,58 100,58 Z" />
+    
+    <!-- Prayer Arms -->
+    <path
+        android:strokeColor="#FAF6EE"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M90,72 C80,75 80,85 100,85 C120,85 120,75 110,72" />
+    <path
+        android:strokeColor="#FAF6EE"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M100,80 L100,88" />
+
+    <!-- Elegant Legs -->
+    <path
+        android:fillColor="#E07A5F"
+        android:pathData="M92,115 L92,165 C92,168 95,170 98,170 C101,170 102,168 102,165 L102,115 Z" />
+    <path
+        android:fillColor="#E07A5F"
+        android:pathData="M98,115 L98,165 C98,168 100,170 102,170 C105,170 108,168 108,165 L108,115 Z" />
+        
+    <!-- Ground Line -->
+    <path
+        android:strokeColor="#44E07A5F"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M60,170 L140,170" />
+</vector>

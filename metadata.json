@@ -1,0 +1,6 @@
+{
+  "name": "YogaFlow",
+  "description": "A guided yoga app with sun salutations flow, hold timers, hands-free always-on voice control, and offline spoken audio cues.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
