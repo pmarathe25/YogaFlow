@@ -21,6 +21,7 @@ data class YogaFlow(
 )
 
 object YogaFlowRepository {
+    @Deprecated("Flows are now loaded from assets/flows.json via FlowLoader")
     val sunSalutationFlow = YogaFlow(
         id = "sun_salutation",
         name = "Sun Salutation",
@@ -906,6 +907,7 @@ object YogaFlowRepository {
         )
     )
 
+    @Deprecated("Use FlowLoader.loadFlows(context) instead")
     val allFlows = listOf(
         restorativeYinFlow,
         morningEnergizerFlow,
@@ -918,4 +920,9 @@ object YogaFlowRepository {
         ashtangaCorePowerFlow,
         advancedBalanceMasteryFlow
     )
+
+    @Deprecated("Use FlowLoader.loadFlows(context) instead")
+    fun getAllFlows(context: android.content.Context): List<YogaFlow> {
+        return FlowLoader.loadFlows(context)
+    }
 }
