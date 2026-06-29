@@ -71,6 +71,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.model.FlowLoader
+import com.example.navigation.Screen
 
 class MainActivity : ComponentActivity() {
     private val flowIdState = mutableStateOf<String?>(null)
@@ -120,12 +128,14 @@ fun YogaAppContent(
     notificationFlowId: String? = null,
     onHandledNotification: () -> Unit = {}
 ) {
-    val isCompleted by viewModel.isSessionCompleted.collectAsState()
-    val isPlaying by viewModel.isPlaying.collectAsState()
     val isCountdownActive by viewModel.isCountdownActive.collectAsState()
+    val isPlaying by viewModel.isPlaying.collectAsState()
+    val isCompleted by viewModel.isSessionCompleted.collectAsState()
     val keepScreenAwake by viewModel.keepScreenAwake.collectAsState()
 
     val context = LocalContext.current
+    val navController = rememberNavController()
+
     DisposableEffect(isPlaying, isCountdownActive, keepScreenAwake) {
         val activity = context as? android.app.Activity
         val shouldKeepAwake = (isPlaying || isCountdownActive) && keepScreenAwake
@@ -138,75 +148,22 @@ fun YogaAppContent(
             }
         }
     }
-    
-    // We can track if player is active (even if paused, we want to stay in player view)
-    var isPlayerViewActive by remember { mutableStateOf(false) }
-
-    // If session is playing or completed, adjust view states
-    LaunchedEffect(isPlaying) {
-        if (isPlaying) {
-            isPlayerViewActive = true
-        }
-    }
-
-    LaunchedEffect(isCompleted) {
-        if (isCompleted) {
-            isPlayerViewActive = false
-        }
-    }
-
-    // Active flow for detail screen
-    var activeFlowForDetails by remember { mutableStateOf<com.example.model.YogaFlow?>(null) }
-    var showExpandedDashboard by remember { mutableStateOf(false) }
-    var showSettingsScreen by remember { mutableStateOf(false) }
-    var showHistoryScreen by remember { mutableStateOf(false) }
-    var showZenGardenScreen by remember { mutableStateOf(false) }
 
     LaunchedEffect(notificationFlowId) {
         if (notificationFlowId != null) {
-            val flow = com.example.model.YogaFlowRepository.allFlows.find { it.id == notificationFlowId }
-            if (flow != null) {
-                showSettingsScreen = false
-                showHistoryScreen = false
-                showZenGardenScreen = false
-                showExpandedDashboard = false
-                isPlayerViewActive = false
-                activeFlowForDetails = flow
-            }
+            navController.navigate(Screen.FlowDetails.createRoute(notificationFlowId))
             onHandledNotification()
         }
     }
 
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val isInPlayerFlow = currentRoute == Screen.Player.route
+    val showBottomBar = !isInPlayerFlow && currentRoute != Screen.SessionComplete.route
+
     FrostedGlassBackground(
         modifier = modifier.fillMaxSize()
     ) {
-        val showBottomBar = !isPlayerViewActive && !isCompleted && activeFlowForDetails == null && !showSettingsScreen
-
-        BackHandler(
-            enabled = isCompleted || showSettingsScreen || isPlayerViewActive || showZenGardenScreen || activeFlowForDetails != null || showHistoryScreen || showExpandedDashboard
-        ) {
-            when {
-                showSettingsScreen -> showSettingsScreen = false
-                isCompleted -> {
-                    viewModel.resetForDashboard()
-                    isPlayerViewActive = false
-                    activeFlowForDetails = null
-                }
-                isPlayerViewActive -> {
-                    if (isCountdownActive) {
-                        viewModel.cancelCountdown()
-                    } else {
-                        viewModel.resetForDashboard()
-                    }
-                    isPlayerViewActive = false
-                }
-                showZenGardenScreen -> showZenGardenScreen = false
-                activeFlowForDetails != null -> activeFlowForDetails = null
-                showHistoryScreen -> showHistoryScreen = false
-                showExpandedDashboard -> showExpandedDashboard = false
-            }
-        }
-
         Scaffold(
             bottomBar = {
                 if (showBottomBar) {
@@ -219,12 +176,11 @@ fun YogaAppContent(
                         NavigationBarItem(
                             icon = { Icon(Icons.Default.Home, contentDescription = "Dashboard") },
                             label = { Text("Dashboard") },
-                            selected = !showExpandedDashboard && !showHistoryScreen && !showSettingsScreen && !showZenGardenScreen,
+                            selected = currentRoute == Screen.Dashboard.route,
                             onClick = {
-                                showSettingsScreen = false
-                                showHistoryScreen = false
-                                showExpandedDashboard = false
-                                showZenGardenScreen = false
+                                navController.navigate(Screen.Dashboard.route) {
+                                    popUpTo(Screen.Dashboard.route) { inclusive = true }
+                                }
                             },
                             modifier = Modifier.testTag("bottom_nav_dashboard")
                         )
@@ -255,36 +211,36 @@ fun YogaAppContent(
                                 }
                             },
                             label = { Text("Journey") },
-                            selected = showExpandedDashboard && !showHistoryScreen && !showSettingsScreen && !showZenGardenScreen,
+                            selected = currentRoute == Screen.ExpandedDashboard.route,
                             onClick = {
-                                showSettingsScreen = false
-                                showHistoryScreen = false
-                                showExpandedDashboard = true
-                                showZenGardenScreen = false
+                                navController.navigate(Screen.ExpandedDashboard.route) {
+                                    popUpTo(Screen.Dashboard.route)
+                                    launchSingleTop = true
+                                }
                             },
                             modifier = Modifier.testTag("bottom_nav_journey")
                         )
                         NavigationBarItem(
                             icon = { Icon(Icons.Default.History, contentDescription = "History") },
                             label = { Text("History") },
-                            selected = showHistoryScreen && !showExpandedDashboard && !showSettingsScreen && !showZenGardenScreen,
+                            selected = currentRoute == Screen.History.route,
                             onClick = {
-                                showSettingsScreen = false
-                                showExpandedDashboard = false
-                                showHistoryScreen = true
-                                showZenGardenScreen = false
+                                navController.navigate(Screen.History.route) {
+                                    popUpTo(Screen.Dashboard.route)
+                                    launchSingleTop = true
+                                }
                             },
                             modifier = Modifier.testTag("bottom_nav_history")
                         )
                         NavigationBarItem(
                             icon = { Text("⚔️", fontSize = 20.sp) },
                             label = { Text("Zen Battle") },
-                            selected = showZenGardenScreen && !showExpandedDashboard && !showHistoryScreen && !showSettingsScreen,
+                            selected = currentRoute == Screen.ZenGarden.route,
                             onClick = {
-                                showSettingsScreen = false
-                                showExpandedDashboard = false
-                                showHistoryScreen = false
-                                showZenGardenScreen = true
+                                navController.navigate(Screen.ZenGarden.route) {
+                                    popUpTo(Screen.Dashboard.route)
+                                    launchSingleTop = true
+                                }
                             },
                             modifier = Modifier.testTag("bottom_nav_garden")
                         )
@@ -293,109 +249,127 @@ fun YogaAppContent(
             },
             containerColor = Color.Transparent
         ) { paddingValues ->
-            Box(
+            NavHost(
+                navController = navController,
+                startDestination = Screen.Dashboard.route,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                when {
-                    showSettingsScreen -> {
-                        SettingsScreen(
+                composable(Screen.Dashboard.route) {
+                    YogaDashboardScreen(
+                        viewModel = viewModel,
+                        onViewFlowDetails = { flow ->
+                            navController.navigate(Screen.FlowDetails.createRoute(flow.id))
+                        },
+                        onOpenSettings = {
+                            navController.navigate(Screen.Settings.route)
+                        }
+                    )
+                }
+
+                composable(
+                    route = Screen.FlowDetails.route,
+                    arguments = listOf(navArgument("flowId") { type = NavType.StringType })
+                ) { entry ->
+                    val flowId = entry.arguments?.getString("flowId") ?: ""
+                    val flow = FlowLoader.getFlowById(context, flowId)
+                    if (flow != null) {
+                        YogaFlowDetailsScreen(
+                            flow = flow,
                             viewModel = viewModel,
-                            onBack = { showSettingsScreen = false }
+                            onBack = { navController.popBackStack() },
+                            onStartFlow = {
+                                viewModel.selectFlow(flow)
+                                viewModel.restartSession()
+                                navController.navigate(Screen.Player.route) {
+                                    popUpTo(Screen.Dashboard.route) { inclusive = false }
+                                }
+                            },
+                            onSelectPose = { index ->
+                                viewModel.selectFlow(flow)
+                                viewModel.selectPoseDirectly(index)
+                                navController.navigate(Screen.Player.route) {
+                                    popUpTo(Screen.Dashboard.route) { inclusive = false }
+                                }
+                            }
                         )
                     }
-                    isCompleted -> {
-                        SessionCompleteScreen(
+                }
+
+                composable(Screen.Player.route) {
+                    BackHandler {
+                        if (isCountdownActive) {
+                            viewModel.cancelCountdown()
+                        } else {
+                            viewModel.resetForDashboard()
+                        }
+                        navController.popBackStack(Screen.Dashboard.route, inclusive = false)
+                    }
+                    when {
+                        isCompleted -> SessionCompleteScreen(
                             viewModel = viewModel,
                             onDone = {
                                 viewModel.resetForDashboard()
-                                isPlayerViewActive = false
-                                activeFlowForDetails = null
+                                navController.popBackStack(Screen.Dashboard.route, inclusive = false)
+                            }
+                        )
+                        isCountdownActive -> CountdownStartScreen(
+                            viewModel = viewModel,
+                            onCancel = {
+                                viewModel.cancelCountdown()
+                                navController.popBackStack(Screen.Dashboard.route, inclusive = false)
+                            }
+                        )
+                        else -> YogaPlayerScreen(
+                            viewModel = viewModel,
+                            onExit = {
+                                viewModel.resetForDashboard()
+                                navController.popBackStack(Screen.Dashboard.route, inclusive = false)
                             }
                         )
                     }
-                    isPlayerViewActive -> {
-                        val isCountdownActive by viewModel.isCountdownActive.collectAsState()
-                        if (isCountdownActive) {
-                            CountdownStartScreen(
-                                viewModel = viewModel,
-                                onCancel = {
-                                    viewModel.cancelCountdown()
-                                    isPlayerViewActive = false
-                                }
-                            )
-                        } else {
-                            YogaPlayerScreen(
-                                viewModel = viewModel,
-                                onExit = {
-                                    viewModel.resetForDashboard()
-                                    isPlayerViewActive = false
-                                }
-                            )
-                        }
-                    }
-                    showZenGardenScreen -> {
-                        ZenGardenScreen(
-                            viewModel = viewModel,
-                            onNavigateBack = { showZenGardenScreen = false }
-                        )
-                    }
-                    activeFlowForDetails != null -> {
-                        YogaFlowDetailsScreen(
-                            flow = activeFlowForDetails!!,
-                            viewModel = viewModel,
-                            onBack = {
-                                activeFlowForDetails = null
-                            },
-                            onStartFlow = {
-                                viewModel.selectFlow(activeFlowForDetails!!)
-                                viewModel.restartSession()
-                                isPlayerViewActive = true
-                            },
-                            onSelectPose = { index ->
-                                viewModel.selectFlow(activeFlowForDetails!!)
-                                viewModel.selectPoseDirectly(index)
-                                isPlayerViewActive = true
+                }
+
+                composable(Screen.ZenGarden.route) {
+                    ZenGardenScreen(
+                        viewModel = viewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable(Screen.ExpandedDashboard.route) {
+                    ExpandedDashboardScreen(
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() },
+                        onNavigateToHistory = {
+                            navController.navigate(Screen.History.route)
+                        },
+                        onOpenSettings = {
+                            navController.navigate(Screen.Settings.route) {
+                                popUpTo(Screen.Dashboard.route)
                             }
-                        )
-                    }
-                    else -> {
-                        if (showHistoryScreen) {
-                            PracticeHistoryScreen(
-                                viewModel = viewModel,
-                                onBack = { showHistoryScreen = false },
-                                onOpenSettings = {
-                                    showSettingsScreen = true
-                                    showHistoryScreen = false
-                                    showExpandedDashboard = false
-                                }
-                            )
-                        } else if (showExpandedDashboard) {
-                            ExpandedDashboardScreen(
-                                viewModel = viewModel,
-                                onBack = { showExpandedDashboard = false },
-                                onNavigateToHistory = { showHistoryScreen = true },
-                                onOpenSettings = {
-                                    showSettingsScreen = true
-                                    showHistoryScreen = false
-                                    showExpandedDashboard = false
-                                }
-                            )
-                        } else {
-                            YogaDashboardScreen(
-                                viewModel = viewModel,
-                                onViewFlowDetails = { flow ->
-                                    activeFlowForDetails = flow
-                                },
-                                onOpenSettings = {
-                                    showSettingsScreen = true
-                                    showHistoryScreen = false
-                                    showExpandedDashboard = false
-                                }
-                            )
                         }
-                    }
+                    )
+                }
+
+                composable(Screen.History.route) {
+                    PracticeHistoryScreen(
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() },
+                        onOpenSettings = {
+                            navController.navigate(Screen.Settings.route) {
+                                popUpTo(Screen.Dashboard.route)
+                            }
+                        }
+                    )
+                }
+
+                composable(Screen.Settings.route) {
+                    SettingsScreen(
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
             }
         }
