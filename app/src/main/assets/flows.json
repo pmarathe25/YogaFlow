@@ -264,7 +264,7 @@
       "totalDurationMinutes": 4,
       "poses": [
         {
-          "id": 301,
+          "id": 205,
           "sanskritName": "Balasana",
           "englishName": "Child's Pose",
           "description": "Rest on your shins and fold your chest forward, letting go of all tension.",
@@ -278,7 +278,7 @@
           "voicePrompt": "Restorative Yin Step 1: Child's Pose, Balasana. Bring your knees wide, sink your hips back, and relax your forehead on the mat. Feel the breath soothing your back."
         },
         {
-          "id": 302,
+          "id": 301,
           "sanskritName": "Salamba Bhujangasana",
           "englishName": "Sphinx Pose",
           "description": "Lie on your belly, resting on your forearms with chest gently lifted.",
@@ -292,7 +292,7 @@
           "voicePrompt": "Restorative Yin Step 2: Sphinx Pose. Prop yourself onto your forearms, relaxing your lower body completely. Lift your chest gently and enjoy this mild back-bend."
         },
         {
-          "id": 303,
+          "id": 302,
           "sanskritName": "Baddha Konasana",
           "englishName": "Butterfly Pose",
           "description": "Sit upright, bring soles of your feet together, and let your knees fall out wide.",
@@ -306,7 +306,7 @@
           "voicePrompt": "Restorative Yin Step 3: Butterfly Pose, Baddha Konasana. Bring the soles of your feet together, letting your knees open wide. Fold forward slightly to release the hips."
         },
         {
-          "id": 304,
+          "id": 303,
           "sanskritName": "Supta Matsyendrasana",
           "englishName": "Reclined Spinal Twist",
           "description": "Lie on your back, draw knees to chest, and drop them to the side.",
@@ -320,7 +320,7 @@
           "voicePrompt": "Restorative Yin Step 4: Reclined Spinal Twist. Lay on your back and drop your knees to the side. Open your chest flat toward the sky, breathing ease into your spine."
         },
         {
-          "id": 305,
+          "id": 304,
           "sanskritName": "Savasana",
           "englishName": "Corpse Pose",
           "description": "Lie flat on your back, feet wide, arms relaxed with palms up.",
@@ -417,7 +417,7 @@
       "totalDurationMinutes": 5,
       "poses": [
         {
-          "id": 301,
+          "id": 205,
           "sanskritName": "Balasana",
           "englishName": "Child's Pose",
           "description": "Rest on your shins and fold your chest forward, letting go of all tension.",
@@ -430,7 +430,7 @@
           "voicePrompt": "Bedtime Wind Down Step 1: Child's Pose. Rest your body on the mat. Take slow, soothing breaths and feel the busyness of the day fade away."
         },
         {
-          "id": 303,
+          "id": 302,
           "sanskritName": "Baddha Konasana",
           "englishName": "Butterfly Pose",
           "description": "Sit with soles of feet together, knees open wide, folding gently forward.",
@@ -443,7 +443,7 @@
           "voicePrompt": "Bedtime Wind Down Step 2: Butterfly Pose. Bring your feet together and let your knees relax outward. Lean forward slightly and release any tension in your hips."
         },
         {
-          "id": 304,
+          "id": 303,
           "sanskritName": "Supta Matsyendrasana",
           "englishName": "Reclined Spinal Twist",
           "description": "Lie flat, draw knees to chest, and let them drop to one side.",
@@ -456,7 +456,7 @@
           "voicePrompt": "Bedtime Wind Down Step 3: Reclined Spinal Twist. Lay back and let your knees drift to the side. Breathe deeply into your back, letting your body decompress."
         },
         {
-          "id": 305,
+          "id": 304,
           "sanskritName": "Savasana",
           "englishName": "Corpse Pose",
           "description": "Lie flat on your back, feet wide, arms relaxed with palms facing up.",
@@ -579,7 +579,7 @@
           "voicePrompt": "Heart Opening Step 2: Raised Arms Pose. Reach up and arch back slightly, stretching your chest toward the light."
         },
         {
-          "id": 302,
+          "id": 301,
           "sanskritName": "Salamba Bhujangasana",
           "englishName": "Sphinx Pose",
           "description": "Lie on your belly, resting on your forearms with chest gently lifted.",
@@ -861,7 +861,7 @@
           "voicePrompt": "Balance Mastery Step 5: Child's Pose. Rest and breathe, releasing all physical effort."
         },
         {
-          "id": 305,
+          "id": 304,
           "sanskritName": "Savasana",
           "englishName": "Corpse Pose",
           "description": "Lie flat on your back, feet wide, arms relaxed with palms up.",
