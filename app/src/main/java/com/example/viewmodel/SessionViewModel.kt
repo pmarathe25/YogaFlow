@@ -1,7 +1,6 @@
 package com.example.viewmodel
 
 import android.app.Application
-import android.media.ToneGenerator
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.BuildConfig
@@ -35,8 +34,10 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
     private val zenSoundSynthesizer = ZenSoundSynthesizer(application)
     val ambientMusicManager = com.example.audio.AmbientMusicManager(application)
 
-    // Flow state
-    private val _flow = MutableStateFlow<YogaFlow>(YogaFlowRepository.sunSalutationFlow)
+    // Flow state - load default flow from FlowLoader
+    private val _flow = MutableStateFlow<YogaFlow>(FlowLoader.getFlowById(application, "sun_salutation") 
+        ?: FlowLoader.loadFlows(application).firstOrNull() 
+        ?: YogaFlow(id="empty", name="Empty", description="", difficulty="", totalDurationMinutes=0, poses=emptyList()))
     val flow: StateFlow<YogaFlow> = _flow.asStateFlow()
 
     private val _currentPoseIndex = MutableStateFlow(0)
@@ -89,9 +90,6 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         
         val isMuted = com.example.db.SettingsManager.getIsMusicMuted(app)
         val trackIdx = com.example.db.SettingsManager.getCurrentTrackIndex(app)
-        if (isMuted) {
-            ambientMusicManager.toggleMute()
-        }
         ambientMusicManager.setCurrentTrackIndex(trackIdx)
     }
 
@@ -145,8 +143,8 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun toggleMusicMute() {
-        ambientMusicManager.toggleMute()
-        val muted = ambientMusicManager.isMuted()
+        ambientMusicManager.setMute(!com.example.db.SettingsManager.getIsMusicMuted(getApplication()))
+        val muted = com.example.db.SettingsManager.getIsMusicMuted(getApplication())
         com.example.db.SettingsManager.saveIsMusicMuted(getApplication(), muted)
     }
 
@@ -156,7 +154,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
             ambientMusicManager.setCurrentTrackIndex(index)
             com.example.db.SettingsManager.saveCurrentTrackIndex(getApplication(), index)
             if (_isPlaying.value || _isCountdownActive.value) {
-                ambientMusicManager.playTrack(index)
+                ambientMusicManager.play()
             }
         }
     }

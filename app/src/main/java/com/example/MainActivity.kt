@@ -382,11 +382,11 @@ fun YogaDashboardScreen(
     onViewFlowDetails: (com.example.model.YogaFlow) -> Unit,
     onOpenSettings: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val allFlows = remember { com.example.model.FlowLoader.loadFlows(context) }
     val themeMode by viewModel.themeMode.collectAsState()
     val currentLevel by viewModel.currentLevel.collectAsState()
     val totalXp by viewModel.totalXp.collectAsState()
-
-    val allFlows = com.example.model.YogaFlowRepository.allFlows
     val favoriteFlowIds by viewModel.favoriteFlowIds.collectAsState()
     val favoriteFlows = allFlows.filter { favoriteFlowIds.contains(it.id) }
     val beginnerFlows = allFlows.filter { it.difficulty.equals("Beginner", ignoreCase = true) }
