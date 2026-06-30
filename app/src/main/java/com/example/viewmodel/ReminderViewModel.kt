@@ -10,6 +10,7 @@ import com.example.db.YogaSessionRepository
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ReminderViewModel(application: Application) : AndroidViewModel(application) {

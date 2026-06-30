@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.testTag
 import com.example.viewmodel.YogaViewModel
+import com.example.ui.components.ReminderDialog
 
 @Composable
 fun ReminderItem(reminder: com.example.db.ReminderEntity, onEdit: () -> Unit, onDelete: () -> Unit) {
@@ -394,7 +395,7 @@ fun SettingsScreen(
                 if (editingReminder != null) {
                     val reminder = editingReminder!!
                     val initialDays = reminder.daysOfWeek.split(",").filter { it.isNotEmpty() }.mapNotNull { it.toIntOrNull() }.toSet()
-                    com.example.ReminderDialog(
+                    ReminderDialog(
                         flowName = reminder.flowName,
                         flowId = reminder.flowId,
                         initialHour = reminder.hour,

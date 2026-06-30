@@ -99,8 +99,8 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
                         id = "yogi_adept",
                         title = "Yogi Adept",
                         description = "Reach Level 3 (Flow Initiate).",
-                        isUnlocked = level >= 3,
-                        progressText = "Lvl $level/3"
+                        isUnlocked = levelDef.level >= 3,
+                        progressText = "Lvl ${levelDef.level}/3"
                     ),
                     Achievement(
                         id = "deep_devotee",

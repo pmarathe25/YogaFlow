@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.*
 import com.example.viewmodel.YogaViewModel
+import com.example.game.viewmodel.GameViewModel
+import com.example.game.ui.components.GameApp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -287,10 +289,8 @@ fun YogaAppContent(
                 }
 
                 composable(Screen.ZenGarden.route) {
-                    ZenGardenScreen(
-                        viewModel = viewModel,
-                        onNavigateBack = { navController.popBackStack() }
-                    )
+                    val gameViewModel: GameViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                    GameApp(viewModel = gameViewModel)
                 }
 
                 composable(Screen.ExpandedDashboard.route) {

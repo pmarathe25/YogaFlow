@@ -85,8 +85,9 @@ class ZenSoundSynthesizer(context: Context) {
             byteBuf.asShortBuffer().put(pcmData)
             buf.put(byteBuf.array())
 
+            buf.flip()
             FileOutputStream(file).use { fos ->
-                fos.channel.write(buf.array())
+                fos.channel.write(buf)
             }
         }
     }

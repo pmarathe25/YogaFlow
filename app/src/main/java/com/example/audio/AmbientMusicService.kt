@@ -49,6 +49,8 @@ class AmbientMusicService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val notification = buildNotification()
+        startForeground(NOTIFICATION_ID, notification)
         intent?.action?.let { action ->
             when (action) {
                 ACTION_PLAY -> play()
