@@ -22,7 +22,8 @@ data class Particle(
     var lifetime: Int,
     var maxLifetime: Int,
     var gravity: Float = 0f,
-    var drag: Float = 0.98f
+    var drag: Float = 0.98f,
+    var blendMode: BlendMode = BlendMode.SrcOver
 ) {
     val isDead: Boolean get() = lifetime <= 0 || alpha <= 0f
 }
@@ -67,6 +68,7 @@ class ParticlePool(capacity: Int) {
             p.lifetime = p.maxLifetime
             p.gravity = config.gravity
             p.drag = 0.98f
+            p.blendMode = config.blendMode
             activeCount++
         }
     }
@@ -97,7 +99,7 @@ class ParticlePool(capacity: Int) {
                 color = p.color.copy(alpha = p.alpha),
                 radius = p.size,
                 center = Offset(p.x, p.y),
-                blendMode = BlendMode.SrcOver
+                blendMode = p.blendMode
             )
         }
     }

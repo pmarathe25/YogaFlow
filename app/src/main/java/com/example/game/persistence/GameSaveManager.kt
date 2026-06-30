@@ -27,6 +27,7 @@ class GameSaveManager(context: Context) {
         const val KEY_HIGHEST_COMBO_HITS = "highest_combo_hits"
         const val KEY_FASTEST_BATTLE_TURNS = "fastest_battle_turns"
         const val KEY_LAST_PLAYED_TIMESTAMP = "last_played_timestamp"
+        const val KEY_LAST_SYNCED_MAIN_SPARKS = "last_synced_main_sparks"
     }
 
     data class GameSaveData(
@@ -45,7 +46,8 @@ class GameSaveManager(context: Context) {
         val totalPlayTimeMs: Long = 0L,
         val highestComboHits: Int = 0,
         val fastestBattleTurns: Int = Int.MAX_VALUE,
-        val lastPlayedTimestamp: Long = 0L
+        val lastPlayedTimestamp: Long = 0L,
+        val lastSyncedMainSparks: Int = 0
     ) {
         fun toSaveMap(): Map<String, String> = mapOf(
             KEY_BATTLE_STATE to if (battleState != null) gson.toJson(battleState) else "",
@@ -63,7 +65,8 @@ class GameSaveManager(context: Context) {
             KEY_TOTAL_PLAY_TIME_MS to totalPlayTimeMs.toString(),
             KEY_HIGHEST_COMBO_HITS to highestComboHits.toString(),
             KEY_FASTEST_BATTLE_TURNS to fastestBattleTurns.toString(),
-            KEY_LAST_PLAYED_TIMESTAMP to lastPlayedTimestamp.toString()
+            KEY_LAST_PLAYED_TIMESTAMP to lastPlayedTimestamp.toString(),
+            KEY_LAST_SYNCED_MAIN_SPARKS to lastSyncedMainSparks.toString()
         )
     }
 
@@ -113,7 +116,8 @@ class GameSaveManager(context: Context) {
             totalPlayTimeMs = prefs.getLong(KEY_TOTAL_PLAY_TIME_MS, 0L),
             highestComboHits = prefs.getInt(KEY_HIGHEST_COMBO_HITS, 0),
             fastestBattleTurns = prefs.getInt(KEY_FASTEST_BATTLE_TURNS, Int.MAX_VALUE),
-            lastPlayedTimestamp = prefs.getLong(KEY_LAST_PLAYED_TIMESTAMP, 0L)
+            lastPlayedTimestamp = prefs.getLong(KEY_LAST_PLAYED_TIMESTAMP, 0L),
+            lastSyncedMainSparks = prefs.getInt(KEY_LAST_SYNCED_MAIN_SPARKS, 0)
         )
     }
 
@@ -128,6 +132,7 @@ class GameSaveManager(context: Context) {
             putInt(KEY_HIGHEST_COMBO_HITS, data.highestComboHits)
             putInt(KEY_FASTEST_BATTLE_TURNS, data.fastestBattleTurns)
             putLong(KEY_LAST_PLAYED_TIMESTAMP, data.lastPlayedTimestamp)
+            putInt(KEY_LAST_SYNCED_MAIN_SPARKS, data.lastSyncedMainSparks)
             apply()
         }
     }

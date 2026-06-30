@@ -10,9 +10,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.game.model.*
@@ -25,9 +28,15 @@ fun BattleResultScreen(viewModel: GameViewModel) {
     val battleState by viewModel.battleState.collectAsState()
     val isVictory = battleState?.phase == BattlePhase.VICTORY
     val turnsTaken = battleState?.turnsTaken ?: 0
+    val totalDamageDealt = remember(battleState) {
+        battleState?.eventLog?.filterIsInstance<BattleEvent.SkillUsed>()?.sumOf { e ->
+            e.outcomes.sumOf { it.damageDealt }
+        } ?: 0
+    }
 
     var titleVisible by remember { mutableStateOf(false) }
     var statsVisible by remember { mutableStateOf(false) }
+    var encouragementVisible by remember { mutableStateOf(false) }
     var buttonVisible by remember { mutableStateOf(false) }
 
     val pool = rememberParticlePool(200)
@@ -36,6 +45,9 @@ fun BattleResultScreen(viewModel: GameViewModel) {
         titleVisible = true
         delay(400)
         statsVisible = true
+        if (!isVictory) {
+            encouragementVisible = true
+        }
         delay(400)
         buttonVisible = true
     }
@@ -45,12 +57,20 @@ fun BattleResultScreen(viewModel: GameViewModel) {
         animationSpec = spring(dampingRatio = 0.5f, stiffness = 300f)
     )
     val titleScale by animateFloatAsState(
-        targetValue = if (titleVisible) 1f else 0.3f,
+        targetValue = if (titleVisible) 1f else 0f,
         animationSpec = spring(dampingRatio = 0.4f, stiffness = 200f)
     )
     val statsAlpha by animateFloatAsState(
         targetValue = if (statsVisible) 1f else 0f,
         animationSpec = tween(400)
+    )
+    val statsSlideOffset by animateFloatAsState(
+        targetValue = if (statsVisible) 0f else 80f,
+        animationSpec = spring(dampingRatio = 0.7f, stiffness = 250f)
+    )
+    val encouragementAlpha by animateFloatAsState(
+        targetValue = if (encouragementVisible) 1f else 0f,
+        animationSpec = tween(600)
     )
     val buttonAlpha by animateFloatAsState(
         targetValue = if (buttonVisible) 1f else 0f,
@@ -128,8 +148,14 @@ fun BattleResultScreen(viewModel: GameViewModel) {
 
             Spacer(Modifier.height(12.dp))
 
+            val density = LocalDensity.current
             GlassCard(
-                modifier = Modifier.fillMaxWidth().alpha(statsAlpha),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .alpha(statsAlpha)
+                    .graphicsLayer {
+                        translationY = with(density) { statsSlideOffset.dp.toPx() }
+                    },
                 elevation = 4.dp
             ) {
                 Column(
@@ -137,11 +163,29 @@ fun BattleResultScreen(viewModel: GameViewModel) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        "Turns: $turnsTaken",
+                        "Turns taken: $turnsTaken",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
+                    if (isVictory) {
+                        Text(
+                            "Damage dealt: $totalDamageDealt",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                    }
                 }
+            }
+
+            if (!isVictory) {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = "The journey continues...",
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = encouragementAlpha * 0.7f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontStyle = FontStyle.Italic,
+                    modifier = Modifier.alpha(encouragementAlpha)
+                )
             }
 
             Spacer(Modifier.height(24.dp))

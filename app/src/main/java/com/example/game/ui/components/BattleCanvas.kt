@@ -1,5 +1,8 @@
 package com.example.game.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -85,6 +88,27 @@ fun BattleBackground(
                     )
                 }
             }
+            Element.EARTH -> {
+                drawRect(
+                    Brush.verticalGradient(
+                        0.6f to Color(0xFF8D6E63).copy(alpha = 0.12f),
+                        1f to Color.Transparent
+                    ),
+                    size = Size(w, h * 0.4f)
+                )
+            }
+            Element.AIR -> {
+                val wispAlpha = 0.06f + 0.04f * sin(parallaxOffset * 0.5f)
+                for (i in 0..4) {
+                    val wx = (w * 0.1f * i + parallaxOffset * 20f * (1f + i * 0.3f)) % (w + 100f) - 50f
+                    val wy = h * (0.1f + i * 0.08f) + sin(parallaxOffset + i * 1.2f) * 15f
+                    drawRect(
+                        Color.White.copy(alpha = wispAlpha * (0.5f + i * 0.1f)),
+                        topLeft = Offset(wx, wy),
+                        size = Size(60f + i * 15f, 2f)
+                    )
+                }
+            }
             Element.DARK, Element.SHADOW -> {
                 drawRect(Color(0xFF4A148C).copy(alpha = 0.08f))
             }
@@ -118,6 +142,16 @@ fun BattleBackground(
                 radius = starSize,
                 center = Offset(sx, sy)
             )
+        }
+
+        // AIR element: brighter star overlays
+        if (monsterElement == Element.AIR) {
+            repeat(15) {
+                val sx = (it * 73.5f + parallaxOffset * 5f) % w
+                val sy = (it * 53.7f + parallaxOffset * 10f) % (h * 0.45f)
+                val twinkle = 0.5f + 0.5f * sin(it * 1.1f + parallaxOffset * 3f)
+                drawCircle(Color.White.copy(alpha = twinkle * 0.6f), 1.5f + (it % 2), Offset(sx, sy))
+            }
         }
 
         // Clouds
@@ -247,16 +281,41 @@ fun HeroSprite(
     flashAlpha: Float = 0f,
     animState: SpriteAnimState = SpriteAnimState()
 ) {
+    val smoothOffsetX by animateFloatAsState(
+        targetValue = animState.offsetX,
+        animationSpec = spring(dampingRatio = 0.55f, stiffness = 400f)
+    )
+    val smoothOffsetY by animateFloatAsState(
+        targetValue = animState.offsetY,
+        animationSpec = spring(dampingRatio = 0.55f, stiffness = 400f)
+    )
+    val smoothScale by animateFloatAsState(
+        targetValue = animState.scale,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)
+    )
+    val smoothAlpha by animateFloatAsState(
+        targetValue = animState.alpha,
+        animationSpec = tween(400)
+    )
+    val smoothFlashAlpha by animateFloatAsState(
+        targetValue = if (isDamaged) flashAlpha else 0f,
+        animationSpec = tween(200)
+    )
+
     val tint = if (!isActive) elementColor.copy(alpha = 0.4f) else elementColor
-    val flash = if (isDamaged) Color.Red.copy(alpha = flashAlpha) else Color.Transparent
+    val flash = if (isDamaged && flashAlpha > 0f) Color.Red.copy(alpha = smoothFlashAlpha) else Color.Transparent
 
     Canvas(modifier = modifier) {
-        val cx = size.width / 2f + animState.offsetX
-        val cy = size.height * 0.6f + animState.offsetY
-        val s = size.minDimension * 0.2f * animState.scale
+        val cx = size.width / 2f + smoothOffsetX
+        val cy = size.height * 0.6f + smoothOffsetY
+        val phase = heroName.hashCode() * 0.1f
+        val idleScalePulse = if (animState.state == SpriteState.IDLE) {
+            1f + sin(animState.stateTime * 1.2f + phase) * 0.02f
+        } else 1f
+        val s = size.minDimension * 0.2f * smoothScale * idleScalePulse
 
         val idleBob = if (animState.state == SpriteState.IDLE) {
-            sin(animState.stateTime * 1.5f + heroName.hashCode() * 0.1f) * 4f
+            sin(animState.stateTime * 1.5f + phase) * 4f
         } else 0f
 
         val drawCx = cx
@@ -271,10 +330,10 @@ fun HeroSprite(
             )
         }
 
-        drawSilhouette(drawCx, drawCy, s, heroName, tint.copy(alpha = animState.alpha))
+        drawSilhouette(drawCx, drawCy, s, heroName, tint.copy(alpha = smoothAlpha))
 
-        if (isDamaged && flashAlpha > 0f) {
-            drawRect(flash, alpha = flashAlpha * animState.alpha)
+        if (flashAlpha > 0f) {
+            drawRect(flash, alpha = smoothFlashAlpha * smoothAlpha)
         }
     }
 }
@@ -292,13 +351,38 @@ fun MonsterSprite(
     bossPulse: Float = 0f,
     animState: SpriteAnimState = SpriteAnimState()
 ) {
+    val smoothOffsetX by animateFloatAsState(
+        targetValue = animState.offsetX,
+        animationSpec = spring(dampingRatio = 0.55f, stiffness = 400f)
+    )
+    val smoothOffsetY by animateFloatAsState(
+        targetValue = animState.offsetY,
+        animationSpec = spring(dampingRatio = 0.55f, stiffness = 400f)
+    )
+    val smoothScale by animateFloatAsState(
+        targetValue = animState.scale,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)
+    )
+    val smoothAlpha by animateFloatAsState(
+        targetValue = animState.alpha,
+        animationSpec = tween(400)
+    )
+    val smoothFlashAlpha by animateFloatAsState(
+        targetValue = if (isDamaged) flashAlpha else 0f,
+        animationSpec = tween(200)
+    )
+
     Canvas(modifier = modifier) {
-        val cx = size.width / 2f + animState.offsetX
-        val cy = size.height * 0.42f + animState.offsetY
-        val s = size.minDimension * 0.3f * (if (isBoss) 1.3f else 1f) * animState.scale
+        val cx = size.width / 2f + smoothOffsetX
+        val cy = size.height * 0.42f + smoothOffsetY
+        val phase = monsterName.hashCode() * 0.1f
+        val idleScalePulse = if (animState.state == SpriteState.IDLE) {
+            1f + sin(animState.stateTime * 1.2f + phase) * 0.02f
+        } else 1f
+        val s = size.minDimension * 0.3f * (if (isBoss) 1.3f else 1f) * smoothScale * idleScalePulse
 
         val idleBob = if (animState.state == SpriteState.IDLE) {
-            sin(animState.stateTime * 1.5f + monsterName.hashCode() * 0.1f) * 3f
+            sin(animState.stateTime * 1.5f + phase) * 3f
         } else 0f
 
         val drawCx = cx
@@ -319,10 +403,10 @@ fun MonsterSprite(
             )
         }
 
-        drawMonsterShape(drawCx, drawCy, s, monsterName, elementColor.copy(alpha = animState.alpha))
+        drawMonsterShape(drawCx, drawCy, s, monsterName, elementColor.copy(alpha = smoothAlpha))
 
-        if (isDamaged && flashAlpha > 0f) {
-            drawRect(Color.Red.copy(alpha = flashAlpha * animState.alpha))
+        if (flashAlpha > 0f) {
+            drawRect(Color.Red.copy(alpha = smoothFlashAlpha * smoothAlpha))
         }
     }
 }

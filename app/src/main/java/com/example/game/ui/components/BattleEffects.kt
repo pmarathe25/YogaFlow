@@ -52,6 +52,21 @@ fun BattleEffectOverlay(
                 val totalDmg = event.outcomes.sumOf { it.damageDealt }
                 val totalHeal = event.outcomes.sumOf { it.healingDone }
 
+                // Particle stream from hero toward monster (80ms)
+                val streamConfig = EmitterConfig(
+                    particlesPerSecond = 300,
+                    spreadAngle = 25f,
+                    force = 180f,
+                    gravity = 0f,
+                    colors = listOf(Color(0xFFFFD740), Color(0xFFFFA726)),
+                    sizeRange = 2f..4f,
+                    lifetimeRange = 10..20
+                )
+                repeat(5) {
+                    pool.emit(streamConfig, heroPos, 8)
+                    delay(16)
+                }
+
                 val dmgEntry = FloatingTextEntry(
                     id = System.nanoTime(),
                     text = if (totalDmg > 0) "$totalDmg" else if (totalHeal > 0) "HEAL +$totalHeal" else "0",
@@ -139,6 +154,28 @@ fun BattleEffectOverlay(
                 )
             }
 
+            is BattleEvent.PhaseTriggered -> {
+                val intensity = 0.3f + event.phaseIndex * 0.2f
+                screenFlash = intensity
+                shockwave = ShockwaveState(
+                    center = monsterPosition,
+                    maxRadius = 200f + event.phaseIndex * 60f,
+                    durationMs = 600
+                )
+                pool.emit(
+                    EmitterConfig(
+                        particlesPerSecond = 250,
+                        spreadAngle = 360f,
+                        force = 100f + event.phaseIndex * 30f,
+                        gravity = 40f,
+                        colors = listOf(Color(0xFFFF6B35), Color(0xFFFFD740), Color.White),
+                        sizeRange = 3f..7f,
+                        lifetimeRange = 25..50
+                    ),
+                    monsterPosition, 20 + event.phaseIndex * 10
+                )
+            }
+
             is BattleEvent.Victory -> {
                 victoryParticles = true
             }
@@ -146,8 +183,6 @@ fun BattleEffectOverlay(
             is BattleEvent.Defeat -> {
                 defeatParticles = true
             }
-
-            else -> {}
         }
     }
 

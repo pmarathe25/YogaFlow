@@ -22,16 +22,10 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
     // Sub-ViewModels
     val statsViewModel = StatsViewModel(application)
     val settingsViewModel = SettingsViewModel(application)
-    val rpgViewModel = RpgViewModel(application)
     val reminderViewModel = ReminderViewModel(application)
     val sessionViewModel = SessionViewModel(application)
 
     init {
-        // Wire up RPG ViewModel to get XP/Sparks from Stats
-        rpgViewModel.totalXpProvider = { statsViewModel.totalXp.value }
-        rpgViewModel.totalSparksProvider = { statsViewModel.totalSparks.value }
-        
-        // Reschedule reminders on startup
         reminderViewModel.rescheduleAllReminders()
     }
 
@@ -53,19 +47,6 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
     val preferredVoice: StateFlow<String> = settingsViewModel.preferredVoice
     val isMusicMuted: StateFlow<Boolean> = settingsViewModel.isMusicMuted
     val currentTrackIndex: StateFlow<Int> = settingsViewModel.currentTrackIndex
-
-    // Delegate RPG
-    val gardenItems = rpgViewModel.gardenItems
-    val availableXp: StateFlow<Int> = rpgViewModel.availableXp
-    val availableSparks: StateFlow<Int> = rpgViewModel.availableSparks
-    val rpgUnlockedHeroes: StateFlow<Set<String>> = rpgViewModel.rpgUnlockedHeroes
-    val rpgActiveParty: StateFlow<List<String>> = rpgViewModel.rpgActiveParty
-    val rpgSpentKarmaXp: StateFlow<Int> = rpgViewModel.rpgSpentKarmaXp
-    val rpgSpentSparks: StateFlow<Int> = rpgViewModel.rpgSpentSparks
-    val rpgExtraKarmaXp: StateFlow<Int> = rpgViewModel.rpgExtraKarmaXp
-    val rpgExtraSparks: StateFlow<Int> = rpgViewModel.rpgExtraSparks
-    val rpgStats: StateFlow<Pair<Int, Int>> = rpgViewModel.rpgStats
-    val rpgHeroLevels: StateFlow<Map<String, Int>> = rpgViewModel.rpgHeroLevels
 
     // Delegate Reminders
     val allReminders = reminderViewModel.allReminders
@@ -124,16 +105,6 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
     fun updateReminder(reminder: com.example.db.ReminderEntity) = reminderViewModel.updateReminder(reminder)
     fun deleteReminder(reminder: com.example.db.ReminderEntity) = reminderViewModel.deleteReminder(reminder)
     fun toggleFavoriteFlow(flowId: String) = reminderViewModel.toggleFavoriteFlow(flowId)
-
-    // RPG delegation methods
-    fun loadRpgData() = rpgViewModel.loadRpgData()
-    fun buyGardenItem(type: String, x: Float, y: Float, onResult: (Boolean) -> Unit) = rpgViewModel.buyGardenItem(type, x, y, onResult)
-    fun upgradeZone(zoneId: String, newLevel: Int, onResult: (Boolean) -> Unit) = rpgViewModel.upgradeZone(zoneId, newLevel, onResult)
-    fun removeGardenItem(item: com.example.db.GardenItemEntity) = rpgViewModel.removeGardenItem(item)
-    fun rpgUnlockHero(heroId: String, costSparks: Int, onResult: (Boolean) -> Unit) = rpgViewModel.rpgUnlockHero(heroId, costSparks, onResult)
-    fun rpgLevelUpHero(heroId: String, costXp: Int, onResult: (Boolean) -> Unit) = rpgViewModel.rpgLevelUpHero(heroId, costXp, onResult)
-    fun rpgTogglePartyMember(heroId: String) = rpgViewModel.rpgTogglePartyMember(heroId)
-    fun rpgRecordBattleResult(won: Boolean, xpEarned: Int, sparksEarned: Int) = rpgViewModel.rpgRecordBattleResult(won, xpEarned, sparksEarned)
 
     // Stats delegation
     fun clearAllCompletedSessions() = statsViewModel.clearAllCompletedSessions()

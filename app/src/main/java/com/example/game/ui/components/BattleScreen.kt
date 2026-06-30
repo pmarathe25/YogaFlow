@@ -7,10 +7,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -38,6 +42,43 @@ fun BattleScreen(viewModel: GameViewModel) {
     val monsterColor = monster?.let { elementToColor(it.element) } ?: Color.Gray
     val isBoss = monster?.isBoss ?: false
 
+    // ─── Battle Start Animation ────────────────────────────────────
+    var blackVisible by remember { mutableStateOf(true) }
+    var monsterVisible by remember { mutableStateOf(false) }
+    var heroesVisible by remember { mutableStateOf(false) }
+    var heroVisibilities = remember { mutableStateMapOf<String, Boolean>() }
+    var battleTextVisible by remember { mutableStateOf(false) }
+
+    val blackAlpha by animateFloatAsState(
+        targetValue = if (blackVisible) 1f else 0f,
+        animationSpec = tween(300)
+    )
+    val monsterAppearScale by animateFloatAsState(
+        targetValue = if (monsterVisible) 1f else 0f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 200f)
+    )
+    val battleTextAlpha by animateFloatAsState(
+        targetValue = if (battleTextVisible) 1f else 0f,
+        animationSpec = tween(400)
+    )
+
+    LaunchedEffect(Unit) {
+        delay(100)
+        blackVisible = false  // fade from black (300ms)
+        delay(300)
+        monsterVisible = true  // monster spring scale 0→1 (400ms)
+        delay(400)
+        heroesVisible = true  // heroes slide up (staggered 100ms each)
+        state.aliveHeroes.forEachIndexed { idx, hero ->
+            delay(100)
+            heroVisibilities[hero.heroId] = true
+        }
+        delay(50)
+        battleTextVisible = true
+        delay(1500)
+        battleTextVisible = false
+    }
+
     // ─── Sprite Animation States ────────────────────────────────────
     val heroAnimStates = remember { mutableStateMapOf<String, SpriteAnimState>() }
     val monsterAnimState = remember { mutableStateOf(SpriteAnimState()) }
@@ -63,6 +104,8 @@ fun BattleScreen(viewModel: GameViewModel) {
     // ─── Battle Event → Sprite Animations ──────────────────────────
     val eventLog = state.eventLog
     val lastEventCount = remember { mutableIntStateOf(0) }
+    var monsterFlashAlpha by remember { mutableStateOf(0f) }
+    val heroFlashAlphas = remember { mutableStateMapOf<String, Float>() }
 
     LaunchedEffect(eventLog.size) {
         if (eventLog.size <= lastEventCount.intValue) return@LaunchedEffect
@@ -79,8 +122,10 @@ fun BattleScreen(viewModel: GameViewModel) {
                 monsterAnimState.value = SpriteAnimState(
                     state = SpriteState.HIT, stateTime = 0f, offsetX = -15f
                 )
+                monsterFlashAlpha = 1f
                 delay(150)
                 monsterAnimState.value = SpriteAnimState(state = SpriteState.IDLE, stateTime = 0f)
+                monsterFlashAlpha = 0f
             }
             is BattleEvent.MonsterTurn -> {
                 monsterAnimState.value = SpriteAnimState(
@@ -88,24 +133,25 @@ fun BattleScreen(viewModel: GameViewModel) {
                 )
                 delay(100)
                 monsterAnimState.value = SpriteAnimState(state = SpriteState.IDLE, stateTime = 0f)
-                // Hit effect on random hero
                 val targetHeroId = event.targets.firstOrNull()
                 if (targetHeroId != null) {
                     heroAnimStates[targetHeroId] = SpriteAnimState(
                         state = SpriteState.HIT, stateTime = 0f, offsetX = -10f
                     )
+                    heroFlashAlphas[targetHeroId] = 1f
                     delay(150)
                     heroAnimStates[targetHeroId] = SpriteAnimState(state = SpriteState.IDLE, stateTime = 0f)
+                    heroFlashAlphas[targetHeroId] = 0f
                 }
             }
             is BattleEvent.MonsterDown -> {
                 monsterAnimState.value = SpriteAnimState(
-                    state = SpriteState.DYING, stateTime = 0f, alpha = 0f
+                    state = SpriteState.DYING, stateTime = 0f, alpha = 0f, offsetY = 20f
                 )
             }
             is BattleEvent.HeroDown -> {
                 heroAnimStates[event.heroId] = SpriteAnimState(
-                    state = SpriteState.DYING, stateTime = 0f, alpha = 0f
+                    state = SpriteState.DYING, stateTime = 0f, alpha = 0f, offsetY = 20f
                 )
             }
             else -> {}
@@ -165,11 +211,16 @@ fun BattleScreen(viewModel: GameViewModel) {
                 contentAlignment = Alignment.Center
             ) {
                 if (monster != null && !monster.isDead) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.scale(monsterAppearScale)
+                    ) {
                         MonsterSprite(
                             monsterName = monster.monsterId,
                             elementColor = monsterColor,
                             isBoss = isBoss,
+                            isDamaged = monsterFlashAlpha > 0f,
+                            flashAlpha = monsterFlashAlpha,
                             bossPulse = kotlin.math.sin(bossPulse),
                             animState = monsterAnimState.value,
                             modifier = Modifier.fillMaxWidth().weight(1f)
@@ -208,20 +259,34 @@ fun BattleScreen(viewModel: GameViewModel) {
                 contentAlignment = Alignment.BottomCenter
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     state.aliveHeroes.forEach { hero ->
                         val isTurn = state.currentActorId == hero.heroId
                         val animState = heroAnimStates[hero.heroId] ?: SpriteAnimState()
+                        val heroFlash = heroFlashAlphas[hero.heroId] ?: 0f
+                        val heroEntry by animateFloatAsState(
+                            targetValue = if (heroVisibilities[hero.heroId] == true) 0f else 120f,
+                            animationSpec = spring(dampingRatio = 0.7f, stiffness = 180f)
+                        )
+                        val density = LocalDensity.current
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier
+                                .weight(1f)
+                                .graphicsLayer {
+                                    translationY = with(density) { heroEntry.dp.toPx() }
+                                }
                         ) {
                             HeroSprite(
                                 heroName = hero.heroId,
                                 elementColor = elementToColor(hero.element),
                                 isActive = !hero.isDead,
+                                isDamaged = heroFlash > 0f,
+                                flashAlpha = heroFlash,
                                 animState = animState,
                                 modifier = Modifier.size(60.dp)
                             )
@@ -260,6 +325,30 @@ fun BattleScreen(viewModel: GameViewModel) {
             pool = pool,
             modifier = Modifier.fillMaxSize()
         )
+
+        // ─── Fade-in from black ──────────────────────────────────────
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(blackAlpha)
+                .background(Color.Black)
+        )
+
+        // ─── "Battle begins!" text ──────────────────────────────────
+        if (battleTextVisible) {
+            Text(
+                text = "Battle begins!",
+                color = Color.White.copy(alpha = battleTextAlpha),
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopCenter)
+                    .padding(top = 80.dp),
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 

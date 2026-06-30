@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.CornerRadius
+
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -173,6 +174,38 @@ fun HeroHUD(
                         )
                     }
                 }
+                // ─── Sparkle particles when full ──────────────────────
+                if (isUltReady) {
+                    val infiniteTransition = rememberInfiniteTransition()
+                    val sparklePhase by infiniteTransition.animateFloat(
+                        initialValue = 0f, targetValue = 1f,
+                        animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing))
+                    )
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val sparkleCount = 6
+                        for (i in 0 until sparkleCount) {
+                            val t = (sparklePhase + i.toFloat() / sparkleCount) % 1f
+                            val alpha = (1f - t * t).coerceIn(0f, 1f)
+                            val x = size.width * (0.1f + (i.toFloat() / sparkleCount) * 0.8f)
+                            val y = size.height * (0.5f + kotlin.math.cos(t.toDouble() * kotlin.math.PI * 4).toFloat() * 0.4f)
+                            val sparkleSize = (1.5f + t * 2f) * 2f
+                            val c = Offset(x, y)
+                            drawLine(
+                                Color.White.copy(alpha = alpha),
+                                Offset(c.x - sparkleSize, c.y),
+                                Offset(c.x + sparkleSize, c.y),
+                                strokeWidth = 1f
+                            )
+                            drawLine(
+                                Color.White.copy(alpha = alpha),
+                                Offset(c.x, c.y - sparkleSize),
+                                Offset(c.x, c.y + sparkleSize),
+                                strokeWidth = 1f
+                            )
+                            drawCircle(Color.White.copy(alpha = alpha * 0.5f), sparkleSize * 0.3f, c)
+                        }
+                    }
+                }
             }
 
             // Status effects
@@ -303,6 +336,28 @@ fun StatusIcon(type: StatusEffectType, iconSize: Int = 12) {
             drawCircle(color.copy(alpha = 0.3f), r * 0.4f, c)
 
             when (type) {
+                StatusEffectType.BURN -> {
+                    val flamePath = Path().apply {
+                        moveTo(c.x, c.y - r * 0.4f)
+                        lineTo(c.x - r * 0.15f, c.y + r * 0.2f)
+                        lineTo(c.x, c.y + r * 0.05f)
+                        lineTo(c.x + r * 0.15f, c.y + r * 0.2f)
+                        close()
+                    }
+                    drawPath(flamePath, Color.White.copy(alpha = 0.7f))
+                }
+                StatusEffectType.STUN -> {
+                    val boltPath = Path().apply {
+                        moveTo(c.x - r * 0.08f, c.y - r * 0.4f)
+                        lineTo(c.x + r * 0.12f, c.y - r * 0.1f)
+                        lineTo(c.x - r * 0.05f, c.y - r * 0.05f)
+                        lineTo(c.x + r * 0.08f, c.y + r * 0.4f)
+                        lineTo(c.x - r * 0.12f, c.y + r * 0.1f)
+                        lineTo(c.x + r * 0.05f, c.y + r * 0.05f)
+                        close()
+                    }
+                    drawPath(boltPath, Color.White.copy(alpha = 0.7f))
+                }
                 StatusEffectType.ATK_UP -> {
                     drawLine(Color.White, Offset(c.x, c.y - r * 0.3f), Offset(c.x, c.y + r * 0.3f), 1.5f)
                     drawLine(Color.White, Offset(c.x - r * 0.3f, c.y), Offset(c.x + r * 0.3f, c.y), 1.5f)

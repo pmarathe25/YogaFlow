@@ -58,9 +58,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
-    private val _mainAppSparks = MutableStateFlow(0)
-    val mainAppSparks: StateFlow<Int> = _mainAppSparks.asStateFlow()
-
     init {
         loadGame()
         viewModelScope.launch { syncWithMainApp() }
@@ -89,11 +86,21 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val computedLevel = LevelDefinitions.getLevelForXp(xpSum).level
 
         val data = _saveData.value
+        var updated = data
         if (data.yogaLevel != computedLevel) {
-            _saveData.value = data.copy(yogaLevel = computedLevel)
+            updated = updated.copy(yogaLevel = computedLevel)
+        }
+        val delta = mainSparks - data.lastSyncedMainSparks
+        if (delta > 0) {
+            updated = updated.copy(sparks = updated.sparks + delta)
+        }
+        if (updated.lastSyncedMainSparks != mainSparks) {
+            updated = updated.copy(lastSyncedMainSparks = mainSparks)
+        }
+        if (updated != data) {
+            _saveData.value = updated
             saveGame()
         }
-        _mainAppSparks.value = mainSparks
     }
 
     fun navigateTo(screen: GameScreen) {
@@ -748,9 +755,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun onBattleWon() {
         val data = _saveData.value
-        val sparksEarned = 5 + Random.nextInt(6) // 5-10 sparks
         _saveData.value = data.copy(
-            sparks = data.sparks + sparksEarned,
             totalBattlesWon = data.totalBattlesWon + 1,
             lastPlayedTimestamp = System.currentTimeMillis()
         )
@@ -762,8 +767,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun purchaseItem(itemId: String): Boolean {
         val item = EquipmentDefinitions.allEquipment.find { it.id == itemId } ?: return false
         val data = _saveData.value
-        if (data.sparks < item.sparksCost) return false
         if (data.yogaLevel < item.yogaLevelRequired) return false
+        if (data.sparks < item.sparksCost) return false
+        if (itemId in data.inventory) return false
 
         _saveData.value = data.copy(
             sparks = data.sparks - item.sparksCost,

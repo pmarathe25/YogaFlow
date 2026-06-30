@@ -7,7 +7,6 @@ sealed class Screen(val route: String) {
     }
     object Player : Screen("player")
     object SessionComplete : Screen("session_complete")
-    object ZenGarden : Screen("zen_garden")
     object ExpandedDashboard : Screen("expanded_dashboard")
     object History : Screen("history")
     object Settings : Screen("settings")

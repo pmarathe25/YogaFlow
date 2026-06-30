@@ -34,7 +34,6 @@ fun HubScreen(viewModel: GameViewModel) {
     val saveData by viewModel.saveData.collectAsState()
     val party by viewModel.party.collectAsState()
     val error by viewModel.error.collectAsState()
-    val mainAppSparks by viewModel.mainAppSparks.collectAsState()
 
     LaunchedEffect(Unit) { viewModel.refreshSync() }
     var showMonsterSelection by remember { mutableStateOf(false) }
@@ -81,23 +80,13 @@ fun HubScreen(viewModel: GameViewModel) {
                         slideInVertically(animationSpec = spring(stiffness = 200f)) { it / 2 }
             ) {
                 GlassCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            StatItem("Yoga Lv", saveData.yogaLevel.toString())
-                            StatItem("Sparks", saveData.sparks.toString())
-                            StatItem("Wins", saveData.totalBattlesWon.toString())
-                        }
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = "Zen Sparks (practice): $mainAppSparks",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center
-                        )
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        StatItem("Yoga Lv", saveData.yogaLevel.toString())
+                        StatItem("Sparks", saveData.sparks.toString())
+                        StatItem("Wins", saveData.totalBattlesWon.toString())
                     }
                 }
             }

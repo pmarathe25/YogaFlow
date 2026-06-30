@@ -24,8 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.*
 import com.example.viewmodel.YogaViewModel
-import com.example.game.viewmodel.GameViewModel
-import com.example.game.ui.components.GameApp
+
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -189,18 +188,6 @@ fun YogaAppContent(
                             },
                             modifier = Modifier.testTag("bottom_nav_history")
                         )
-                        NavigationBarItem(
-                            icon = { Text("⚔️", fontSize = 20.sp) },
-                            label = { Text("Zen Battle") },
-                            selected = currentRoute == Screen.ZenGarden.route,
-                            onClick = {
-                                navController.navigate(Screen.ZenGarden.route) {
-                                    popUpTo(Screen.Dashboard.route)
-                                    launchSingleTop = true
-                                }
-                            },
-                            modifier = Modifier.testTag("bottom_nav_garden")
-                        )
                     }
                 }
             },
@@ -286,11 +273,6 @@ fun YogaAppContent(
                             }
                         )
                     }
-                }
-
-                composable(Screen.ZenGarden.route) {
-                    val gameViewModel: GameViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-                    GameApp(viewModel = gameViewModel)
                 }
 
                 composable(Screen.ExpandedDashboard.route) {
