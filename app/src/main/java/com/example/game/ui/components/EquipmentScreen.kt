@@ -3,15 +3,17 @@ package com.example.game.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.game.model.*
 import com.example.game.viewmodel.GameViewModel
 
@@ -23,37 +25,42 @@ fun EquipmentScreen(viewModel: GameViewModel) {
 
     Box(
         modifier = Modifier.fillMaxSize()
-            .background(
-                androidx.compose.ui.graphics.Brush.verticalGradient(
-                    colors = listOf(Color(0xFF0D1B2A), Color(0xFF1B2838))
-                )
-            )
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             Text(
-                "EQUIPMENT",
-                color = Color(0xFF4488FF),
-                fontSize = 22.sp,
+                "Equipment",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
             Spacer(Modifier.height(8.dp))
             Text(
                 "Sparks: ${saveData.sparks}  |  Yoga Lv: ${saveData.yogaLevel}",
-                color = Color.White.copy(alpha = 0.6f),
-                fontSize = 12.sp
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
             )
 
             Spacer(Modifier.height(16.dp))
 
             // Hero selector
-            Text("Select Hero", color = Color.White, fontSize = 14.sp)
+            Text(
+                "Select Hero",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onBackground
+            )
             Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                party.forEach { hero ->
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(party) { hero ->
                     FilterChip(
                         selected = hero.heroId == selectedHeroId,
                         onClick = { selectedHeroId = hero.heroId },
-                        label = { Text(hero.name, fontSize = 11.sp) },
+                        label = {
+                            Text(
+                                hero.name,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = elementToColor(hero.element).copy(alpha = 0.3f)
                         )
@@ -64,32 +71,55 @@ fun EquipmentScreen(viewModel: GameViewModel) {
             Spacer(Modifier.height(16.dp))
 
             if (selectedHeroId != null) {
-                // Equipped items
                 val hero = party.find { it.heroId == selectedHeroId }
                 if (hero != null) {
                     Text(
                         "${hero.name}'s Equipment",
+                        style = MaterialTheme.typography.titleSmall,
                         color = elementToColor(hero.element),
-                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(Modifier.height(8.dp))
 
                     val equipped = viewModel.getEquippedItems(hero.heroId)
-                    if (equipped.isEmpty()) {
-                        Text("No items equipped.", color = Color.White.copy(alpha = 0.4f), fontSize = 12.sp)
-                    } else {
-                        equipped.forEach { item ->
-                            EquippedItemCard(item, onUnequip = {
-                                viewModel.unequipItem(hero.heroId, item.id)
-                            })
-                        }
+
+                    // Equipment slots grid (2x2)
+                    val slots = listOf(
+                        EquipmentSlot.WEAPON to "Weapon",
+                        EquipmentSlot.ARMOR to "Armor",
+                        EquipmentSlot.ACCESSORY to "Acc.1",
+                        EquipmentSlot.ACCESSORY to "Acc.2"
+                    )
+                    val slotItems = slots.map { (slot, label) ->
+                        val item = equipped.find { it.slot == slot }
+                        SlotData(label, item)
+                    }
+
+                    // 2x2 grid
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SlotCard(slotItems[0], Modifier.weight(1f))
+                        SlotCard(slotItems[1], Modifier.weight(1f))
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SlotCard(slotItems[2], Modifier.weight(1f))
+                        SlotCard(slotItems[3], Modifier.weight(1f))
                     }
 
                     Spacer(Modifier.height(16.dp))
 
                     // Inventory
-                    Text("Inventory", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Inventory",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                     Spacer(Modifier.height(8.dp))
 
                     val filteredEquipment = EquipmentDefinitions.allEquipment.filter { eq ->
@@ -98,10 +128,14 @@ fun EquipmentScreen(viewModel: GameViewModel) {
                                 (eq.heroId == null || eq.heroId == hero.heroId)
                     }
 
-                    if (filteredEquipment.isEmpty()) {
-                        Text("No available equipment.", color = Color.White.copy(alpha = 0.4f), fontSize = 12.sp)
+                    if (equipped.isEmpty() && filteredEquipment.isEmpty()) {
+                        Text(
+                            "No items available.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
+                        )
                     } else {
-                        LazyColumn {
+                        LazyColumn(modifier = Modifier.weight(1f)) {
                             items(filteredEquipment) { item ->
                                 val alreadyEquipped = hero.equippedItems.any { eid ->
                                     EquipmentDefinitions.getEquipment(eid)?.slot == item.slot
@@ -118,40 +152,65 @@ fun EquipmentScreen(viewModel: GameViewModel) {
             }
 
             Spacer(Modifier.weight(1f))
+            Spacer(Modifier.height(16.dp))
             Button(
                 onClick = { viewModel.navigateBack() },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF333333)),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Back")
+                Text(
+                    "Back",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         }
     }
 }
 
+private data class SlotData(val label: String, val item: Equipment?)
+
 @Composable
-private fun EquippedItemCard(item: Equipment, onUnequip: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0x40000000))
+private fun SlotCard(slot: SlotData, modifier: Modifier = Modifier) {
+    GlassCard(
+        modifier = modifier,
+        elevation = 2.dp
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Text(
+                slot.label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            )
+            Spacer(Modifier.height(4.dp))
+            if (slot.item != null) {
                 Text(
-                    "[${item.slot.name}] ${item.name}",
+                    slot.item.name,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
                     color = Color(0xFFFFD740),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
+                    textAlign = TextAlign.Center,
+                    maxLines = 2
                 )
-                item.bonusDescription?.let {
-                    Text(it, color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
+                slot.item.bonusDescription?.let {
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        textAlign = TextAlign.Center
+                    )
                 }
-            }
-            OutlinedButton(onClick = onUnequip) {
-                Text("X", fontSize = 10.sp)
+            } else {
+                Text(
+                    "Empty",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                )
             }
         }
     }
@@ -159,37 +218,46 @@ private fun EquippedItemCard(item: Equipment, onUnequip: () -> Unit) {
 
 @Composable
 private fun InventoryItemCard(item: Equipment, canEquip: Boolean, onEquip: () -> Unit) {
-    Card(
+    GlassCard(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0x40000000))
+        elevation = 2.dp
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(8.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "${item.name}",
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
+                    item.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     "[${item.slot.name}] ${item.tier.name}  Lv.${item.yogaLevelRequired}",
-                    color = Color.White.copy(alpha = 0.5f),
-                    fontSize = 10.sp
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
                 item.bonusDescription?.let {
-                    Text(it, color = Color(0xFFFFD740).copy(alpha = 0.7f), fontSize = 10.sp)
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
                 }
             }
-            Button(
+            FilledTonalButton(
                 onClick = onEquip,
                 enabled = canEquip,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
-                modifier = Modifier.height(32.dp)
+                modifier = Modifier.height(36.dp),
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
             ) {
-                Text("Equip", fontSize = 10.sp)
+                Text(
+                    "Equip",
+                    style = MaterialTheme.typography.labelSmall
+                )
             }
         }
     }

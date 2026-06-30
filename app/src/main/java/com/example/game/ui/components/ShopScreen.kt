@@ -3,15 +3,17 @@ package com.example.game.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.game.model.*
 import com.example.game.viewmodel.GameViewModel
 
@@ -22,38 +24,62 @@ fun ShopScreen(viewModel: GameViewModel) {
 
     Box(
         modifier = Modifier.fillMaxSize()
-            .background(
-                androidx.compose.ui.graphics.Brush.verticalGradient(
-                    colors = listOf(Color(0xFF0D1B2A), Color(0xFF1B2838))
-                )
-            )
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-            Text(
-                "SHOP",
-                color = Color(0xFF4488FF),
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                "Sparks: ${saveData.sparks}  |  Yoga Lv: ${saveData.yogaLevel}",
-                color = Color.White.copy(alpha = 0.6f),
-                fontSize = 12.sp
-            )
+            // Header with sparks
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Shop",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "\u2726",
+                            color = Color(0xFFFFD740),
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            "${saveData.sparks}",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFFFD740)
+                        )
+                    }
+                }
+            }
 
             Spacer(Modifier.height(16.dp))
 
             // Filter tabs
             var selectedCategory by remember { mutableStateOf(EquipmentSlot.WEAPON) }
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                EquipmentSlot.values().forEach { slot ->
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(EquipmentSlot.values()) { slot ->
                     FilterChip(
                         selected = slot == selectedCategory,
                         onClick = { selectedCategory = slot },
-                        label = { Text(slot.name.take(4), fontSize = 9.sp) },
+                        label = {
+                            Text(
+                                slot.name,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFF1565C0)
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
                         )
                     )
                 }
@@ -84,10 +110,16 @@ fun ShopScreen(viewModel: GameViewModel) {
             Spacer(Modifier.height(16.dp))
             Button(
                 onClick = { viewModel.navigateBack() },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF333333)),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Back")
+                Text(
+                    "Back",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         }
     }
@@ -101,58 +133,107 @@ private fun ShopItemCard(
     partyHasHero: Boolean,
     onPurchase: () -> Unit
 ) {
-    Card(
+    GlassCard(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0x40000000))
+        elevation = 2.dp
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        item.name,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = when (item.tier) {
+                            EquipmentTier.UNIQUE -> Color(0xFFFFD740)
+                            EquipmentTier.CLASS_SPECIFIC -> Color(0xFFB388FF)
+                            EquipmentTier.GENERIC -> MaterialTheme.colorScheme.onSurface
+                        }
+                    )
+                    // Tier badge
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = when (item.tier) {
+                            EquipmentTier.UNIQUE -> Color(0xFFFFD740).copy(alpha = 0.2f)
+                            EquipmentTier.CLASS_SPECIFIC -> Color(0xFFB388FF).copy(alpha = 0.2f)
+                            EquipmentTier.GENERIC -> MaterialTheme.colorScheme.surfaceVariant
+                        }
+                    ) {
+                        Text(
+                            text = item.tier.name,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = when (item.tier) {
+                                EquipmentTier.UNIQUE -> Color(0xFFFFD740)
+                                EquipmentTier.CLASS_SPECIFIC -> Color(0xFFB388FF)
+                                EquipmentTier.GENERIC -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            },
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+                Spacer(Modifier.height(2.dp))
                 Text(
-                    item.name,
-                    color = when (item.tier) {
-                        EquipmentTier.UNIQUE -> Color(0xFFFFD740)
-                        EquipmentTier.CLASS_SPECIFIC -> Color(0xFFB388FF)
-                        EquipmentTier.GENERIC -> Color.White
-                    },
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp
-                )
-                Text(
-                    "[${item.slot.name}] ${item.tier.name}  Lv.${item.yogaLevelRequired}",
-                    color = Color.White.copy(alpha = 0.5f),
-                    fontSize = 10.sp
+                    "[${item.slot.name}]  Lv.${item.yogaLevelRequired}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
                 item.bonusDescription?.let {
-                    Text(it, color = Color(0xFFFFD740).copy(alpha = 0.7f), fontSize = 10.sp)
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
                 }
                 if (!partyHasHero && item.heroId != null) {
                     Text(
                         "Requires: ${item.heroId}",
-                        color = Color(0xFFFF4444).copy(alpha = 0.7f),
-                        fontSize = 10.sp
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
                     )
                 }
             }
 
             Column(horizontalAlignment = Alignment.End) {
                 if (owned) {
-                    Text("OWNED", color = Color(0xFF66BB6A), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)
+                    ) {
+                        Text(
+                            "Owned",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.tertiary,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
                 } else {
-                    Text("${item.sparksCost} ✦", color = if (canAfford) Color(0xFFFFD740) else Color(0xFFFF4444), fontSize = 12.sp)
+                    Text(
+                        "${item.sparksCost} \u2726",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = if (canAfford) Color(0xFFFFD740) else MaterialTheme.colorScheme.error
+                    )
                     Spacer(Modifier.height(4.dp))
-                    Button(
+                    FilledTonalButton(
                         onClick = onPurchase,
                         enabled = canAfford && partyHasHero,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF2E7D32),
-                            disabledContainerColor = Color(0xFF333333)
-                        ),
-                        modifier = Modifier.height(28.dp)
+                        modifier = Modifier.height(32.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
                     ) {
-                        Text("Buy", fontSize = 10.sp)
+                        Text(
+                            "Buy",
+                            style = MaterialTheme.typography.labelSmall
+                        )
                     }
                 }
             }

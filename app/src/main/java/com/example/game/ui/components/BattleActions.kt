@@ -1,8 +1,11 @@
 package com.example.game.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -11,6 +14,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -32,127 +37,168 @@ fun ActionPanel(
 ) {
     var showComboSelector by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(Color(0xCC000000))
-            .padding(8.dp)
+    Surface(
+        modifier = modifier.offset(y = (-8).dp),
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+        tonalElevation = 8.dp,
+        shadowElevation = 8.dp
     ) {
-        // Skill buttons row
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(currentHero.skills) { skill ->
-                SkillButton(
-                    skill = skill,
-                    onClick = { onSkill(skill) },
-                    modifier = Modifier.width(100.dp)
-                )
-            }
-        }
-
-        Spacer(Modifier.height(6.dp))
-
-        // Action row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Ultimate button
-            val ultReady = currentHero.ultimateGauge >= 100
-            Button(
-                onClick = onUltimate,
-                enabled = ultReady,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (ultReady) Color(0xFFFFD700) else Color(0xFF555555),
-                    disabledContainerColor = Color(0xFF333333)
-                ),
-                modifier = Modifier.weight(1f)
+        Column(modifier = Modifier.padding(12.dp)) {
+            // Skill buttons row
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    "ULTIMATE",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (ultReady) Color.Black else Color.Gray
-                )
-            }
-
-            // Defend button
-            OutlinedButton(
-                onClick = onDefend,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
-            ) {
-                Text("DEFEND", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-            }
-
-            // Combo button
-            if (comboAvailable) {
-                Button(
-                    onClick = { showComboSelector = !showComboSelector },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF9C27B0)
-                    ),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("COMBO", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                items(currentHero.skills) { skill ->
+                    SkillPill(
+                        skill = skill,
+                        heroElement = currentHero.element,
+                        onClick = { onSkill(skill) },
+                        modifier = Modifier.width(110.dp)
+                    )
                 }
             }
-        }
 
-        // Combo selector
-        if (showComboSelector) {
-            Spacer(Modifier.height(6.dp))
-            ComboSelector(
-                heroes = heroes,
-                onSelect = { participants ->
-                    onCombo(participants)
-                    showComboSelector = false
-                },
-                onDismiss = { showComboSelector = false }
-            )
+            Spacer(Modifier.height(8.dp))
+
+            // Action row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Ultimate button
+                val ultReady = currentHero.ultimateGauge >= 100
+                Button(
+                    onClick = onUltimate,
+                    enabled = ultReady,
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = MaterialTheme.shapes.small,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (ultReady) Color(0xFFFFD740) else MaterialTheme.colorScheme.surfaceVariant,
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text(
+                        "\uD83D\uDD25 ULTIMATE",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = if (ultReady) Color.Black else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    )
+                }
+
+                // Defend button
+                OutlinedButton(
+                    onClick = onDefend,
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = MaterialTheme.shapes.small,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    )
+                ) {
+                    Text(
+                        "\uD83D\uDEE1\uFE0F DEFEND",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                // Combo button
+                if (comboAvailable) {
+                    Button(
+                        onClick = { showComboSelector = !showComboSelector },
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        shape = MaterialTheme.shapes.small,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF9C27B0)
+                        )
+                    ) {
+                        Text(
+                            "\u2728 COMBO",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            // Combo selector
+            if (showComboSelector) {
+                Spacer(Modifier.height(8.dp))
+                ComboSelector(
+                    heroes = heroes,
+                    onSelect = { participants ->
+                        onCombo(participants)
+                        showComboSelector = false
+                    },
+                    onDismiss = { showComboSelector = false }
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun SkillButton(
+private fun SkillPill(
     skill: Skill,
+    heroElement: Element,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val bgColor = when {
-        skill.healScaling != null -> Color(0xFF2E7D32).copy(alpha = 0.8f)
-        skill.shieldScaling != null -> Color(0xFF1565C0).copy(alpha = 0.8f)
-        skill.damageComponents.isNotEmpty() || skill.baseDamage > 0 -> Color(0xFFB71C1C).copy(alpha = 0.8f)
-        else -> Color(0xFF4A148C).copy(alpha = 0.8f)
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = spring(stiffness = 500f)
+    )
+
+    val accentColor = when {
+        skill.healScaling != null -> Color(0xFF2E7D32)
+        skill.shieldScaling != null -> Color(0xFF1565C0)
+        skill.damageComponents.isNotEmpty() || skill.baseDamage > 0 -> Color(0xFFB71C1C)
+        else -> Color(0xFF4A148C)
     }
 
-    Card(
-        modifier = modifier.clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = bgColor),
-        shape = RoundedCornerShape(6.dp)
+    Surface(
+        modifier = modifier
+            .scale(scale)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            ),
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     ) {
-        Column(
-            modifier = Modifier.padding(6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Row(
+            modifier = Modifier.fillMaxHeight().padding(start = 0.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = skill.name,
-                color = Color.White,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                maxLines = 2
+            // Accent bar
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(40.dp)
+                    .clip(RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp))
+                    .background(accentColor)
             )
-            Text(
-                text = skill.description.take(40) + if (skill.description.length > 40) "..." else "",
-                color = Color.White.copy(alpha = 0.6f),
-                fontSize = 7.sp,
-                textAlign = TextAlign.Center,
-                maxLines = 2
-            )
+            Column(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = skill.name,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1
+                )
+                Text(
+                    text = skill.description.take(30) + if (skill.description.length > 30) "..." else "",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    maxLines = 1
+                )
+            }
         }
     }
 }
@@ -165,57 +211,95 @@ private fun ComboSelector(
 ) {
     var selected by remember { mutableStateOf<Set<String>>(emptySet()) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xDD1A0033))
-    ) {
-        Column(modifier = Modifier.padding(8.dp)) {
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(12.dp)) {
             Text(
                 "Select combo participants:",
-                color = Color.White,
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(8.dp))
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 heroes.filter { !it.isDead }.forEach { hero ->
                     val isSelected = hero.heroId in selected
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = {
-                            selected = if (isSelected) selected - hero.heroId
-                            else selected + hero.heroId
-                        },
-                        label = { Text(hero.name, fontSize = 10.sp) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFF9C27B0)
+                    val heroColor = elementToColor(hero.element)
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                selected = if (isSelected) selected - hero.heroId
+                                else selected + hero.heroId
+                            }
+                            .background(
+                                if (isSelected) heroColor.copy(alpha = 0.3f)
+                                else Color.Transparent
+                            )
+                            .padding(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .background(
+                                    if (isSelected) heroColor.copy(alpha = 0.6f)
+                                    else heroColor.copy(alpha = 0.2f)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .clip(androidx.compose.foundation.shape.CircleShape)
+                                    .background(heroColor)
+                            )
+                        }
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            hero.name,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isSelected) heroColor
+                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
-                    )
+                    }
                 }
             }
 
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Button(
                     onClick = { selected.let(onSelect) },
                     enabled = selected.size >= 2,
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9C27B0))
+                    shape = MaterialTheme.shapes.small,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF9C27B0)
+                    )
                 ) {
-                    Text("Execute!", fontSize = 11.sp)
+                    Text(
+                        "Execute!",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
                 OutlinedButton(
                     onClick = onDismiss,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    shape = MaterialTheme.shapes.small
                 ) {
-                    Text("Cancel", fontSize = 11.sp)
+                    Text(
+                        "Cancel",
+                        style = MaterialTheme.typography.labelLarge
+                    )
                 }
             }
         }

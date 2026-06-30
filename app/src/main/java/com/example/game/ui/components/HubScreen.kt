@@ -1,18 +1,25 @@
 package com.example.game.ui.components
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.game.model.*
@@ -20,6 +27,7 @@ import com.example.game.model.DifficultyTier.*
 import com.example.game.viewmodel.GameScreen
 import com.example.game.viewmodel.GameViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HubScreen(viewModel: GameViewModel) {
     val saveData by viewModel.saveData.collectAsState()
@@ -30,11 +38,7 @@ fun HubScreen(viewModel: GameViewModel) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(Color(0xFF0D1B2A), Color(0xFF1B2838))
-                )
-            )
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -44,24 +48,27 @@ fun HubScreen(viewModel: GameViewModel) {
 
             Text(
                 text = "ZEN BATTLE",
-                color = Color(0xFF4488FF),
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 4.sp
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.secondary
+                        )
+                    ),
+                    letterSpacing = 4.sp
+                )
             )
             Text(
                 text = "A Yoga Journey",
-                color = Color.White.copy(alpha = 0.5f),
-                fontSize = 12.sp
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
             )
 
             Spacer(Modifier.height(24.dp))
 
             // Stats row
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0x40000000)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -72,9 +79,29 @@ fun HubScreen(viewModel: GameViewModel) {
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(20.dp))
 
-            // Continue Battle / Start Battle button
+            // Party preview
+            if (party.isNotEmpty()) {
+                Text(
+                    "Your Party",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(8.dp))
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(party) { hero ->
+                        HeroAvatar(hero)
+                    }
+                }
+                Spacer(Modifier.height(20.dp))
+            }
+
+            // Enter Battle button
             Button(
                 onClick = {
                     if (party.isNotEmpty()) {
@@ -82,59 +109,62 @@ fun HubScreen(viewModel: GameViewModel) {
                     }
                 },
                 enabled = party.isNotEmpty(),
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1565C0),
-                    disabledContainerColor = Color(0xFF333333)
-                ),
-                modifier = Modifier.fillMaxWidth().height(56.dp)
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             ) {
                 Text(
-                    if (party.isNotEmpty()) "ENTER BATTLE" else "ADD HEROES TO PARTY",
-                    fontSize = 16.sp,
+                    if (party.isNotEmpty()) "Enter Battle" else "Add Heroes to Party",
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (party.isNotEmpty()) Color.White else Color.Gray
+                    color = if (party.isNotEmpty()) MaterialTheme.colorScheme.onPrimary
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 )
             }
-            Spacer(Modifier.height(16.dp))
 
-            // Navigation buttons
+            Spacer(Modifier.height(20.dp))
+
+            // Navigation grid
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                NavButton("PARTY", Color(0xFF4A148C)) { viewModel.navigateTo(GameScreen.PARTY) }
-                NavButton("GEAR", Color(0xFF1B5E20)) { viewModel.navigateTo(GameScreen.EQUIPMENT) }
+                NavTile(
+                    icon = "\uD83D\uDC65",
+                    label = "Party",
+                    onClick = { viewModel.navigateTo(GameScreen.PARTY) },
+                    modifier = Modifier.weight(1f)
+                )
+                NavTile(
+                    icon = "\u2699\uFE0F",
+                    label = "Gear",
+                    onClick = { viewModel.navigateTo(GameScreen.EQUIPMENT) },
+                    modifier = Modifier.weight(1f)
+                )
             }
             Spacer(Modifier.height(12.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                NavButton("TROPHIES", Color(0xFFE65100)) { viewModel.navigateTo(GameScreen.TROPHIES) }
-                NavButton("SHOP", Color(0xFF311B92)) { viewModel.navigateTo(GameScreen.SHOP) }
+                NavTile(
+                    icon = "\uD83C\uDFC6",
+                    label = "Trophies",
+                    onClick = { viewModel.navigateTo(GameScreen.TROPHIES) },
+                    modifier = Modifier.weight(1f)
+                )
+                NavTile(
+                    icon = "\uD83D\uDED2",
+                    label = "Shop",
+                    onClick = { viewModel.navigateTo(GameScreen.SHOP) },
+                    modifier = Modifier.weight(1f)
+                )
             }
 
             Spacer(Modifier.weight(1f))
-
-            // Party preview
-            if (party.isNotEmpty()) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color(0x40000000)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text("Party", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
-                        Spacer(Modifier.height(4.dp))
-                        party.forEach { hero ->
-                            Text(
-                                text = "${hero.name}  Lv.${hero.level}  HP:${hero.currentHp}/${hero.maxHp}",
-                                color = elementToColor(hero.element),
-                                fontSize = 12.sp
-                            )
-                        }
-                    }
-                }
-            }
         }
 
         // Error snackbar
@@ -151,15 +181,21 @@ fun HubScreen(viewModel: GameViewModel) {
             }
         }
 
-        // Monster selection dialog
+        // Monster selection bottom sheet
         if (showMonsterSelection) {
-            MonsterSelectionDialog(
-                onSelectMonster = { monsterId ->
-                    showMonsterSelection = false
-                    viewModel.startBattle(monsterId)
-                },
-                onDismiss = { showMonsterSelection = false }
-            )
+            ModalBottomSheet(
+                onDismissRequest = { showMonsterSelection = false },
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                shape = MaterialTheme.shapes.large
+            ) {
+                MonsterSelectionSheet(
+                    onSelectMonster = { monsterId ->
+                        showMonsterSelection = false
+                        viewModel.startBattle(monsterId)
+                    },
+                    onDismiss = { showMonsterSelection = false }
+                )
+            }
         }
     }
 }
@@ -169,109 +205,151 @@ private fun StatItem(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = value,
-            color = Color(0xFF4488FF),
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.primary
         )
         Text(
             text = label,
-            color = Color.White.copy(alpha = 0.6f),
-            fontSize = 10.sp
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
     }
 }
 
 @Composable
-private fun MonsterSelectionDialog(
+private fun HeroAvatar(hero: HeroInstance) {
+    val color = elementToColor(hero.element)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(56.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(color.copy(alpha = 0.3f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = hero.name,
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+            textAlign = TextAlign.Center,
+            maxLines = 1
+        )
+    }
+}
+
+@Composable
+private fun NavTile(
+    icon: String,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    GlassCard(
+        modifier = modifier.clickable(onClick = onClick),
+        elevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = icon,
+                fontSize = 28.sp
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun MonsterSelectionSheet(
     onSelectMonster: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
     val monstersByTier = MonsterDefinitions.allMonsters.groupBy { it.difficultyTier }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text("Choose Opponent", fontWeight = FontWeight.Bold, color = Color(0xFF4488FF))
-        },
-        text = {
-            LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                monstersByTier.entries.forEach { (tier, monsters) ->
-                    item {
-                        val tierColor = when (tier) {
-                            EASY -> Color(0xFF4CAF50)
-                            MEDIUM -> Color(0xFFFFC107)
-                            HARD -> Color(0xFFFF9800)
-                            BOSS -> Color(0xFFF44336)
-                            SUPERBOSS -> Color(0xFF9C27B0)
-                        }
-                        Text(
-                            text = tier.name,
-                            color = tierColor,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp)
-                        )
+    Column(modifier = Modifier.padding(bottom = 32.dp)) {
+        Text(
+            "Choose Opponent",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+        )
+
+        LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            monstersByTier.entries.forEach { (tier, monsters) ->
+                item {
+                    val tierColor = when (tier) {
+                        EASY -> Color(0xFF4CAF50)
+                        MEDIUM -> Color(0xFFFFC107)
+                        HARD -> Color(0xFFFF9800)
+                        BOSS -> Color(0xFFF44336)
+                        SUPERBOSS -> Color(0xFF9C27B0)
                     }
-                    items(monsters) { monster ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                                .clickable { onSelectMonster(monster.id) },
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFF1B2838)
-                            )
+                    Text(
+                        text = tier.name,
+                        color = tierColor,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp)
+                    )
+                }
+                items(monsters) { monster ->
+                    GlassCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .clickable { onSelectMonster(monster.id) },
+                        elevation = 2.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier.padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .background(
-                                            elementToColor(monster.element),
-                                            RoundedCornerShape(4.dp)
-                                        )
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = monster.englishName,
-                                        color = Color.White,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                    Text(
-                                        text = monster.name,
-                                        color = elementToColor(monster.element),
-                                        fontSize = 11.sp
-                                    )
-                                }
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .clip(RoundedCornerShape(5.dp))
+                                    .background(elementToColor(monster.element))
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "HP ${monster.baseHp}",
-                                    color = Color.White.copy(alpha = 0.6f),
-                                    fontSize = 10.sp
+                                    text = monster.englishName,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = monster.name,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = elementToColor(monster.element)
                                 )
                             }
+                            Text(
+                                text = "HP ${monster.baseHp}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
                         }
                     }
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
         }
-    )
-}
-
-@Composable
-private fun RowScope.NavButton(text: String, color: Color, onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        colors = ButtonDefaults.buttonColors(containerColor = color),
-        modifier = Modifier.weight(1f).height(48.dp)
-    ) {
-        Text(text, fontSize = 12.sp, fontWeight = FontWeight.Bold)
     }
 }

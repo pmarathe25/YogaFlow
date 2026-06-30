@@ -1,7 +1,9 @@
 package com.example.game.ui.components
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -12,7 +14,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.game.model.*
 import com.example.game.viewmodel.GameViewModel
-import androidx.compose.material3.Text
 
 @Composable
 fun BattleScreen(viewModel: GameViewModel) {
@@ -35,7 +36,7 @@ fun BattleScreen(viewModel: GameViewModel) {
     val monsterColor = monster?.let { elementToColor(it.element) } ?: Color.Gray
     val isBoss = monster?.isBoss ?: false
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         // Background layer
         BattleBackground(
             parallaxOffset = kotlin.math.sin(parallaxOffset),
@@ -134,8 +135,8 @@ private fun BattleLog(
         log.forEach { message ->
             Text(
                 text = message,
-                color = Color.White.copy(alpha = 0.8f),
-                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
+                style = MaterialTheme.typography.labelSmall,
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.fillMaxWidth()

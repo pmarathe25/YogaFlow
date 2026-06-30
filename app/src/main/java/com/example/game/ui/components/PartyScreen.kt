@@ -4,14 +4,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.game.model.*
 import com.example.game.viewmodel.GameViewModel
 
@@ -23,36 +25,36 @@ fun PartyScreen(viewModel: GameViewModel) {
 
     Box(
         modifier = Modifier.fillMaxSize()
-            .background(
-                androidx.compose.ui.graphics.Brush.verticalGradient(
-                    colors = listOf(Color(0xFF0D1B2A), Color(0xFF1B2838))
-                )
-            )
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             Text(
-                "PARTY",
-                color = Color(0xFF4488FF),
-                fontSize = 22.sp,
+                "Party",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "Limit: 5 heroes",
-                color = Color.White.copy(alpha = 0.5f),
-                fontSize = 11.sp
+                "${party.size} / 5 heroes",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
             )
             Spacer(Modifier.height(16.dp))
 
             // Current party
-            Text("Current Party", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(
+                "Current Party",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onBackground
+            )
             Spacer(Modifier.height(8.dp))
 
             if (party.isEmpty()) {
                 Text(
                     "No heroes in party.",
-                    color = Color.White.copy(alpha = 0.4f),
-                    fontSize = 12.sp
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
                 )
             } else {
                 LazyColumn(modifier = Modifier.weight(1f)) {
@@ -69,7 +71,11 @@ fun PartyScreen(viewModel: GameViewModel) {
 
             // Available heroes
             if (availableHeroes.isNotEmpty() && party.size < 5) {
-                Text("Available Heroes", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    "Available Heroes",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
                 Spacer(Modifier.height(8.dp))
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(availableHeroes) { hero ->
@@ -84,10 +90,16 @@ fun PartyScreen(viewModel: GameViewModel) {
             Spacer(Modifier.height(16.dp))
             Button(
                 onClick = { viewModel.navigateBack() },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF333333)),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Back")
+                Text(
+                    "Back",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         }
     }
@@ -95,56 +107,133 @@ fun PartyScreen(viewModel: GameViewModel) {
 
 @Composable
 private fun PartyHeroCard(hero: HeroInstance, onRemove: () -> Unit) {
-    Card(
+    val heroColor = elementToColor(hero.element)
+
+    GlassCard(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0x40000000))
+        elevation = 2.dp
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(hero.name, color = elementToColor(hero.element), fontWeight = FontWeight.Bold)
-                Text(
-                    "Lv.${hero.level}  HP:${hero.currentHp}/${hero.maxHp}  ATK:${hero.atk}  SPD:${hero.spd}",
-                    color = Color.White.copy(alpha = 0.6f),
-                    fontSize = 11.sp
+            // Avatar circle
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(heroColor.copy(alpha = 0.3f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clip(CircleShape)
+                        .background(heroColor)
                 )
+            }
+            Spacer(Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    hero.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = heroColor,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(2.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    StatChip("Lv", hero.level.toString())
+                    StatChip("HP", "${hero.currentHp}/${hero.maxHp}")
+                    StatChip("ATK", hero.atk.toString())
+                    StatChip("SPD", hero.spd.toString())
+                }
             }
             OutlinedButton(
                 onClick = onRemove,
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFF4444))
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                ),
+                modifier = Modifier.height(32.dp)
             ) {
-                Text("Remove", fontSize = 10.sp)
+                Text(
+                    "Remove",
+                    style = MaterialTheme.typography.labelSmall
+                )
             }
         }
     }
 }
 
 @Composable
+private fun StatChip(label: String, value: String) {
+    Surface(
+        shape = RoundedCornerShape(4.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    ) {
+        Text(
+            text = "$label $value",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+        )
+    }
+}
+
+@Composable
 private fun AvailableHeroCard(hero: Hero, onAdd: () -> Unit) {
-    Card(
+    val heroColor = elementToColor(hero.element)
+
+    GlassCard(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0x40000000))
+        elevation = 2.dp
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(hero.name, color = elementToColor(hero.element), fontWeight = FontWeight.Bold)
-                Text(
-                    hero.description,
-                    color = Color.White.copy(alpha = 0.5f),
-                    fontSize = 10.sp
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(heroColor.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(14.dp)
+                        .clip(CircleShape)
+                        .background(heroColor.copy(alpha = 0.6f))
                 )
             }
-            Button(
+            Spacer(Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    hero.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = heroColor
+                )
+                Text(
+                    hero.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+            }
+            FilledTonalButton(
                 onClick = onAdd,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
-                modifier = Modifier.height(32.dp)
+                modifier = Modifier.height(36.dp),
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                )
             ) {
-                Text("+", fontSize = 14.sp)
+                Text(
+                    "+",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

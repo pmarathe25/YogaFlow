@@ -1,23 +1,23 @@
 package com.example.game.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.game.model.*
-import com.example.ui.theme.*
 
 @Composable
 fun HeroHUD(
@@ -27,42 +27,56 @@ fun HeroHUD(
     modifier: Modifier = Modifier
 ) {
     val accentColor = elementToColor(hero.element)
-    val hpColor = if (hero.hpPercent < 0.3f) Color(0xFFFF4444)
-    else if (hero.hpPercent < 0.6f) Color(0xFFFFA726)
+
+    val animatedHpPercent by animateFloatAsState(
+        targetValue = hero.hpPercent,
+        animationSpec = tween(300)
+    )
+
+    val hpColor = if (animatedHpPercent < 0.3f) Color(0xFFFF4444)
+    else if (animatedHpPercent < 0.6f) Color(0xFFFFA726)
     else Color(0xFF66BB6A)
+
+    val borderAlpha by remember { mutableFloatStateOf(if (isCurrentTurn) 0.6f else 0f) }
+
+    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
 
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            containerColor = Color(0x80000000)
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
         ),
         border = if (isCurrentTurn) CardDefaults.outlinedCardBorder().copy(
-            brush = androidx.compose.ui.graphics.SolidColor(accentColor)
-        ) else null
+            brush = SolidColor(accentColor.copy(alpha = borderAlpha))
+        ) else null,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(6.dp)) {
             Text(
                 text = hero.name,
+                style = MaterialTheme.typography.labelLarge,
                 color = accentColor,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
             )
             Spacer(Modifier.height(2.dp))
 
             // HP bar
             Box(modifier = Modifier.fillMaxWidth().height(8.dp)) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
-                    drawRoundRect(Color(0x40000000), cornerRadius = androidx.compose.ui.geometry.CornerRadius(2f))
+                    drawRoundRect(
+                        surfaceVariant,
+                        cornerRadius = CornerRadius(2f)
+                    )
                     drawRoundRect(
                         color = hpColor,
-                        size = Size(size.width * hero.hpPercent, size.height),
-                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(2f)
+                        size = Size(size.width * animatedHpPercent, size.height),
+                        cornerRadius = CornerRadius(2f)
                     )
                     if (hero.shield > 0) {
                         drawRoundRect(
                             color = Color(0xFF42A5F5).copy(alpha = 0.5f),
                             size = Size(size.width * hero.shield.toFloat() / hero.maxHp, size.height),
-                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(2f),
+                            cornerRadius = CornerRadius(2f),
                             style = Stroke(width = 1f)
                         )
                     }
@@ -71,21 +85,30 @@ fun HeroHUD(
 
             Text(
                 text = "${hero.currentHp}/${hero.maxHp}",
-                color = Color.White.copy(alpha = 0.8f),
-                fontSize = 9.sp
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
             )
             Spacer(Modifier.height(2.dp))
 
             // Ultimate gauge
             val gaugePct = hero.ultimateGauge / 100f
-            Box(modifier = Modifier.fillMaxWidth().height(4.dp)) {
+            Box(modifier = Modifier.fillMaxWidth().height(6.dp)) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
-                    drawRoundRect(Color(0x40000000), cornerRadius = androidx.compose.ui.geometry.CornerRadius(2f))
-                    drawRoundRect(
-                        color = Color(0xFFFFD700),
-                        size = Size(size.width * gaugePct, size.height),
-                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(2f)
-                    )
+                    val w = size.width
+                    val h = size.height
+                    val segments = 10
+                    val gap = 1f
+                    val segW = (w - gap * (segments - 1)) / segments
+                    for (i in 0 until segments) {
+                        val filled = i < (gaugePct * segments).toInt()
+                        val x = i * (segW + gap)
+                        drawRoundRect(
+                            color = if (filled) Color(0xFFFFD700) else Color(0x40000000),
+                            topLeft = Offset(x, 0f),
+                            size = Size(segW, h),
+                            cornerRadius = CornerRadius(1f)
+                        )
+                    }
                 }
             }
 
@@ -109,29 +132,38 @@ fun MonsterHUD(
     modifier: Modifier = Modifier
 ) {
     val accentColor = elementToColor(monster.element)
-    val hpColor = if (monster.hpPercent < 0.3f) Color(0xFFFF4444)
-    else if (monster.hpPercent < 0.6f) Color(0xFFFFA726)
+
+    val animatedHpPercent by animateFloatAsState(
+        targetValue = monster.hpPercent,
+        animationSpec = tween(300)
+    )
+
+    val hpColor = if (animatedHpPercent < 0.3f) Color(0xFFFF4444)
+    else if (animatedHpPercent < 0.6f) Color(0xFFFFA726)
     else Color(0xFF66BB6A)
+
+    val surfaceVariantMonster = MaterialTheme.colorScheme.surfaceVariant
 
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            containerColor = Color(0x80000000)
-        )
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = monster.name,
+                style = MaterialTheme.typography.titleSmall,
                 color = accentColor,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
             )
             if (monster.isBoss) {
                 Text(
-                    text = "★ BOSS ★",
-                    color = Color(0xFFFF4444),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "\u2605 BOSS \u2605",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                 )
             }
             Spacer(Modifier.height(4.dp))
@@ -139,17 +171,20 @@ fun MonsterHUD(
             // HP bar
             Box(modifier = Modifier.fillMaxWidth(0.8f).height(12.dp)) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
-                    drawRoundRect(Color(0x40000000), cornerRadius = androidx.compose.ui.geometry.CornerRadius(3f))
+                    drawRoundRect(
+                        surfaceVariantMonster,
+                        cornerRadius = CornerRadius(3f)
+                    )
                     drawRoundRect(
                         color = hpColor,
-                        size = Size(size.width * monster.hpPercent, size.height),
-                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(3f)
+                        size = Size(size.width * animatedHpPercent, size.height),
+                        cornerRadius = CornerRadius(3f)
                     )
                     if (monster.shield > 0) {
                         drawRoundRect(
                             color = Color(0xFF42A5F5).copy(alpha = 0.5f),
                             size = Size(size.width * monster.shield.toFloat() / monster.maxHp, size.height),
-                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(3f),
+                            cornerRadius = CornerRadius(3f),
                             style = Stroke(width = 1.5f)
                         )
                     }
@@ -158,8 +193,8 @@ fun MonsterHUD(
 
             Text(
                 text = "${monster.currentHp}/${monster.maxHp}",
-                color = Color.White.copy(alpha = 0.8f),
-                fontSize = 11.sp
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
             )
 
             if (statuses.isNotEmpty()) {
@@ -194,8 +229,9 @@ fun StatusIcon(type: StatusEffectType, iconSize: Int = 12) {
         val c = Offset(size.width / 2f, size.height / 2f)
         val r = size.minDimension / 2f
 
-        drawCircle(color.copy(alpha = 0.2f), r, c)
-        drawCircle(color, r * 0.6f, c)
+        drawCircle(color.copy(alpha = 0.15f), r, c)
+        drawCircle(color, r * 0.6f, c, style = Stroke(width = 1.5f))
+        drawCircle(color.copy(alpha = 0.3f), r * 0.4f, c)
 
         when (type) {
             StatusEffectType.ATK_UP -> {
