@@ -3,6 +3,7 @@ package com.example.game.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.db.YogaDatabase
 import com.example.game.model.*
 import com.example.game.model.Element.*
 import com.example.game.model.TargetType.*
@@ -15,10 +16,15 @@ import com.example.game.model.DifficultyTier.*
 import com.example.game.model.ComboType.*
 import com.example.game.persistence.GameSaveManager
 import com.example.game.persistence.GameSaveManager.GameSaveData
+import com.example.model.LevelDefinitions
+import com.example.model.XpCalculator
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.pow
 import kotlin.random.Random
 
@@ -52,8 +58,42 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    private val _mainAppSparks = MutableStateFlow(0)
+    val mainAppSparks: StateFlow<Int> = _mainAppSparks.asStateFlow()
+
     init {
         loadGame()
+        viewModelScope.launch { syncWithMainApp() }
+    }
+
+    fun refreshSync() {
+        viewModelScope.launch { syncWithMainApp() }
+    }
+
+    private suspend fun syncWithMainApp() = withContext(Dispatchers.IO) {
+        val app = getApplication<Application>()
+        val db = YogaDatabase.getDatabase(app)
+        val sessions = db.yogaSessionDao().getAllSessions().first()
+
+        val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).apply {
+            timeZone = java.util.TimeZone.getDefault()
+        }
+        val uniqueDays = sessions.map { dateFormat.format(java.util.Date(it.timestamp)) }.distinct()
+        val mainSparks = uniqueDays.size
+
+        var xpSum = 0
+        sessions.forEach { session ->
+            xpSum += XpCalculator.calculateSessionXp(session.durationMinutes, session.flowId)
+        }
+        xpSum += mainSparks * 150
+        val computedLevel = LevelDefinitions.getLevelForXp(xpSum).level
+
+        val data = _saveData.value
+        if (data.yogaLevel != computedLevel) {
+            _saveData.value = data.copy(yogaLevel = computedLevel)
+            saveGame()
+        }
+        _mainAppSparks.value = mainSparks
     }
 
     fun navigateTo(screen: GameScreen) {

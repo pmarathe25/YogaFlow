@@ -11,6 +11,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
@@ -19,7 +20,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
 import com.example.game.model.*
-import kotlin.math.pow
 
 private val hpGreen = Color(0xFF66BB6A)
 private val hpYellow = Color(0xFFFFA726)
@@ -82,12 +82,31 @@ fun HeroHUD(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(6.dp)) {
-            Text(
-                text = hero.name,
-                style = MaterialTheme.typography.labelLarge,
-                color = accentColor,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (isCurrentTurn) {
+                    val turnAlpha by infiniteTransition.animateFloat(
+                        initialValue = 1f,
+                        targetValue = 0.3f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(500, easing = FastOutSlowInEasing),
+                            repeatMode = RepeatMode.Reverse
+                        )
+                    )
+                    Text(
+                        text = "\u25B6",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = accentColor.copy(alpha = turnAlpha),
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                    )
+                    Spacer(Modifier.width(2.dp))
+                }
+                Text(
+                    text = hero.name,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = accentColor,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                )
+            }
             Spacer(Modifier.height(2.dp))
 
             // HP bar
@@ -128,12 +147,15 @@ fun HeroHUD(
                     val segments = 10
                     val gap = 1f
                     val segW = (w - gap * (segments - 1)) / segments
+                    val gradStart = Color(0xFFFF8F00)
+                    val gradEnd = Color(0xFFFFD700)
                     for (i in 0 until segments) {
                         val filled = i < (gaugePct * segments).toInt()
                         val x = i * (segW + gap)
                         val segColor = if (filled) {
-                            if (isUltReady) Color(0xFFFFD700).copy(alpha = ultGlowAlpha)
-                            else Color(0xFFFFD700)
+                            val t = i.toFloat() / segments.coerceAtLeast(1)
+                            val base = lerp(gradStart, gradEnd, t)
+                            if (isUltReady) base.copy(alpha = ultGlowAlpha) else base
                         } else Color(0x40000000)
                         drawRoundRect(
                             color = segColor,
@@ -144,7 +166,7 @@ fun HeroHUD(
                     }
                     if (isUltReady) {
                         drawRoundRect(
-                            color = Color(0xFFFFD700).copy(alpha = ultGlowAlpha * 0.3f),
+                            color = lerp(gradStart, gradEnd, 0.8f).copy(alpha = ultGlowAlpha * 0.3f),
                             size = size,
                             cornerRadius = CornerRadius(1f),
                             style = Stroke(width = 2f)
