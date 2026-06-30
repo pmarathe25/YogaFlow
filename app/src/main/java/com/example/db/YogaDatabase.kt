@@ -28,7 +28,7 @@ abstract class YogaDatabase : RoomDatabase() {
                     context.applicationContext,
                     YogaDatabase::class.java,
                     "yoga_database"
-                ).addMigrations(MIGRATION_4_5).build()
+                ).addMigrations(MIGRATION_4_5).fallbackToDestructiveMigration().build()
                 INSTANCE = instance
                 instance
             }

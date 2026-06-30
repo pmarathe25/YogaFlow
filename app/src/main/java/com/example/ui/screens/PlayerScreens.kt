@@ -321,7 +321,7 @@ fun YogaPlayerScreen(
             val activeTrackName = if (currentTrackIndex in tracks.indices) tracks[currentTrackIndex].name else "Calm Sound"
 
             TextButton(
-                onClick = { viewModel.toggleMusicMute() }
+                onClick = { viewModel.setIsMusicMuted(!isMusicMuted) }
             ) {
                 Icon(
                     imageVector = if (isMusicMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,

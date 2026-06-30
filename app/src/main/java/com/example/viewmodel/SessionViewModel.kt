@@ -89,6 +89,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         
         val isMuted = com.example.db.SettingsManager.getIsMusicMuted(app)
         val trackIdx = com.example.db.SettingsManager.getCurrentTrackIndex(app)
+        ambientMusicManager.setMute(isMuted)
         ambientMusicManager.setCurrentTrackIndex(trackIdx)
     }
 
@@ -142,9 +143,10 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun toggleMusicMute() {
-        ambientMusicManager.setMute(!com.example.db.SettingsManager.getIsMusicMuted(getApplication()))
-        val muted = com.example.db.SettingsManager.getIsMusicMuted(getApplication())
-        com.example.db.SettingsManager.saveIsMusicMuted(getApplication(), muted)
+        val currentMuted = com.example.db.SettingsManager.getIsMusicMuted(getApplication())
+        val newMuted = !currentMuted
+        ambientMusicManager.setMute(newMuted)
+        com.example.db.SettingsManager.saveIsMusicMuted(getApplication(), newMuted)
     }
 
     fun selectAmbientTrack(index: Int) {

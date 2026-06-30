@@ -55,7 +55,18 @@ class AmbientMusicService : Service() {
             when (action) {
                 ACTION_PLAY -> play()
                 ACTION_PAUSE -> pause()
-                ACTION_STOP -> stopSelf()
+                ACTION_STOP -> {
+                    loopMonitorJob?.cancel()
+                    fadeJob?.cancel()
+                    try {
+                        mediaPlayer?.stop()
+                        mediaPlayer?.release()
+                    } catch (e: Exception) {
+                        Log.e(tag, "Error stopping player: ${e.message}")
+                    }
+                    mediaPlayer = null
+                    stopForeground(true)
+                }
                 ACTION_SET_TRACK -> {
                     val index = intent.getIntExtra(EXTRA_TRACK_INDEX, 0)
                     setTrack(index)

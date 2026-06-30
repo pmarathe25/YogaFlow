@@ -215,7 +215,7 @@ fun SettingsScreen(
                 }
                 if (isVoiceEnabled) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Voice Cue Language", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold))
+                    Text("Voice Cue Language", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
                     Spacer(modifier = Modifier.height(8.dp))
                     val preferredVoice by viewModel.preferredVoice.collectAsState()
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -245,7 +245,7 @@ fun SettingsScreen(
                         Text("Background Music", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                         Text(if (isMusicMuted) "Ambient music disabled" else "Ambient music enabled", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
                     }
-                    Switch(checked = !isMusicMuted, onCheckedChange = { viewModel.toggleMusicMute() })
+                    Switch(checked = !isMusicMuted, onCheckedChange = { viewModel.setIsMusicMuted(!isMusicMuted) })
                 }
                 
                 if (!isMusicMuted) {
@@ -274,7 +274,7 @@ fun SettingsScreen(
                             val isSelected = currentTrackIndex == origIndex
                             val isPreviewing = previewPlayingIndex == origIndex
                             Row(
-                                modifier = Modifier.fillMaxWidth().background(if(isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.15f), RoundedCornerShape(10.dp)).clickable { viewModel.selectAmbientTrack(origIndex) }.padding(10.dp),
+                                modifier = Modifier.fillMaxWidth().background(if(isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.15f), RoundedCornerShape(10.dp)).clickable { viewModel.setCurrentTrackIndex(origIndex) }.padding(10.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(Icons.Default.MusicNote, contentDescription = null, tint = if(isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
@@ -331,7 +331,7 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Keep Screen Awake", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
+                        Text("Keep Screen Awake", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.onSurface)
                         Text("Prevent screen from dimming or sleeping during a session", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
                     }
                     Switch(
@@ -351,7 +351,7 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Background Audio Playback", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
+                        Text("Background Audio Playback", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.onSurface)
                         Text("Continue playing voice guide and music when screen is off", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
                     }
                     Switch(

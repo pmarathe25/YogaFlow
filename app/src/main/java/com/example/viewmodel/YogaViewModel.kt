@@ -89,9 +89,18 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
     fun setKeepScreenAwake(enabled: Boolean) = settingsViewModel.setKeepScreenAwake(enabled)
     fun setBackgroundAudioEnabled(enabled: Boolean) = settingsViewModel.setBackgroundAudioEnabled(enabled)
     fun setIsVoiceEnabled(enabled: Boolean) = sessionViewModel.toggleVoice(enabled)
-    fun setPreferredVoice(voice: String) = settingsViewModel.setPreferredVoice(voice)
-    fun setIsMusicMuted(muted: Boolean) = settingsViewModel.setIsMusicMuted(muted)
-    fun setCurrentTrackIndex(index: Int) = settingsViewModel.setCurrentTrackIndex(index)
+    fun setPreferredVoice(voice: String) {
+        settingsViewModel.setPreferredVoice(voice)
+        sessionViewModel.setPreferredVoice(voice)
+    }
+    fun setIsMusicMuted(muted: Boolean) {
+        settingsViewModel.setIsMusicMuted(muted)
+        sessionViewModel.ambientMusicManager.setMute(muted)
+    }
+    fun setCurrentTrackIndex(index: Int) {
+        settingsViewModel.setCurrentTrackIndex(index)
+        sessionViewModel.ambientMusicManager.setCurrentTrackIndex(index)
+    }
 
     // Session delegation methods
     fun selectFlow(yogaFlow: com.example.model.YogaFlow) = sessionViewModel.selectFlow(yogaFlow)
