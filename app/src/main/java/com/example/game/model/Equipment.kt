@@ -27,6 +27,11 @@ data class Equipment(
 ) {
     val yogaLevelRequired: Int get() = minYogaLevel
     val sparksCost: Int get() = sparkCost
+    val goldCost: Int get() = sparkCost * when (tier) {
+        EquipmentTier.GENERIC -> 5
+        EquipmentTier.CLASS_SPECIFIC -> 8
+        EquipmentTier.UNIQUE -> 10
+    }
     val bonusDescription: String get() = effects.joinToString(", ") { "${it.type.name}: ${if (it.value > 0) "+" else ""}${it.value}" }
 }
 

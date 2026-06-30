@@ -33,6 +33,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.model.FlowLoader
 import com.example.navigation.Screen
+import com.example.game.ui.components.GameApp
+import com.example.game.viewmodel.GameViewModel
 import com.example.ui.components.*
 import com.example.ui.screens.*
 
@@ -208,6 +210,11 @@ fun YogaAppContent(
                         },
                         onOpenSettings = {
                             navController.navigate(Screen.Settings.route)
+                        },
+                        onNavigateToBattle = {
+                            navController.navigate(Screen.ZenBattle.route) {
+                                launchSingleTop = true
+                            }
                         }
                     )
                 }
@@ -307,6 +314,12 @@ fun YogaAppContent(
                         viewModel = viewModel,
                         onBack = { navController.popBackStack() }
                     )
+                }
+
+                composable(Screen.ZenBattle.route) {
+                    val gameViewModel: GameViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                    BackHandler { navController.popBackStack() }
+                    GameApp(viewModel = gameViewModel)
                 }
             }
         }

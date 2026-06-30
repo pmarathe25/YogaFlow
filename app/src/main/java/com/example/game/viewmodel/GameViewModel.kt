@@ -754,9 +754,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun onBattleWon() {
+        val monster = _currentMonster.value ?: return
         val data = _saveData.value
+        val karmaReward = 50 + (monster.difficultyTier.ordinal * 25)
         _saveData.value = data.copy(
             totalBattlesWon = data.totalBattlesWon + 1,
+            totalKarmaXp = data.totalKarmaXp + karmaReward,
+            defeatedMonsterIds = data.defeatedMonsterIds + monster.id,
             lastPlayedTimestamp = System.currentTimeMillis()
         )
         saveGame()
@@ -767,12 +771,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun purchaseItem(itemId: String): Boolean {
         val item = EquipmentDefinitions.allEquipment.find { it.id == itemId } ?: return false
         val data = _saveData.value
+        val availableGold = data.totalKarmaXp - data.totalGoldSpent
         if (data.yogaLevel < item.yogaLevelRequired) return false
-        if (data.sparks < item.sparksCost) return false
+        if (availableGold < item.goldCost) return false
         if (itemId in data.inventory) return false
 
         _saveData.value = data.copy(
-            sparks = data.sparks - item.sparksCost,
+            totalGoldSpent = data.totalGoldSpent + item.goldCost,
             inventory = data.inventory + itemId
         )
         saveGame()
@@ -813,20 +818,48 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         return hero.equippedItems.mapNotNull { EquipmentDefinitions.getEquipment(it) }
     }
 
+    // --- Economy ---
+
+    fun getAvailableGold(): Int {
+        val data = _saveData.value
+        return data.totalKarmaXp - data.totalGoldSpent
+    }
+
     // --- Hero Level Up ---
 
-    fun addKarmaXp(heroId: String, amount: Int) {
+    fun levelUpHero(heroId: String): Boolean {
+        val hero = _party.value.find { it.heroId == heroId } ?: return false
         val data = _saveData.value
-        val currentXp = data.karmaXp[heroId] ?: 0
-        _saveData.value = data.copy(karmaXp = data.karmaXp + (heroId to currentXp + amount))
+        val sparkCost = kotlin.math.ceil(hero.level * 1.5).toInt()
+        if (data.sparks < sparkCost) return false
+
+        hero.level++
+        _saveData.value = data.copy(
+            sparks = data.sparks - sparkCost,
+            party = _party.value.map { it.toSaveData() }
+        )
         saveGame()
+        return true
     }
 
-    fun getHeroLevel(heroId: String): Int {
-        return _saveData.value.party.find { it.heroId == heroId }?.level ?: 1
-    }
+    // --- Hero Purchase ---
 
-    fun getXpForLevel(level: Int): Int = 100 * level * level
+    fun purchaseHero(heroId: String): Boolean {
+        val hero = HeroDefinitions.getHero(heroId) ?: return false
+        val data = _saveData.value
+        if (heroId in data.unlockedHeroIds) return false
+        if (data.yogaLevel < hero.unlockYogaLevel) return false
+        // Spark cost = 10 * yogaLevel requirement
+        val sparkCost = hero.unlockYogaLevel * 10
+        if (data.sparks < sparkCost) return false
+
+        _saveData.value = data.copy(
+            sparks = data.sparks - sparkCost,
+            unlockedHeroIds = data.unlockedHeroIds + heroId
+        )
+        saveGame()
+        return true
+    }
 
     // --- Error handling ---
 

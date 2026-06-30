@@ -10,4 +10,5 @@ sealed class Screen(val route: String) {
     object ExpandedDashboard : Screen("expanded_dashboard")
     object History : Screen("history")
     object Settings : Screen("settings")
+    object ZenBattle : Screen("zen_battle")
 }

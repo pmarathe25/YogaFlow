@@ -14,7 +14,6 @@ class GameSaveManager(context: Context) {
         const val KEY_BATTLE_STATE = "battle_state"
         const val KEY_PARTY = "party"
         const val KEY_UNLOCKED_HERO_IDS = "unlocked_hero_ids"
-        const val KEY_KARMA_XP = "karma_xp"
         const val KEY_SPARKS = "sparks"
         const val KEY_YOGA_LEVEL = "yoga_level"
         const val KEY_EARNED_TROPHY_IDS = "earned_trophy_ids"
@@ -28,13 +27,15 @@ class GameSaveManager(context: Context) {
         const val KEY_FASTEST_BATTLE_TURNS = "fastest_battle_turns"
         const val KEY_LAST_PLAYED_TIMESTAMP = "last_played_timestamp"
         const val KEY_LAST_SYNCED_MAIN_SPARKS = "last_synced_main_sparks"
+        const val KEY_TOTAL_KARMA_XP = "total_karma_xp"
+        const val KEY_TOTAL_GOLD_SPENT = "total_gold_spent"
+        const val KEY_DEFEATED_MONSTER_IDS = "defeated_monster_ids"
     }
 
     data class GameSaveData(
         val battleState: BattleSaveData? = null,
         val party: List<HeroSaveData> = emptyList(),
         val unlockedHeroIds: Set<String> = emptySet(),
-        val karmaXp: Map<String, Int> = emptyMap(),
         val sparks: Int = 0,
         val yogaLevel: Int = 1,
         val earnedTrophyIds: Set<String> = emptySet(),
@@ -47,13 +48,15 @@ class GameSaveManager(context: Context) {
         val highestComboHits: Int = 0,
         val fastestBattleTurns: Int = Int.MAX_VALUE,
         val lastPlayedTimestamp: Long = 0L,
-        val lastSyncedMainSparks: Int = 0
+        val lastSyncedMainSparks: Int = 0,
+        val totalKarmaXp: Int = 0,
+        val totalGoldSpent: Int = 0,
+        val defeatedMonsterIds: Set<String> = emptySet()
     ) {
         fun toSaveMap(): Map<String, String> = mapOf(
             KEY_BATTLE_STATE to if (battleState != null) gson.toJson(battleState) else "",
             KEY_PARTY to gson.toJson(party),
             KEY_UNLOCKED_HERO_IDS to gson.toJson(unlockedHeroIds.toList()),
-            KEY_KARMA_XP to gson.toJson(karmaXp),
             KEY_SPARKS to sparks.toString(),
             KEY_YOGA_LEVEL to yogaLevel.toString(),
             KEY_EARNED_TROPHY_IDS to gson.toJson(earnedTrophyIds.toList()),
@@ -66,7 +69,10 @@ class GameSaveManager(context: Context) {
             KEY_HIGHEST_COMBO_HITS to highestComboHits.toString(),
             KEY_FASTEST_BATTLE_TURNS to fastestBattleTurns.toString(),
             KEY_LAST_PLAYED_TIMESTAMP to lastPlayedTimestamp.toString(),
-            KEY_LAST_SYNCED_MAIN_SPARKS to lastSyncedMainSparks.toString()
+            KEY_LAST_SYNCED_MAIN_SPARKS to lastSyncedMainSparks.toString(),
+            KEY_TOTAL_KARMA_XP to totalKarmaXp.toString(),
+            KEY_TOTAL_GOLD_SPENT to totalGoldSpent.toString(),
+            KEY_DEFEATED_MONSTER_IDS to gson.toJson(defeatedMonsterIds.toList())
         )
     }
 
@@ -86,10 +92,6 @@ class GameSaveManager(context: Context) {
                 val type = object : TypeToken<List<String>>() {}.type
                 (gson.fromJson(prefs.getString(KEY_UNLOCKED_HERO_IDS, "[]"), type) as? List<String>)?.toSet() ?: emptySet()
             } catch (e: Exception) { emptySet() },
-            karmaXp = try {
-                val type = object : TypeToken<Map<String, Int>>() {}.type
-                gson.fromJson(prefs.getString(KEY_KARMA_XP, "{}"), type) ?: emptyMap()
-            } catch (e: Exception) { emptyMap() },
             sparks = prefs.getInt(KEY_SPARKS, 0),
             yogaLevel = prefs.getInt(KEY_YOGA_LEVEL, 1),
             earnedTrophyIds = try {
@@ -117,7 +119,17 @@ class GameSaveManager(context: Context) {
             highestComboHits = prefs.getInt(KEY_HIGHEST_COMBO_HITS, 0),
             fastestBattleTurns = prefs.getInt(KEY_FASTEST_BATTLE_TURNS, Int.MAX_VALUE),
             lastPlayedTimestamp = prefs.getLong(KEY_LAST_PLAYED_TIMESTAMP, 0L),
-            lastSyncedMainSparks = prefs.getInt(KEY_LAST_SYNCED_MAIN_SPARKS, 0)
+            lastSyncedMainSparks = prefs.getInt(KEY_LAST_SYNCED_MAIN_SPARKS, 0),
+            totalKarmaXp = try {
+                prefs.getString(KEY_TOTAL_KARMA_XP, "0")?.toIntOrNull() ?: 0
+            } catch (e: Exception) { 0 },
+            totalGoldSpent = try {
+                prefs.getString(KEY_TOTAL_GOLD_SPENT, "0")?.toIntOrNull() ?: 0
+            } catch (e: Exception) { 0 },
+            defeatedMonsterIds = try {
+                val type = object : TypeToken<List<String>>() {}.type
+                (gson.fromJson(prefs.getString(KEY_DEFEATED_MONSTER_IDS, "[]"), type) as? List<String>)?.toSet() ?: emptySet()
+            } catch (e: Exception) { emptySet() }
         )
     }
 

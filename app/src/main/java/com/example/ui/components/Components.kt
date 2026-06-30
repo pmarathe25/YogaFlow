@@ -41,6 +41,7 @@ import com.example.model.YogaFlow
 import com.example.ui.theme.*
 import com.example.viewmodel.Achievement
 import com.example.viewmodel.YogaViewModel
+import com.example.game.model.TrophyRarity
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.ui.platform.testTag
 
@@ -524,13 +525,23 @@ fun AchievementBadgeCard(
     modifier: Modifier = Modifier
 ) {
     val alpha = if (achievement.isUnlocked) 1.0f else 0.4f
+    
+    val rarityColor = when (achievement.rarity) {
+        TrophyRarity.BRONZE -> Color(0xFFCD7F32)
+        TrophyRarity.SILVER -> Color(0xFFC0C0C0)
+        TrophyRarity.GOLD -> Color(0xFFFFD700)
+        TrophyRarity.PLATINUM -> Color(0xFFE5E4E2)
+        null -> null
+    }
+
     val cardBg = if (achievement.isUnlocked) {
-        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f)
+        rarityColor?.copy(alpha = 0.15f) ?: MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f)
     } else {
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)
     }
+    
     val borderColor = if (achievement.isUnlocked) {
-        MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
+        rarityColor?.copy(alpha = 0.6f) ?: MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
     } else {
         MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
     }
@@ -539,6 +550,7 @@ fun AchievementBadgeCard(
         modifier = modifier
             .width(135.dp)
             .background(color = cardBg, shape = RoundedCornerShape(16.dp))
+            .border(BorderStroke(1.dp, borderColor), shape = RoundedCornerShape(16.dp))
             .padding(10.dp)
             .alpha(alpha)
     ) {
@@ -553,7 +565,7 @@ fun AchievementBadgeCard(
                     .size(42.dp)
                     .background(
                         color = if (achievement.isUnlocked) {
-                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
+                            rarityColor?.copy(alpha = 0.2f) ?: MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
                         } else {
                             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
                         },
@@ -568,7 +580,10 @@ fun AchievementBadgeCard(
                         "tri_fold_harmony" -> "🌿"
                         "yogi_adept" -> "🎯"
                         "deep_devotee" -> "🧘"
-                        else -> "🏆"
+                        "practice_morning_light" -> "☀️"
+                        "practice_hour_of_power" -> "⚡"
+                        "practice_ten_sessions" -> "🔟"
+                        else -> if (achievement.id.startsWith("badge_")) "🏅" else "🏆"
                     },
                     style = MaterialTheme.typography.titleMedium
                 )
@@ -599,7 +614,7 @@ fun AchievementBadgeCard(
             Box(
                 modifier = Modifier
                     .background(
-                        color = if (achievement.isUnlocked) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
+                        color = if (achievement.isUnlocked) (rarityColor?.copy(alpha = 0.2f) ?: MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
                         shape = RoundedCornerShape(8.dp)
                     )
                     .padding(horizontal = 6.dp, vertical = 2.dp)
@@ -610,7 +625,7 @@ fun AchievementBadgeCard(
                         fontSize = 8.sp,
                         fontWeight = FontWeight.Bold
                     ),
-                    color = if (achievement.isUnlocked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    color = if (achievement.isUnlocked) (rarityColor ?: MaterialTheme.colorScheme.primary) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
             }
         }
