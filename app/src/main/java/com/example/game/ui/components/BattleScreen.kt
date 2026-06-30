@@ -116,7 +116,6 @@ fun BattleScreen(viewModel: GameViewModel) {
                     currentCombo = state.currentCombo,
                     onSkill = { skill -> viewModel.executeSkill(currentHero.heroId, skill) },
                     onUltimate = { viewModel.executeUltimate(currentHero.heroId) },
-                    onDefend = { viewModel.executeDefend(currentHero.heroId) },
                     onCombo = { viewModel.executeCombo(it) },
                     modifier = Modifier.fillMaxWidth()
                 )

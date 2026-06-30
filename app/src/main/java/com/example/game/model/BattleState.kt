@@ -74,7 +74,6 @@ sealed class BattleEvent {
         val phaseIndex: Int,
         val trigger: PhaseTrigger
     ) : BattleEvent()
-    data class DefendUsed(val heroId: String) : BattleEvent()
     data class HeroDown(val heroId: String) : BattleEvent()
     data class MonsterDown(val monsterId: String) : BattleEvent()
     data class Victory(val turnsTaken: Int) : BattleEvent()

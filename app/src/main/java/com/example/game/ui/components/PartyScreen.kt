@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.game.model.*
 import com.example.game.viewmodel.GameViewModel
 
@@ -135,12 +136,30 @@ private fun PartyHeroCard(hero: HeroInstance, onRemove: () -> Unit) {
             Spacer(Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    hero.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = heroColor,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        hero.name,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = heroColor,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    hero.equippedItems.forEach { itemId ->
+                        val eq = EquipmentDefinitions.getEquipment(itemId)
+                        if (eq != null) {
+                            val icon = when (eq.slot) {
+                                EquipmentSlot.WEAPON -> "\uD83D\uDDE1\uFE0F"
+                                EquipmentSlot.ARMOR -> "\uD83D\uDEE1\uFE0F"
+                                EquipmentSlot.ACCESSORY -> "\uD83D\uDCDD"
+                            }
+                            Text(
+                                icon,
+                                fontSize = 10.sp,
+                                modifier = Modifier.padding(1.dp)
+                            )
+                        }
+                    }
+                }
                 Spacer(Modifier.height(2.dp))
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -170,7 +189,7 @@ private fun PartyHeroCard(hero: HeroInstance, onRemove: () -> Unit) {
 @Composable
 private fun StatChip(label: String, value: String) {
     Surface(
-        shape = RoundedCornerShape(4.dp),
+        shape = MaterialTheme.shapes.small,
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     ) {
         Text(

@@ -1,8 +1,10 @@
 package com.example.game.ui.components
 
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,7 +12,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -68,14 +69,23 @@ fun HubScreen(viewModel: GameViewModel) {
             Spacer(Modifier.height(24.dp))
 
             // Stats row
-            GlassCard(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    StatItem("Yoga Lv", saveData.yogaLevel.toString())
-                    StatItem("Sparks", saveData.sparks.toString())
-                    StatItem("Wins", saveData.totalBattlesWon.toString())
+            var statsVisible by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { statsVisible = true }
+
+            AnimatedVisibility(
+                visible = statsVisible,
+                enter = fadeIn(animationSpec = spring(stiffness = 200f)) +
+                        slideInVertically(animationSpec = spring(stiffness = 200f)) { it / 2 }
+            ) {
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        StatItem("Yoga Lv", saveData.yogaLevel.toString())
+                        StatItem("Sparks", saveData.sparks.toString())
+                        StatItem("Wins", saveData.totalBattlesWon.toString())
+                    }
                 }
             }
 
@@ -83,25 +93,36 @@ fun HubScreen(viewModel: GameViewModel) {
 
             // Party preview
             if (party.isNotEmpty()) {
-                Text(
-                    "Your Party",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(8.dp))
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
+                var partyVisible by remember { mutableStateOf(false) }
+                LaunchedEffect(Unit) { partyVisible = true }
+
+                AnimatedVisibility(
+                    visible = partyVisible,
+                    enter = fadeIn(animationSpec = spring(stiffness = 150f)) +
+                            scaleIn(animationSpec = spring(stiffness = 150f, dampingRatio = 0.6f))
                 ) {
-                    items(party) { hero ->
-                        HeroAvatar(hero)
+                    Column {
+                        Text(
+                            "Your Party",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            items(party) { hero ->
+                                HeroAvatar(hero)
+                            }
+                        }
                     }
                 }
                 Spacer(Modifier.height(20.dp))
             }
 
-            // Enter Battle button
+            // Enter Battle button (gradient)
             Button(
                 onClick = {
                     if (party.isNotEmpty()) {
@@ -116,13 +137,27 @@ fun HubScreen(viewModel: GameViewModel) {
                     disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             ) {
-                Text(
-                    if (party.isNotEmpty()) "Enter Battle" else "Add Heroes to Party",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = if (party.isNotEmpty()) MaterialTheme.colorScheme.onPrimary
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.secondary
+                                )
+                            ),
+                            shape = MaterialTheme.shapes.medium
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        if (party.isNotEmpty()) "Enter Battle" else "Add Heroes to Party",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
             }
 
             Spacer(Modifier.height(20.dp))
@@ -325,7 +360,7 @@ private fun MonsterSelectionSheet(
                             Box(
                                 modifier = Modifier
                                     .size(10.dp)
-                                    .clip(RoundedCornerShape(5.dp))
+                                    .clip(MaterialTheme.shapes.small)
                                     .background(elementToColor(monster.element))
                             )
                             Spacer(Modifier.width(12.dp))

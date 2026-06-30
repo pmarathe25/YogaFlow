@@ -6,10 +6,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,7 +31,6 @@ fun ActionPanel(
     currentCombo: ComboSkill?,
     onSkill: (Skill) -> Unit,
     onUltimate: () -> Unit,
-    onDefend: () -> Unit,
     onCombo: (Set<String>) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -44,35 +43,33 @@ fun ActionPanel(
         tonalElevation = 8.dp,
         shadowElevation = 8.dp
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            // Skill buttons row
+        Column(modifier = Modifier.padding(8.dp)) {
+            // Skill pills row
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 items(currentHero.skills) { skill ->
                     SkillPill(
                         skill = skill,
                         heroElement = currentHero.element,
-                        onClick = { onSkill(skill) },
-                        modifier = Modifier.width(110.dp)
+                        onClick = { onSkill(skill) }
                     )
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(6.dp))
 
-            // Action row
+            // Action buttons row
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // Ultimate button
                 val ultReady = currentHero.ultimateGauge >= 100
                 Button(
                     onClick = onUltimate,
                     enabled = ultReady,
-                    modifier = Modifier.weight(1f).height(48.dp),
+                    modifier = Modifier.weight(1f).height(40.dp),
                     shape = MaterialTheme.shapes.small,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (ultReady) Color(0xFFFFD740) else MaterialTheme.colorScheme.surfaceVariant,
@@ -81,33 +78,16 @@ fun ActionPanel(
                 ) {
                     Text(
                         "\uD83D\uDD25 ULTIMATE",
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = if (ultReady) Color.Black else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                     )
                 }
 
-                // Defend button
-                OutlinedButton(
-                    onClick = onDefend,
-                    modifier = Modifier.weight(1f).height(48.dp),
-                    shape = MaterialTheme.shapes.small,
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    )
-                ) {
-                    Text(
-                        "\uD83D\uDEE1\uFE0F DEFEND",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                // Combo button
                 if (comboAvailable) {
                     Button(
                         onClick = { showComboSelector = !showComboSelector },
-                        modifier = Modifier.weight(1f).height(48.dp),
+                        modifier = Modifier.weight(1f).height(40.dp),
                         shape = MaterialTheme.shapes.small,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF9C27B0)
@@ -115,7 +95,7 @@ fun ActionPanel(
                     ) {
                         Text(
                             "\u2728 COMBO",
-                            style = MaterialTheme.typography.labelLarge,
+                            style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -142,8 +122,7 @@ fun ActionPanel(
 private fun SkillPill(
     skill: Skill,
     heroElement: Element,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -160,45 +139,35 @@ private fun SkillPill(
     }
 
     Surface(
-        modifier = modifier
+        modifier = Modifier
+            .height(32.dp)
             .scale(scale)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick
             ),
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.small,
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     ) {
         Row(
-            modifier = Modifier.fillMaxHeight().padding(start = 0.dp),
+            modifier = Modifier.height(32.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Accent bar
             Box(
                 modifier = Modifier
                     .width(4.dp)
-                    .height(40.dp)
-                    .clip(RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp))
+                    .fillMaxHeight()
+                    .clip(MaterialTheme.shapes.small)
                     .background(accentColor)
             )
-            Column(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
-            ) {
-                Text(
-                    text = skill.name,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1
-                )
-                Text(
-                    text = skill.description.take(30) + if (skill.description.length > 30) "..." else "",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    maxLines = 1
-                )
-            }
+            Text(
+                text = skill.name,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
         }
     }
 }
@@ -232,7 +201,7 @@ private fun ComboSelector(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(MaterialTheme.shapes.small)
                             .clickable {
                                 selected = if (isSelected) selected - hero.heroId
                                 else selected + hero.heroId

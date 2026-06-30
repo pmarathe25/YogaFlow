@@ -208,19 +208,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         emitBattleState(state)
     }
 
-    fun executeDefend(heroId: String) {
-        val state = _battleState.value ?: return
-        if (state.phase != PLAYER_TURN) return
-        val hero = state.heroes.find { it.heroId == heroId && !it.isDead } ?: return
-
-        hero.ultimateGauge = (hero.ultimateGauge + 30).coerceAtMost(100)
-        state.addEvent(BattleEvent.DefendUsed(heroId))
-        addBattleLog("${hero.name} defends, gaining 30 ultimate gauge.")
-
-        advanceTurn(state)
-        emitBattleState(state)
-    }
-
     fun executeCombo(participantIds: Set<String>) {
         val state = _battleState.value ?: return
         if (state.phase != PLAYER_TURN) return
@@ -622,7 +609,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val base = skill.baseDamage + skill.damagePerLevel * hero.level
         val elementMult = getElementMultiplier(hero.element, component.element ?: monster.element)
         val atkBonus = 1f + hero.atk / 100f
-        val buffMult = computeBuffMultiplier(state, hero.heroId, ATK_UP)
+        val buffMult = 1f + computeBuffMultiplier(state, hero.heroId, ATK_UP)
         val dmg = (base * (component.percentage / 100f) * elementMult * atkBonus * buffMult).toInt()
         val shielded = monster.shield
         if (shielded >= dmg) {

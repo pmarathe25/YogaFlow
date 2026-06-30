@@ -1,13 +1,13 @@
 package com.example.game.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -16,8 +16,19 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
 import com.example.game.model.*
+import kotlin.math.pow
+
+private val hpGreen = Color(0xFF66BB6A)
+private val hpYellow = Color(0xFFFFA726)
+private val hpRed = Color(0xFFFF4444)
+
+private fun hpColorFromPercent(pct: Float): Color = when {
+    pct < 0.5f -> lerp(hpRed, hpYellow, (pct / 0.5f).coerceIn(0f, 1f))
+    else -> lerp(hpYellow, hpGreen, ((pct - 0.5f) / 0.5f).coerceIn(0f, 1f))
+}
 
 @Composable
 fun HeroHUD(
@@ -33,13 +44,32 @@ fun HeroHUD(
         animationSpec = tween(300)
     )
 
-    val hpColor = if (animatedHpPercent < 0.3f) Color(0xFFFF4444)
-    else if (animatedHpPercent < 0.6f) Color(0xFFFFA726)
-    else Color(0xFF66BB6A)
+    val hpColor = hpColorFromPercent(animatedHpPercent)
 
-    val borderAlpha by remember { mutableFloatStateOf(if (isCurrentTurn) 0.6f else 0f) }
+    val infiniteTransition = rememberInfiniteTransition()
+    val turnGlowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    val borderAlpha = if (isCurrentTurn) turnGlowAlpha else 0f
 
     val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+
+    val gaugePct = hero.ultimateGauge / 100f
+    val isUltReady = gaugePct >= 1f
+    val ultGlowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
 
     Card(
         modifier = modifier,
@@ -91,7 +121,6 @@ fun HeroHUD(
             Spacer(Modifier.height(2.dp))
 
             // Ultimate gauge
-            val gaugePct = hero.ultimateGauge / 100f
             Box(modifier = Modifier.fillMaxWidth().height(6.dp)) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val w = size.width
@@ -102,11 +131,23 @@ fun HeroHUD(
                     for (i in 0 until segments) {
                         val filled = i < (gaugePct * segments).toInt()
                         val x = i * (segW + gap)
+                        val segColor = if (filled) {
+                            if (isUltReady) Color(0xFFFFD700).copy(alpha = ultGlowAlpha)
+                            else Color(0xFFFFD700)
+                        } else Color(0x40000000)
                         drawRoundRect(
-                            color = if (filled) Color(0xFFFFD700) else Color(0x40000000),
+                            color = segColor,
                             topLeft = Offset(x, 0f),
                             size = Size(segW, h),
                             cornerRadius = CornerRadius(1f)
+                        )
+                    }
+                    if (isUltReady) {
+                        drawRoundRect(
+                            color = Color(0xFFFFD700).copy(alpha = ultGlowAlpha * 0.3f),
+                            size = size,
+                            cornerRadius = CornerRadius(1f),
+                            style = Stroke(width = 2f)
                         )
                     }
                 }
@@ -138,9 +179,7 @@ fun MonsterHUD(
         animationSpec = tween(300)
     )
 
-    val hpColor = if (animatedHpPercent < 0.3f) Color(0xFFFF4444)
-    else if (animatedHpPercent < 0.6f) Color(0xFFFFA726)
-    else Color(0xFF66BB6A)
+    val hpColor = hpColorFromPercent(animatedHpPercent)
 
     val surfaceVariantMonster = MaterialTheme.colorScheme.surfaceVariant
 
@@ -225,32 +264,41 @@ fun StatusIcon(type: StatusEffectType, iconSize: Int = 12) {
         else -> Color.Gray
     }
 
-    Canvas(modifier = Modifier.size(iconSize.dp)) {
-        val c = Offset(size.width / 2f, size.height / 2f)
-        val r = size.minDimension / 2f
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+    val iconScale by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = spring(dampingRatio = 0.5f, stiffness = 800f)
+    )
 
-        drawCircle(color.copy(alpha = 0.15f), r, c)
-        drawCircle(color, r * 0.6f, c, style = Stroke(width = 1.5f))
-        drawCircle(color.copy(alpha = 0.3f), r * 0.4f, c)
+    Box(modifier = Modifier.scale(iconScale)) {
+        Canvas(modifier = Modifier.size(iconSize.dp)) {
+            val c = Offset(size.width / 2f, size.height / 2f)
+            val r = size.minDimension / 2f
 
-        when (type) {
-            StatusEffectType.ATK_UP -> {
-                drawLine(Color.White, Offset(c.x, c.y - r * 0.3f), Offset(c.x, c.y + r * 0.3f), 1.5f)
-                drawLine(Color.White, Offset(c.x - r * 0.3f, c.y), Offset(c.x + r * 0.3f, c.y), 1.5f)
-            }
-            StatusEffectType.SPD_UP -> {
-                val arrowPath = Path().apply {
-                    moveTo(c.x, c.y - r * 0.4f)
-                    lineTo(c.x - r * 0.25f, c.y)
-                    lineTo(c.x + r * 0.25f, c.y)
-                    close()
+            drawCircle(color.copy(alpha = 0.15f), r, c)
+            drawCircle(color, r * 0.6f, c, style = Stroke(width = 1.5f))
+            drawCircle(color.copy(alpha = 0.3f), r * 0.4f, c)
+
+            when (type) {
+                StatusEffectType.ATK_UP -> {
+                    drawLine(Color.White, Offset(c.x, c.y - r * 0.3f), Offset(c.x, c.y + r * 0.3f), 1.5f)
+                    drawLine(Color.White, Offset(c.x - r * 0.3f, c.y), Offset(c.x + r * 0.3f, c.y), 1.5f)
                 }
-                drawPath(arrowPath, Color.White)
+                StatusEffectType.SPD_UP -> {
+                    val arrowPath = Path().apply {
+                        moveTo(c.x, c.y - r * 0.4f)
+                        lineTo(c.x - r * 0.25f, c.y)
+                        lineTo(c.x + r * 0.25f, c.y)
+                        close()
+                    }
+                    drawPath(arrowPath, Color.White)
+                }
+                StatusEffectType.SHIELD -> {
+                    drawCircle(Color.White.copy(alpha = 0.5f), r * 0.3f, c)
+                }
+                else -> {}
             }
-            StatusEffectType.SHIELD -> {
-                drawCircle(Color.White.copy(alpha = 0.5f), r * 0.3f, c)
-            }
-            else -> {}
         }
     }
 }

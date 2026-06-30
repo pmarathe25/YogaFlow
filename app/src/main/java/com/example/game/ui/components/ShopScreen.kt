@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,7 +25,7 @@ fun ShopScreen(viewModel: GameViewModel) {
         modifier = Modifier.fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Column(modifier = Modifier.fillMaxSize().statusBarsPadding().padding(16.dp)) {
             // Header with sparks
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -40,7 +39,7 @@ fun ShopScreen(viewModel: GameViewModel) {
                     fontWeight = FontWeight.Bold
                 )
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
+                    shape = MaterialTheme.shapes.large,
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                 ) {
                     Row(
@@ -158,7 +157,7 @@ private fun ShopItemCard(
                     )
                     // Tier badge
                     Surface(
-                        shape = RoundedCornerShape(4.dp),
+                        shape = MaterialTheme.shapes.small,
                         color = when (item.tier) {
                             EquipmentTier.UNIQUE -> Color(0xFFFFD740).copy(alpha = 0.2f)
                             EquipmentTier.CLASS_SPECIFIC -> Color(0xFFB388FF).copy(alpha = 0.2f)
@@ -202,7 +201,7 @@ private fun ShopItemCard(
             Column(horizontalAlignment = Alignment.End) {
                 if (owned) {
                     Surface(
-                        shape = RoundedCornerShape(4.dp),
+                        shape = MaterialTheme.shapes.small,
                         color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)
                     ) {
                         Text(

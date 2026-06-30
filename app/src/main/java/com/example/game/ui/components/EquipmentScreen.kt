@@ -1,16 +1,21 @@
 package com.example.game.ui.components
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -100,16 +105,16 @@ fun EquipmentScreen(viewModel: GameViewModel) {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        SlotCard(slotItems[0], Modifier.weight(1f))
-                        SlotCard(slotItems[1], Modifier.weight(1f))
+                        SlotCard(slotItems[0], onUnequip = { eq -> viewModel.unequipItem(hero.heroId, eq.id) }, modifier = Modifier.weight(1f))
+                        SlotCard(slotItems[1], onUnequip = { eq -> viewModel.unequipItem(hero.heroId, eq.id) }, modifier = Modifier.weight(1f))
                     }
                     Spacer(Modifier.height(8.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        SlotCard(slotItems[2], Modifier.weight(1f))
-                        SlotCard(slotItems[3], Modifier.weight(1f))
+                        SlotCard(slotItems[2], onUnequip = { eq -> viewModel.unequipItem(hero.heroId, eq.id) }, modifier = Modifier.weight(1f))
+                        SlotCard(slotItems[3], onUnequip = { eq -> viewModel.unequipItem(hero.heroId, eq.id) }, modifier = Modifier.weight(1f))
                     }
 
                     Spacer(Modifier.height(16.dp))
@@ -173,43 +178,74 @@ fun EquipmentScreen(viewModel: GameViewModel) {
 private data class SlotData(val label: String, val item: Equipment?)
 
 @Composable
-private fun SlotCard(slot: SlotData, modifier: Modifier = Modifier) {
-    GlassCard(
-        modifier = modifier,
-        elevation = 2.dp
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+private fun SlotCard(slot: SlotData, onUnequip: ((Equipment) -> Unit)? = null, modifier: Modifier = Modifier) {
+    Box(modifier = modifier) {
+        GlassCard(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = if (slot.item != null) 2.dp else 0.dp
         ) {
-            Text(
-                slot.label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-            )
-            Spacer(Modifier.height(4.dp))
-            if (slot.item != null) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(
-                    slot.item.name,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFFFFD740),
-                    textAlign = TextAlign.Center,
-                    maxLines = 2
+                    slot.label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
-                slot.item.bonusDescription?.let {
+                Spacer(Modifier.height(4.dp))
+                if (slot.item != null) {
                     Text(
-                        it,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        textAlign = TextAlign.Center
+                        slot.item.name,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFFD740),
+                        textAlign = TextAlign.Center,
+                        maxLines = 2
+                    )
+                    slot.item.bonusDescription?.let {
+                        Text(
+                            it,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    Text(
+                        "Empty",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                     )
                 }
-            } else {
+            }
+        }
+        if (slot.item == null) {
+            val dashColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+            Canvas(modifier = Modifier.matchParentSize()) {
+                drawRoundRect(
+                    color = dashColor,
+                    cornerRadius = CornerRadius(12f),
+                    style = Stroke(
+                        width = 1.5f,
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f))
+                    )
+                )
+            }
+        }
+        if (slot.item != null && onUnequip != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(20.dp)
+                    .clickable { onUnequip(slot.item) },
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
-                    "Empty",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                    "\u00D7",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
