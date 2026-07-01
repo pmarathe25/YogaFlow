@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.example.game.model.*
 import com.example.game.persistence.DataLoader
 import com.example.game.viewmodel.GameViewModel
+import com.example.ui.components.GlassCard
 
 @Composable
 fun ShopScreen(viewModel: GameViewModel) {
@@ -143,7 +144,9 @@ private fun ShopItemCard(
 ) {
     GlassCard(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).alpha(if (levelLocked) 0.6f else 1f).clickable { onShowDetail() },
-        elevation = 2.dp
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
+        elevation = 2.dp,
+        useDefaultPadding = false
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),

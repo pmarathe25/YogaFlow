@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.example.game.model.*
 import com.example.game.viewmodel.GameScreen
 import com.example.game.viewmodel.GameViewModel
+import com.example.ui.components.GlassCard
 import kotlinx.coroutines.delay
 
 @Composable
@@ -156,7 +157,9 @@ fun BattleResultScreen(viewModel: GameViewModel) {
                     .graphicsLayer {
                         translationY = with(density) { statsSlideOffset.dp.toPx() }
                     },
-                elevation = 4.dp
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
+                elevation = 4.dp,
+                useDefaultPadding = false
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),

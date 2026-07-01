@@ -3,109 +3,96 @@ package com.example.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.db.ReminderManager
+import com.example.db.SettingsManager
+import com.example.db.StatsManager
 import com.example.db.YogaDatabase
 import com.example.db.YogaSessionRepository
 import com.example.model.YogaFlow
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.example.db.Achievement
+import com.example.db.ReminderEntity
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.launch
 
 class YogaViewModel(application: Application) : AndroidViewModel(application) {
-    private val database = YogaDatabase.getDatabase(application)
-    private val repository = YogaSessionRepository(database.yogaSessionDao())
+    private val repository = YogaSessionRepository(YogaDatabase.getDatabase(application).yogaSessionDao())
     val allSessions = repository.allSessions
 
-    // Sub-ViewModels
-    val statsViewModel = StatsViewModel(application)
-    val settingsViewModel = SettingsViewModel(application)
-    val reminderViewModel = ReminderViewModel(application)
-    val sessionViewModel = SessionViewModel(application)
+    // Managers
+    val settingsManager = SettingsManager(application)
+    val statsManager = StatsManager(viewModelScope, repository)
+    val reminderManager = ReminderManager(application, viewModelScope, YogaDatabase.getDatabase(application), repository)
+    val sessionManager = SessionManager(application, viewModelScope, repository, settingsManager)
 
     init {
-        reminderViewModel.rescheduleAllReminders()
+        reminderManager.rescheduleAllReminders()
     }
 
     // Delegate Stats
-    val totalSessions: StateFlow<Int> = statsViewModel.totalSessions
-    val totalXp: StateFlow<Int> = statsViewModel.totalXp
-    val currentLevel: StateFlow<Int> = statsViewModel.currentLevel
-    val currentLevelName: StateFlow<String> = statsViewModel.currentLevelName
-    val levelProgress: StateFlow<Float> = statsViewModel.levelProgress
-    val totalSparks: StateFlow<Int> = statsViewModel.totalSparks
-    val dailyQuestCompleted: StateFlow<Boolean> = statsViewModel.dailyQuestCompleted
-    val achievements: StateFlow<List<Achievement>> = statsViewModel.achievements
+    val totalSessions: StateFlow<Int> = statsManager.totalSessions
+    val totalXp: StateFlow<Int> = statsManager.totalXp
+    val currentLevel: StateFlow<Int> = statsManager.currentLevel
+    val currentLevelName: StateFlow<String> = statsManager.currentLevelName
+    val levelProgress: StateFlow<Float> = statsManager.levelProgress
+    val totalSparks: StateFlow<Int> = statsManager.totalSparks
+    val dailyQuestCompleted: StateFlow<Boolean> = statsManager.dailyQuestCompleted
+    val achievements: StateFlow<List<Achievement>> = statsManager.achievements
 
     // Delegate Settings
-    val themeMode: StateFlow<String> = settingsViewModel.themeMode
-    val keepScreenAwake: StateFlow<Boolean> = settingsViewModel.keepScreenAwake
-    val backgroundAudioEnabled: StateFlow<Boolean> = settingsViewModel.backgroundAudioEnabled
-    val isVoiceEnabled: StateFlow<Boolean> = sessionViewModel.isVoiceEnabled
-    val preferredVoice: StateFlow<String> = settingsViewModel.preferredVoice
-    val isMusicMuted: StateFlow<Boolean> = settingsViewModel.isMusicMuted
-    val currentTrackIndex: StateFlow<Int> = settingsViewModel.currentTrackIndex
+    val themeMode: StateFlow<String> = settingsManager.themeMode
+    val keepScreenAwake: StateFlow<Boolean> = settingsManager.keepScreenAwake
+    val backgroundAudioEnabled: StateFlow<Boolean> = settingsManager.backgroundAudioEnabled
+    val isVoiceEnabled: StateFlow<Boolean> = sessionManager.isVoiceEnabled
+    val preferredVoice: StateFlow<String> = settingsManager.preferredVoice
+    val isMusicMuted: StateFlow<Boolean> = settingsManager.isMusicMuted
+    val currentTrackIndex: StateFlow<Int> = settingsManager.currentTrackIndex
 
     // Delegate Reminders
-    val allReminders = reminderViewModel.allReminders
-    val favoriteFlowIds = reminderViewModel.favoriteFlowIds
+    val allReminders = reminderManager.allReminders
+    val favoriteFlowIds = reminderManager.favoriteFlowIds
 
     // Delegate Session
-    val flow = sessionViewModel.flow
-    val currentPoseIndex = sessionViewModel.currentPoseIndex
-    val remainingTimeSec = sessionViewModel.remainingTimeSec
-    val isPlaying = sessionViewModel.isPlaying
-    val preferredVoiceSession = sessionViewModel.preferredVoice
-    val isSessionCompleted = sessionViewModel.isSessionCompleted
-    val isCountdownActive = sessionViewModel.isCountdownActive
-    val countdownRemaining = sessionViewModel.countdownRemaining
-    val speechState = sessionViewModel.speechState
-    val currentPose = sessionViewModel.currentPose
-    val ambientMusicManager = sessionViewModel.ambientMusicManager
+    val flow = sessionManager.flow
+    val currentPoseIndex = sessionManager.currentPoseIndex
+    val remainingTimeSec = sessionManager.remainingTimeSec
+    val isPlaying = sessionManager.isPlaying
+    val isSessionCompleted = sessionManager.isSessionCompleted
+    val isCountdownActive = sessionManager.isCountdownActive
+    val countdownRemaining = sessionManager.countdownRemaining
+    val speechState = sessionManager.speechState
+    val currentPose = sessionManager.currentPose
+    val ambientMusicManager = sessionManager.ambientMusicManager
 
-    // Settings delegation methods
-    fun setThemeMode(mode: String) = settingsViewModel.setThemeMode(mode)
-    fun setKeepScreenAwake(enabled: Boolean) = settingsViewModel.setKeepScreenAwake(enabled)
-    fun setBackgroundAudioEnabled(enabled: Boolean) = settingsViewModel.setBackgroundAudioEnabled(enabled)
-    fun setIsVoiceEnabled(enabled: Boolean) = sessionViewModel.toggleVoice(enabled)
-    fun setPreferredVoice(voice: String) {
-        settingsViewModel.setPreferredVoice(voice)
-        sessionViewModel.setPreferredVoice(voice)
+    fun setThemeMode(mode: String) = settingsManager.setThemeMode(mode)
+    fun setKeepScreenAwake(enabled: Boolean) = settingsManager.setKeepScreenAwake(enabled)
+    fun setBackgroundAudioEnabled(enabled: Boolean) = settingsManager.setBackgroundAudioEnabled(enabled)
+    fun setPreferredVoice(voice: String) = sessionManager.setPreferredVoice(voice)
+    fun setIsMusicMuted(muted: Boolean) = settingsManager.setIsMusicMuted(muted)
+    fun setCurrentTrackIndex(index: Int) = settingsManager.setCurrentTrackIndex(index)
+
+    fun selectFlow(yogaFlow: YogaFlow) = sessionManager.selectFlow(yogaFlow)
+    fun togglePlay() = sessionManager.togglePlay()
+    fun toggleMusicMute() = sessionManager.toggleMusicMute()
+    fun selectAmbientTrack(index: Int) = sessionManager.selectAmbientTrack(index)
+    fun skipForward() = sessionManager.skipForward()
+    fun skipBackward() = sessionManager.skipBackward()
+    fun selectPoseDirectly(index: Int) = sessionManager.selectPoseDirectly(index)
+    fun toggleVoice(enabled: Boolean) = sessionManager.toggleVoice(enabled)
+    fun resetForDashboard() = sessionManager.resetForDashboard()
+    fun restartSession() = sessionManager.restartSession()
+    fun startCountdown() = sessionManager.startCountdown()
+    fun cancelCountdown() = sessionManager.cancelCountdown()
+    fun skipCountdownAndStart() = sessionManager.skipCountdownAndStart()
+    fun triggerVoiceCueForCurrentPose() = sessionManager.triggerVoiceCueForCurrentPose()
+
+    fun addReminder(reminder: ReminderEntity, onResult: (Boolean) -> Unit = {}) = reminderManager.addReminder(reminder, onResult)
+    fun updateReminder(reminder: ReminderEntity) = reminderManager.updateReminder(reminder)
+    fun deleteReminder(reminder: ReminderEntity) = reminderManager.deleteReminder(reminder)
+    fun toggleFavoriteFlow(flowId: String) = reminderManager.toggleFavoriteFlow(flowId)
+
+    fun clearAllCompletedSessions() = statsManager.clearAllCompletedSessions()
+
+    override fun onCleared() {
+        super.onCleared()
+        sessionManager.release()
     }
-    fun setIsMusicMuted(muted: Boolean) {
-        settingsViewModel.setIsMusicMuted(muted)
-        sessionViewModel.ambientMusicManager.setMute(muted)
-    }
-    fun setCurrentTrackIndex(index: Int) {
-        settingsViewModel.setCurrentTrackIndex(index)
-        sessionViewModel.ambientMusicManager.setCurrentTrackIndex(index)
-    }
-
-    // Session delegation methods
-    fun selectFlow(yogaFlow: com.example.model.YogaFlow) = sessionViewModel.selectFlow(yogaFlow)
-    fun togglePlay() = sessionViewModel.togglePlay()
-    fun toggleMusicMute() = sessionViewModel.toggleMusicMute()
-    fun selectAmbientTrack(index: Int) = sessionViewModel.selectAmbientTrack(index)
-    fun skipForward() = sessionViewModel.skipForward()
-    fun skipBackward() = sessionViewModel.skipBackward()
-    fun selectPoseDirectly(index: Int) = sessionViewModel.selectPoseDirectly(index)
-    fun toggleVoice(enabled: Boolean) = sessionViewModel.toggleVoice(enabled)
-    fun setPreferredVoiceSession(voice: String) = sessionViewModel.setPreferredVoice(voice)
-    fun resetForDashboard() = sessionViewModel.resetForDashboard()
-    fun restartSession() = sessionViewModel.restartSession()
-    fun startCountdown() = sessionViewModel.startCountdown()
-    fun cancelCountdown() = sessionViewModel.cancelCountdown()
-    fun skipCountdownAndStart() = sessionViewModel.skipCountdownAndStart()
-    fun triggerVoiceCueForCurrentPose() = sessionViewModel.triggerVoiceCueForCurrentPose()
-
-    // Reminder delegation methods
-    fun addReminder(reminder: com.example.db.ReminderEntity, onResult: (Boolean) -> Unit = {}) = reminderViewModel.addReminder(reminder, onResult)
-    fun updateReminder(reminder: com.example.db.ReminderEntity) = reminderViewModel.updateReminder(reminder)
-    fun deleteReminder(reminder: com.example.db.ReminderEntity) = reminderViewModel.deleteReminder(reminder)
-    fun toggleFavoriteFlow(flowId: String) = reminderViewModel.toggleFavoriteFlow(flowId)
-
-    // Stats delegation
-    fun clearAllCompletedSessions() = statsViewModel.clearAllCompletedSessions()
 }

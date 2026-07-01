@@ -11,6 +11,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.SettingsScreen
 import com.example.game.ui.components.GameApp
 import com.example.game.viewmodel.GameViewModel
 import com.example.model.FlowLoader

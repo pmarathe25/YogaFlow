@@ -102,8 +102,6 @@ class BattleState(
     var selectedTargets: List<String> = emptyList(),
     private val _eventLog: MutableList<BattleEvent> = mutableListOf(),
     var isComboAvailable: Boolean = false,
-    var currentCombo: ComboSkill? = null,
-    var pendingAction: TurnAction? = null,
     var pendingSkill: Skill? = null,
     var showTargetSelection: Boolean = false,
     val skillCooldowns: MutableMap<String, MutableMap<String, Int>> = mutableMapOf() // heroId -> (skillId -> remainingTurns)
@@ -148,8 +146,6 @@ class BattleState(
         selectedTargets = selectedTargets.toList(),
         _eventLog = _eventLog.toMutableList(),
         isComboAvailable = isComboAvailable,
-        currentCombo = currentCombo,
-        pendingAction = pendingAction,
         pendingSkill = pendingSkill,
         showTargetSelection = showTargetSelection,
         skillCooldowns = skillCooldowns.mapValues { it.value.toMutableMap() }.toMutableMap()

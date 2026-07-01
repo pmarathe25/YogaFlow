@@ -78,6 +78,10 @@ fun BattleEffectOverlay(
                                 damageNumbers.add(entry)
                                 pool.emit(EmitterConfig(colors = listOf(Color.Cyan)), targetPos, 8)
                             }
+                            if (outcome.damageDealt > 0 || outcome.healingDone > 0 || outcome.shieldApplied > 0) {
+                                // Add a generic emission if specific ones fail to trigger
+                                pool.emit(EmitterConfig(colors = listOf(Color.White)), targetPos, 5)
+                            }
                         }
                     }
                 }

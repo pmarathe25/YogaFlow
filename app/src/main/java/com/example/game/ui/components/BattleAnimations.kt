@@ -18,7 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.game.model.BattleEvent
 import com.example.game.model.BattleState
-import com.example.game.model.SpriteState
+import com.example.game.ui.components.SpriteState
+import com.example.game.ui.components.SpriteAnimState
 import kotlinx.coroutines.delay
 
 @Composable
@@ -50,14 +51,6 @@ fun TurnBanner(
         }
     }
 }
-
-data class SpriteAnimState(
-    val state: SpriteState = SpriteState.IDLE,
-    val stateTime: Float = 0f,
-    val offsetX: Float = 0f,
-    val offsetY: Float = 0f,
-    val alpha: Float = 1f
-)
 
 @Composable
 fun rememberSpriteAnimations(

@@ -1,180 +1,160 @@
-# Plan: Code Simplification and Quality Improvement
+# Plan: Fix Gemini-Introduced Bugs from Refactoring
 
-## Issues Addressed
+## Background
 
-- **God ViewModel**: `GameViewModel` (750 lines) mixes battle, party, shop, equipment, and economy logic.
-- **Sub-ViewModel Leak**: `YogaViewModel` manually instantiates 4 sub-ViewModels (`StatsViewModel`, `SettingsViewModel`, `ReminderViewModel`, `SessionViewModel`) without DI or `ViewModelProvider` — their `onCleared()` is never called.
-- **Missing `onCleared()`**: `YogaViewModel` has no cleanup.
-- **Duplicate NavHost**: `YogaNavHost.kt` exists but is unused — the inline NavHost in `MainActivity.kt` (335 lines) is what actually renders. Two copies to maintain.
-- **Dead Code**: `DataLoader.getHeroForLevel()` is never called. `BattleState.currentCombo` and `pendingAction` are never read (only defined and snapshotted). `pendingSkill` is actively used and must stay.
-- **Large Component**: `BattleScreen` (546 lines) is difficult to maintain.
+Gemini refactored the codebase to eliminate dead code, consolidate ViewModels into Managers, and remove duplicated NavHost. While the structural changes are good, several critical bugs were introduced in the battle system.
 
----
+## Bugs Identified
 
-## Changes Required
+### Bug 1: Double monster turns from dead-actor skip
 
-### 1. `YogaViewModel.kt` — Fix sub-ViewModel lifecycle
+**File:** `GameViewModel.kt:393-404`
 
-**Current (lines 23-26):**
+**Root cause:** A new dead-actor skip was added in `advanceTurn()`:
 ```kotlin
-val statsViewModel = StatsViewModel(application)
-val settingsViewModel = SettingsViewModel(application)
-val reminderViewModel = ReminderViewModel(application)
-val sessionViewModel = SessionViewModel(application)
-```
-
-These are instantiated as plain objects, not through AndroidX `ViewModelProvider`. They will never have their `onCleared()` called, causing resource leaks (especially `SessionViewModel` which manages wake locks, audio, and timers at lines 432-440).
-
-#### Fix: Three options, in order of preference
-
-**Option A (Recommended — full DI retrofit):** Use `ViewModelProvider` or a manual `ViewModelStore`:
-```kotlin
-private val statsViewModel: StatsViewModel by viewModels()
-private val settingsViewModel: SettingsViewModel by viewModels()
-// SessionViewModel needs special handling since it's shared
-```
-
-However, `YogaViewModel` extends `AndroidViewModel`, and `by viewModels()` works in `ComponentActivity`/`Fragment`, not within a ViewModel directly. A better approach:
-
-**Option B (Delegate to manager classes):** Fold the thin sub-ViewModels into `YogaViewModel` directly (or into existing managers), avoiding sub-ViewModel instantiation entirely:
-
-| Sub-ViewModel | Lines | Action |
-|---------------|-------|--------|
-| `StatsViewModel` (138 lines) | Fold into `StatsManager` (already exists in `db/`) or into `YogaViewModel` directly. Its logic is purely reactive (Room DB flows). |
-| `SettingsViewModel` (70 lines) | Fold into existing `SettingsManager` or `YogaViewModel`. Thin wrapper. |
-| `ReminderViewModel` (118 lines) | Fold into existing `ReminderManager` or `YogaViewModel`. Thin wrapper. |
-| `SessionViewModel` (441 lines) | **Cannot fold** — manages active session lifecycle (wake lock, audio, countdown, zen sound). Extract into a dedicated `SessionController` manager class with explicit `cleanup()` method called from `YogaViewModel.onCleared()`. |
-
-#### Add `onCleared()` to YogaViewModel:
-```kotlin
-override fun onCleared() {
-    super.onCleared()
-    sessionViewModel.cleanup()  // or sessionController.cleanup()
+if (!actorInstanceAlive) {
+    advanceTurn(state)  // recursive call
+    return@launch
 }
 ```
 
-### 2. `GameViewModel.kt` — Extract PartyManager and ShopManager
+When the next scheduled actor is dead, this calls `advanceTurn` recursively, which calls `state.currentTurnIndex = (state.currentTurnIndex + 1) % size`. This lands on the next actor in the order — which could be a monster that already acted this round, giving it a **double turn**.
 
-Current: 750 lines mixing 5 concerns.
+**Example:** Turn order [HeroA, Monster]. Monster kills HeroA during its turn. When HeroA's turn comes next, the dead-actor skip advances to the Monster again, giving it an extra turn.
 
-Extract into two new files under `game/manager/`:
-
-#### `PartyManager.kt`
-Move methods:
-- `restoreParty()` (lines 131-142)
-- `getUnlockedHeroes()` (lines 144-146)
-- `getAvailableHeroes()` (lines 148-150)
-- `levelUpHero()` (lines 697-720)
-- `purchaseHero()` (lines 724-739)
-- `getHeroLevelUpCost()` (lines 692-695)
-- `getEquippedItems()` (lines 678-681)
-- `equipItem()` (lines 649-666)
-- `unequipItem()` (lines 668-676)
-
-PartyManager takes `_party` and `_saveData` state flows as constructor params:
-```kotlin
-class PartyManager(
-    private val party: MutableStateFlow<List<HeroInstance>>,
-    private val saveData: MutableStateFlow<GameSaveData>,
-    private val saveGame: () -> Unit
-)
-```
-
-#### `ShopManager.kt`
-Move methods:
-- `purchaseItem()` (lines 633-647)
-- `getAvailableGold()` (lines 685-688)
+**Fix:** Remove the dead-actor skip entirely. The original code didn't have it — dead heroes' turns come up but the UI naturally handles it (the ActionPanel shows nothing since `currentActorId` has no alive hero). When all heroes are dead, the defeat check at lines 382-391 catches it.
 
 ```kotlin
-class ShopManager(
-    private val saveData: MutableStateFlow<GameSaveData>,
-    private val saveGame: () -> Unit
-)
+// DELETE lines 393-404 entirely
 ```
 
-#### `GameViewModel.kt` after extraction
-- Delegates to `PartyManager` and `ShopManager`
-- Keeps battle-specific methods (~450 lines remaining): `startBattle`, `executeSkill`, `executeUltimate`, `executeCombo`, `advanceTurn`, `executeMonsterTurn`, `onBattleWon`, `syncWithMainApp`, etc.
-- Creates managers in `init {}` block:
+### Bug 2: `currentTurnIndex = 0` on round wrap breaks combo skip
+
+**File:** `GameViewModel.kt:368`
+
+**Root cause:** On round wrap, `currentTurnIndex` is unconditionally set to 0:
 ```kotlin
-private val partyManager = PartyManager(_party, _saveData, ::saveGame)
-private val shopManager = ShopManager(_saveData, ::saveGame)
+if (wrapped) {
+    state.advanceRound()
+    state.monsters.forEach { it.extraActionsThisRound = 0 }
+    val newOrder = BattleEngine.calculateTurnOrder(state.heroes, state.monsters)
+    state.turnOrder.clear()
+    state.turnOrder.addAll(newOrder)
+    state.currentTurnIndex = 0  // BUG
+}
 ```
 
-### 3. `BattleState.kt` — Remove unused properties
+This is correct for skipCount=1, but wrong for skipCount > 1 (combo skills). E.g., turn order [H1, M, H2, H3] at index 3 with skipCount=2: `(3+2)%4 = 1`, wrapped. New code sets index=0, skipping H2 who should go next.
 
-Remove (lines 105-106):
+**Fix:**
 ```kotlin
-var currentCombo: ComboSkill? = null,   // UNUSED — never read
-var pendingAction: TurnAction? = null,   // UNUSED — never read
+if (wrapped) {
+    state.advanceRound()
+    state.monsters.forEach { it.extraActionsThisRound = 0 }
+    val newOrder = BattleEngine.calculateTurnOrder(state.heroes, state.monsters)
+    state.turnOrder.clear()
+    state.turnOrder.addAll(newOrder)
+    // Keep currentTurnIndex — the % calculation already computed the correct position
+}
 ```
 
-**Keep `pendingSkill`** (line 107) — it IS actively used in `GameViewModel.kt:211,231,241` and `BattleScreen.kt:66,263,342`.
+### Bug 3: Missing post-phase trigger checks after monster action
 
-Also remove from `snapshot()`:
+**File:** `GameViewModel.kt:477-482`
+
+**Root cause:** The original `executeMonsterTurn` checked `BattleEngine.checkPhaseTriggers()` after the monster's action AND after extra actions. The refactored code only checks preEvents (line 440) and removed the post-action check:
+
 ```kotlin
-currentCombo = currentCombo,
-pendingAction = pendingAction,
+// REMOVED from refactored code:
+val postEvents = BattleEngine.checkPhaseTriggers(state, monster)
+postEvents.filterIsInstance<BattleEvent.PhaseTriggered>().forEach { event ->
+    addBattleLog("${monster.name} triggers: ${event.trigger.type.name}!")
+}
 ```
 
-### 4. `DataLoader.kt` — Remove dead code
+**Fix:** Add the post-action phase trigger check after `applyOutcome` and before the delay:
 
-Remove function (lines 44-46):
 ```kotlin
-fun getHeroForLevel(level: Int): Hero =
-    heroes.filter { level >= it.unlockYogaLevel }.maxByOrNull { it.unlockYogaLevel }
-        ?: heroes.first()
+applyOutcome(state, outcome)
+emitBattleState(state)
+
+val postEvents = BattleEngine.checkPhaseTriggers(state, monster)
+postEvents.filterIsInstance<BattleEvent.PhaseTriggered>().forEach {
+    addBattleLog("${monster.name} triggers: ${it.trigger.type.name}!")
+}
+
+delay(1500)
 ```
 
-Usage confirmed: defined but never called anywhere in the codebase.
+### Bug 4: `BattleEngine.advanceTurn()` is dead code
 
-### 5. `YogaNavHost.kt` — Resolve duplicate
+**File:** `BattleEngine.kt:36-92`
 
-**Current state:** Two copies of the NavHost exist:
-- Inline in `MainActivity.kt` `YogaAppContent` composable (lines 203-332) — the one actually used
-- `navigation/YogaNavHost.kt` — defined at line 21 but never imported or called
+**Root cause:** Gemini created a second `advanceTurn` method in `BattleEngine` but `GameViewModel.advanceTurn()` (lines 353-430) is the one actually called from all battle flow paths. The `BattleEngine.advanceTurn()` is never invoked.
 
-**Decision: Delete `YogaNavHost.kt`** (159 lines of dead code). It's a stale extraction that diverged from the inline version. If NavHost extraction is desired later, re-extract cleanly from the active copy.
+**Fix:** Remove the `BattleEngine.advanceTurn()` method entirely (56 lines of dead code).
 
-### 6. `BattleScreen.kt` — Decompose large composable
+### Bug 5: `BattleScreen` flash `LaunchedEffect` missing `lastEventCount` guard
 
-Current: 546 lines. Extract:
+**File:** `BattleScreen.kt` `LaunchedEffect(state.eventLog.size)`
 
-| Extracted Component | Estimated Lines | Contents |
-|-------------------|-----------------|----------|
-| `BattleStartAnimation` | ~50 | Black fade → monster reveal → heroes slide in → "BATTLE BEGINS!" |
-| `BattleTargetingOverlay` | ~60 | TargetCircle rendering, target selection state |
-| `BattleFlashEffect` | ~40 | Flash overlay timing and color logic |
-| `BattleStatusBar` | ~50 | Top bar: turn indicator + turn order list |
+**Root cause:** The original code had:
+```kotlin
+val lastEventCount = remember { mutableIntStateOf(0) }
+LaunchedEffect(eventLog.size) {
+    if (eventLog.size <= lastEventCount.intValue) return@LaunchedEffect
+    lastEventCount.intValue = eventLog.size
+```
 
-No structural changes — just break up the single composable into smaller named composables in the same file or a new `battle/` subdirectory.
+The refactored code removed the `lastEventCount` guard. While `LaunchedEffect` with a key should only re-run when the key changes, stale recompositions could replay flash effects. The guard was defensive for a reason.
+
+**Fix:** Restore the `lastEventCount` guard.
+
+### Bug 6: `BattleScreen` missing `MonsterDown`/`HeroDown` flash handling
+
+**File:** `BattleScreen.kt` `LaunchedEffect(state.eventLog.size)`
+
+**Root cause:** The refactored code removed the `MonsterDown` and `HeroDown` event handlers that were in the original's flash effect handler:
+
+```kotlin
+// REMOVED:
+is BattleEvent.MonsterDown -> {
+    monsterAnimState.value = SpriteAnimState(state = SpriteState.DYING, stateTime = 0f, alpha = 0f, offsetY = 30f)
+}
+is BattleEvent.HeroDown -> {
+    heroAnimStates[event.heroId] = SpriteAnimState(state = SpriteState.DYING, stateTime = 0f, alpha = 0f, offsetY = 30f)
+}
+```
+
+These may be handled by `rememberSpriteAnimations()` in `BattleAnimations.kt`, but need verification. If not handled there, restore these handlers.
+
+### Bug 7: `GameViewModel.chooseMonsterTarget()` is dead code
+
+**File:** `GameViewModel.kt:486-488`
+
+**Root cause:** The refactored `executeMonsterTurn` calls `BattleEngine.chooseMonsterTarget()` directly (line 456), leaving the wrapper method `GameViewModel.chooseMonsterTarget()` defined but never called.
+
+**Fix:** Remove the unused wrapper method.
 
 ---
 
-## Summary of changes
+## Summary of Changes
 
-| File | Change | Impact |
-|------|--------|--------|
-| `viewmodel/YogaViewModel.kt` | Fold 3 thin sub-VMs, extract SessionController, add `onCleared()` | Fixes memory leak |
-| `viewmodel/SessionViewModel.kt` | Extract SessionController, keep UI state | Enables cleanup |
-| `viewmodel/StatsViewModel.kt` | Fold into StatsManager or YogaViewModel | Delete file |
-| `viewmodel/SettingsViewModel.kt` | Fold into SettingsManager or YogaViewModel | Delete file |
-| `viewmodel/ReminderViewModel.kt` | Fold into ReminderManager or YogaViewModel | Delete file |
-| `game/viewmodel/GameViewModel.kt` | Extract PartyManager + ShopManager | 750→450 lines |
-| `game/manager/PartyManager.kt` | New file | 150 lines |
-| `game/manager/ShopManager.kt` | New file | 40 lines |
-| `game/model/BattleState.kt` | Remove `currentCombo`, `pendingAction` | 201→195 lines |
-| `game/persistence/DataLoader.kt` | Remove `getHeroForLevel()` | 66→60 lines |
-| `navigation/YogaNavHost.kt` | Delete file | 159 lines removed |
-| `game/ui/components/BattleScreen.kt` | Extract 4 sub-composables | 546→~350 lines |
+| # | File | Change |
+|---|------|--------|
+| 1 | `GameViewModel.kt:393-404` | Remove dead-actor skip (causes double monster turns) |
+| 2 | `GameViewModel.kt:368` | Remove `currentTurnIndex = 0` on wrap |
+| 3 | `GameViewModel.kt:~474` | Restore post-phase trigger checks after monster action |
+| 4 | `BattleEngine.kt:36-92` | Remove dead `BattleEngine.advanceTurn()` |
+| 5 | `BattleScreen.kt` | Restore `lastEventCount` guard in flash `LaunchedEffect` |
+| 6 | `BattleScreen.kt` | Restore `MonsterDown`/`HeroDown` flash/sprite transitions |
+| 7 | `GameViewModel.kt:486-488` | Remove dead `chooseMonsterTarget` wrapper |
 
----
+## Verified Correct (no changes needed)
 
-## ⚠️ Important corrections to Gemini analysis
-
-- `pendingSkill` is actively used at `GameViewModel.kt:211,231,241` and `BattleScreen.kt:66,263,342`. **Do NOT remove.**
-- `SessionViewModel` (441 lines) is **not** a thin wrapper — it manages wake locks, audio, countdown timers, and zen sound synthesis during active sessions. Folding it requires creating a proper `SessionController` with explicit lifecycle.
-- `StatsManager` already exists in `db/StatsManager.kt`. The request to "create" it is stale.
-- `SettingsManager` already exists in `db/SettingsManager.kt`.
-- `ReminderManager` already exists in `db/ReminderManager.kt`.
-- `VaginaViyogaHost` already exists in `navigation/YogaNavHost.kt` (the file exists but is dead code).
+- **`BattleEngine.applyOutcome` new combo handling** (buffs, revive, statusEffects via `combo?` fields) — correctly handles combo effects that were previously duplicated in `GameViewModel.computeComboOutcome`.
+- **`SpriteState`/`SpriteAnimState` move** from `BattleAnimations.kt` to `BattleCanvas.kt` — correct, no functional change.
+- **`MainActivity.kt` → `YogaNavHost.kt` extraction** — correct, eliminates inline NavHost duplication.
+- **`YogaViewModel` sub-ViewModel → Manager consolidation** — correct, fixes lifecycle leak.
+- **`DataLoader.getHeroForLevel()` removal** — confirmed dead code.
+- **`BattleState.currentCombo`/`pendingAction` removal** — confirmed dead code.

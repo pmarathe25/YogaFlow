@@ -217,35 +217,36 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         if (state.phase != PLAYER_TURN || _isProcessingTurn.value) return
         val hero = state.heroes.find { it.heroId == heroId && !it.isDead } ?: return
 
-        // Check if we need a target but haven't received one yet
+        // Resolve targets
+        val targets = customTargets ?: resolveTargets(state, hero, skill)
+
+        // If it's a target-selection skill and no targets provided, and multiple choices exist, enter selection
         if (customTargets == null) {
-            when (skill.targetType) {
-                SINGLE_ENEMY -> {
-                    // Auto-target first alive monster
-                    val monsterId = state.aliveMonsters.firstOrNull()?.monsterId
-                    if (monsterId != null) {
-                        return executeSkill(heroId, skill, listOf(monsterId))
-                    }
-                }
-                SINGLE_ALLY, SELF -> {
-                    state.pendingSkill = skill
-                    emitBattleState(state)
-                    return
-                }
-                else -> {} // Multi-target skills resolve in resolveTargets
+            val autoTarget = when (skill.targetType) {
+                SINGLE_ENEMY -> state.aliveMonsters.firstOrNull()?.monsterId
+                SINGLE_ALLY -> if (state.aliveHeroes.size == 1) hero.heroId else null
+                SELF -> hero.heroId
+                ALL_ALLIES, ALL_ENEMIES, ALL -> "ALL"
+                else -> null
+            }
+
+            if (autoTarget == "ALL") {
+                // proceed
+            } else if (autoTarget != null) {
+                executeSkill(heroId, skill, listOf(autoTarget))
+                return
+            } else {
+                state.pendingSkill = skill
+                emitBattleState(state)
+                return
             }
         }
+
+        if (targets.isEmpty()) return
 
         viewModelScope.launch {
             _isProcessingTurn.value = true
             state.pendingSkill = null // Clear pending skill as we are executing
-
-            // Build target list
-            val targets = customTargets ?: resolveTargets(state, hero, skill)
-            if (targets.isEmpty()) {
-                _isProcessingTurn.value = false
-                return@launch
-            }
 
             val outcome = computeSkillOutcome(state, hero, skill, targets)
             hero.ultimateGauge = (hero.ultimateGauge + skill.ultimateGain).coerceAtMost(100)
@@ -358,48 +359,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             val wrapped = state.currentTurnIndex < oldIndex ||
                     (state.currentTurnIndex == 0 && (oldIndex + skipCount) >= state.turnOrder.size)
 
-            // Advance round if we wrapped around the turn order
             if (wrapped) {
                 state.advanceRound()
                 state.monsters.forEach { it.extraActionsThisRound = 0 }
-                calculateTurnOrder(state)
-            }
-
-            // Check for victory/defeat
-            if (state.aliveMonsters.isEmpty()) {
-                state.phase = VICTORY
-                state.addEvent(BattleEvent.Victory(state.turnsTaken))
-                addBattleLog("Victory!")
-                emitBattleState(state)
-                delay(1000)
-                _currentScreen.value = GameScreen.BATTLE_RESULT
-                onBattleWon()
-                return@launch
-            }
-            if (state.aliveHeroes.isEmpty()) {
-                state.phase = DEFEAT
-                state.addEvent(BattleEvent.Defeat(state.round))
-                addBattleLog("Defeat...")
-                
-                // Reset stats even on defeat
-                _party.value.forEach { hero ->
-                    hero.currentHp = hero.maxHp
-                    hero.shield = 0
-                    hero.ultimateGauge = 0
-                    hero.isDead = false
-                }
-
-                emitBattleState(state)
-                delay(1000)
-                _currentScreen.value = GameScreen.BATTLE_RESULT
-                return@launch
+                val newOrder = BattleEngine.calculateTurnOrder(state.heroes, state.monsters)
+                state.turnOrder.clear()
+                state.turnOrder.addAll(newOrder)
             }
 
             val nextActor = state.turnOrder[state.currentTurnIndex]
             state.currentActorId = nextActor.id
             updateComboAvailability(state)
 
-            // Decrement cooldowns for the actor whose turn is starting
+            // Cooldowns
             val actorCds = state.skillCooldowns[nextActor.id]
             if (actorCds != null) {
                 val updatedCds = actorCds.toMutableMap()
@@ -410,7 +382,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             emitBattleState(state)
-            delay(1200) // Delay for Turn Banner to show
+            delay(1200)
 
             if (nextActor.isHero) {
                 state.phase = PLAYER_TURN
@@ -424,26 +396,40 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun executeMonsterTurn(state: BattleState, actor: BattleActor) {
         viewModelScope.launch {
-            val monster = state.monsters.find { it.monsterId == actor.id && !it.isDead } ?: return@launch
+            val monster = state.monsters.find { it.monsterId == actor.id && !it.isDead }
+            if (monster == null) {
+                advanceTurn(state)
+                return@launch
+            }
 
             val preEvents = BattleEngine.checkPhaseTriggers(state, monster)
-            preEvents.filterIsInstance<BattleEvent.PhaseTriggered>().forEach { event ->
-                addBattleLog("${monster.name} triggers: ${event.trigger.type.name}!")
+            preEvents.filterIsInstance<BattleEvent.PhaseTriggered>().forEach {
+                addBattleLog("${monster.name} triggers: ${it.trigger.type.name}!")
             }
 
             val useSpecial = Random.nextFloat() < monster.aiBehavior.specialChance ||
                     monster.turnsSinceLastSpecial >= 3
-            val skill = if (useSpecial) monster.specialAttack
-            else Skill("monster_attack", "Attack", "Basic attack.", SINGLE_ENEMY,
-                damageComponents = listOf(DamageComponent(PHYSICAL)), baseDamage = monster.atk)
+            val skill = if (useSpecial) {
+                monster.turnsSinceLastSpecial = 0
+                monster.specialAttack
+            } else {
+                monster.turnsSinceLastSpecial++
+                Skill("monster_attack", "Attack", "Basic attack.", SINGLE_ENEMY,
+                    damageComponents = listOf(DamageComponent(PHYSICAL)), baseDamage = monster.atk)
+            }
 
-            if (useSpecial) monster.turnsSinceLastSpecial = 0
-            else monster.turnsSinceLastSpecial++
+            val targetId = BattleEngine.chooseMonsterTarget(state.aliveHeroes, monster.aiBehavior.targetStrategy, state)
+            val target = state.heroes.find { it.heroId == targetId }
+            
+            if (target == null) {
+                advanceTurn(state)
+                return@launch
+            }
 
-            val target = chooseMonsterTarget(state, monster)
             val targets = if (skill.targetType == ALL_ENEMIES || skill.targetType == ALL)
                 state.aliveHeroes.map { it.heroId }
-            else listOf(target?.heroId ?: state.aliveHeroes.firstOrNull()?.heroId ?: run { advanceTurn(state); return@launch })
+            else
+                listOf(target.heroId)
 
             val outcome = computeMonsterOutcome(state, monster, skill, targets)
             state.addEvent(BattleEvent.MonsterTurn(monster.monsterId, skill, targets, outcome))
@@ -451,28 +437,20 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             applyOutcome(state, outcome)
             emitBattleState(state)
 
-            delay(1000) // Wait for monster action animation
+            val postEvents = BattleEngine.checkPhaseTriggers(state, monster)
+            postEvents.filterIsInstance<BattleEvent.PhaseTriggered>().forEach {
+                addBattleLog("${monster.name} triggers: ${it.trigger.type.name}!")
+            }
 
-            // Check extra actions (only within same "slot")
+            delay(1500)
+
             if (monster.extraActionsThisRound > 0) {
                 monster.extraActionsThisRound--
                 executeMonsterTurn(state, actor)
-                return@launch
+            } else {
+                advanceTurn(state)
             }
-
-            val postEvents = BattleEngine.checkPhaseTriggers(state, monster)
-            postEvents.filterIsInstance<BattleEvent.PhaseTriggered>().forEach { event ->
-                addBattleLog("${monster.name} triggers: ${event.trigger.type.name}!")
-            }
-
-            // Move to next turn; advanceTurn handles round advancement
-            advanceTurn(state)
         }
-    }
-
-    private fun chooseMonsterTarget(state: BattleState, monster: MonsterInstance): HeroInstance? {
-        val heroId = BattleEngine.chooseMonsterTarget(state.aliveHeroes, monster.aiBehavior.targetStrategy, state)
-        return state.heroes.find { it.heroId == heroId }
     }
 
     private fun resolveTargets(state: BattleState, hero: HeroInstance, skill: Skill): List<String> {
@@ -488,34 +466,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun computeComboOutcome(
         state: BattleState, participants: List<HeroInstance>, combo: ComboSkill, targets: List<String>
     ): ActionOutcome {
-        val result = BattleEngine.computeComboOutcome(combo, participants.first().heroId,
-            participants.drop(1).map { it.heroId }, state)
-        val outcome = result.outcome
-
-        combo.buffs.forEach { buff ->
-            val targetsToBuff = if (buff.targetsParty) state.aliveHeroes.map { it.heroId }
-            else targets
-            targetsToBuff.forEach { id ->
-                state.statusEffects.getOrPut(id) { mutableListOf() }
-                    .add(BattleStatus(id, buff.type, buff.duration, buff.value))
-            }
-        }
-
-        if (combo.cleanse) {
-            targets.forEach { id -> state.statusEffects.remove(id) }
-        }
-
-        if (combo.revive) {
-            state.heroes.filter { it.isDead }.forEach { f ->
-                f.isDead = false
-                val healPct = combo.healScaling?.let {
-                    if (it.isPercentage) it.baseHeal else 50
-                } ?: 50
-                f.currentHp = (f.maxHp * healPct / 100).coerceAtLeast(1)
-            }
-        }
-
-        return outcome
+        return BattleEngine.computeComboOutcome(combo, participants.first().heroId,
+            participants.drop(1).map { it.heroId }, state).outcome
     }
 
     private fun computeMonsterOutcome(

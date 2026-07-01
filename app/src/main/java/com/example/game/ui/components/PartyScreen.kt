@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.example.game.model.*
 import com.example.game.persistence.DataLoader
 import com.example.game.viewmodel.GameViewModel
+import com.example.ui.components.GlassCard
 
 @Composable
 fun PartyScreen(viewModel: GameViewModel) {
@@ -101,7 +102,9 @@ private fun HeroListItem(hero: Hero, instance: HeroInstance?, isUnlocked: Boolea
 
     GlassCard(
         modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp).alpha(if (isUnlocked) 1f else 0.5f).clickable(enabled = isUnlocked) { onClick() },
-        elevation = 3.dp
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
+        elevation = 3.dp,
+        useDefaultPadding = false
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),

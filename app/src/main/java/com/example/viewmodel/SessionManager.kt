@@ -29,7 +29,6 @@ import kotlinx.coroutines.launch
 class SessionManager(
     private val context: Context,
     private val scope: CoroutineScope,
-    private val database: YogaDatabase,
     private val repository: YogaSessionRepository,
     private val settingsManager: SettingsManager
 ) {
@@ -325,7 +324,6 @@ class SessionManager(
             }
             if (!_isPlaying.value && !_isCountdownActive.value) return@launch
             val current = currentPose.value ?: return@launch
-            
             val stepNumber = _currentPoseIndex.value + 1
             val voice = _preferredVoice.value
             

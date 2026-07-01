@@ -41,10 +41,6 @@ object DataLoader {
 
     fun getHero(id: String): Hero = heroes.first { it.id == id }
 
-    fun getHeroForLevel(level: Int): Hero =
-        heroes.filter { level >= it.unlockYogaLevel }.maxByOrNull { it.unlockYogaLevel }
-            ?: heroes.first()
-
     fun getMonster(id: String): Monster = monsters.first { it.id == id }
 
     fun getEquipment(id: String): Equipment = equipment.first { it.id == id }

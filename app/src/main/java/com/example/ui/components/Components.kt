@@ -39,8 +39,8 @@ import androidx.compose.ui.unit.sp
 import com.example.audio.AudioCueManager
 import com.example.model.YogaFlow
 import com.example.ui.theme.*
-import com.example.viewmodel.Achievement
-import com.example.viewmodel.AchievementWithRarity
+import com.example.db.Achievement
+import com.example.db.AchievementWithRarity
 import com.example.viewmodel.YogaViewModel
 import com.example.game.model.TrophyRarity
 import androidx.compose.material.icons.outlined.*
@@ -90,6 +90,8 @@ fun GlassCard(
     modifier: Modifier = Modifier,
     shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(24.dp),
     containerColor: Color = MaterialTheme.colorScheme.surface,
+    elevation: androidx.compose.ui.unit.Dp = 0.dp,
+    useDefaultPadding: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val isDark = MaterialTheme.colorScheme.background == DarkBackground
@@ -102,10 +104,10 @@ fun GlassCard(
         colors = CardDefaults.cardColors(
             containerColor = containerColor
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = if (useDefaultPadding) Modifier.padding(16.dp) else Modifier
         ) {
             content()
         }

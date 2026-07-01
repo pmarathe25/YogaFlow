@@ -130,6 +130,8 @@ object BattleEngine {
                             else (target as MonsterInstance).element
                         val skillBase = skill.baseDamage + skill.damagePerLevel * hero.level
                         val atkBuff = computeBuffMultiplier(state, hero.heroId, StatusEffectType.ATK_UP)
+                        val spdBuff = computeBuffMultiplier(state, hero.heroId, StatusEffectType.SPD_UP)
+                        val dmgReduction = computeBuffMultiplier(state, targetId, StatusEffectType.DAMAGE_REDUCTION)
 
                         val result = computeDamage(
                             baseDamage = skillBase,
@@ -137,10 +139,13 @@ object BattleEngine {
                             attackerElement = hero.element,
                             defenderElement = defenderElement,
                             damageComponent = component,
-                            atkBuffMultiplier = atkBuff
+                            atkBuffMultiplier = atkBuff + (spdBuff * 0.1f)
                         )
-                        tDmg += result.amount
-                        breakdown.add(result.breakdown)
+                        
+                        val finalAmount = (result.amount * (1f - dmgReduction)).toInt().coerceAtLeast(1)
+                        
+                        tDmg += finalAmount
+                        breakdown.add(result.breakdown.copy(amount = finalAmount))
                     }
                 }
             }
@@ -362,6 +367,7 @@ object BattleEngine {
         outcome: ActionOutcome
     ): BattleState {
         val skill = outcome.skillUsed
+        val combo = outcome.comboTriggered
 
         outcome.perTargetResult.forEach { (targetId, result) ->
             val hero = state.heroes.find { it.heroId == targetId }
@@ -399,6 +405,7 @@ object BattleEngine {
 
             result.statuses.forEach { sName ->
                 val se = skill?.statusEffects?.find { it.type.name == sName }
+                    ?: combo?.statusEffects?.find { it.type.name == sName }
                 if (se != null) {
                     val list = state.statusEffects.getOrPut(targetId) { mutableListOf() }
                     list.add(BattleStatus(targetId, se.type, se.duration, se.value))
@@ -410,7 +417,8 @@ object BattleEngine {
             }
         }
 
-        skill?.buffs?.forEach { buff ->
+        val buffs = skill?.buffs ?: combo?.buffs
+        buffs?.forEach { buff ->
             val targetsToBuff = if (buff.targetsParty) state.aliveHeroes.map { it.heroId } else outcome.targets
             targetsToBuff.forEach { id ->
                 val list = state.statusEffects.getOrPut(id) { mutableListOf() }
@@ -418,11 +426,12 @@ object BattleEngine {
             }
         }
 
-        if (skill?.revive == true) {
+        if (skill?.revive == true || combo?.revive == true) {
             val fallen = state.heroes.filter { it.isDead }
             fallen.forEach { h ->
                 h.isDead = false
-                val healPct = skill.healScaling?.let { if (it.isPercentage) it.baseHeal else 50 } ?: 50
+                val scaling = skill?.healScaling ?: combo?.healScaling
+                val healPct = scaling?.let { if (it.isPercentage) it.baseHeal else 50 } ?: 50
                 h.currentHp = (h.maxHp * healPct / 100).coerceAtLeast(1)
             }
         }

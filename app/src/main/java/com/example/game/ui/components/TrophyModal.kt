@@ -27,7 +27,7 @@ import com.example.game.model.Trophy
 import com.example.game.model.TrophyRarity
 import com.example.game.persistence.DataLoader
 import com.example.ui.components.AchievementBadgeCard
-import com.example.viewmodel.Achievement
+import com.example.db.Achievement
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
