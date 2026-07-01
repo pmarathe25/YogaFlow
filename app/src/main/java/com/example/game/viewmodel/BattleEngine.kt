@@ -1,7 +1,6 @@
 package com.example.game.viewmodel
 
 import com.example.game.model.*
-import com.example.game.persistence.DataLoader
 import kotlin.math.*
 import kotlin.random.Random
 
@@ -20,56 +19,15 @@ object BattleEngine {
     )
 
     private val elementChart: Map<Element, Map<Element, Float>> = mapOf(
-        Element.FIRE to mapOf(
-            Element.FIRE to 1.0f, Element.WATER to 0.5f, Element.AIR to 2.0f, Element.EARTH to 0.5f,
-            Element.LIGHT to 1.0f, Element.DARK to 1.0f, Element.SHADOW to 1.0f, Element.ELECTRIC to 1.5f,
-            Element.VOID to 1.0f, Element.NEUTRAL to 1.0f
-        ),
-        Element.WATER to mapOf(
-            Element.FIRE to 2.0f, Element.WATER to 1.0f, Element.AIR to 0.5f, Element.EARTH to 0.5f,
-            Element.LIGHT to 1.0f, Element.DARK to 1.0f, Element.SHADOW to 1.0f, Element.ELECTRIC to 1.5f,
-            Element.VOID to 1.0f, Element.NEUTRAL to 1.0f
-        ),
-        Element.AIR to mapOf(
-            Element.FIRE to 0.5f, Element.WATER to 2.0f, Element.AIR to 1.0f, Element.EARTH to 0.5f,
-            Element.LIGHT to 1.0f, Element.DARK to 1.0f, Element.SHADOW to 1.0f, Element.ELECTRIC to 1.5f,
-            Element.VOID to 1.0f, Element.NEUTRAL to 1.0f
-        ),
-        Element.EARTH to mapOf(
-            Element.FIRE to 2.0f, Element.WATER to 2.0f, Element.AIR to 2.0f, Element.EARTH to 1.0f,
-            Element.LIGHT to 1.0f, Element.DARK to 1.0f, Element.SHADOW to 1.0f, Element.ELECTRIC to 1.5f,
-            Element.VOID to 1.0f, Element.NEUTRAL to 1.0f
-        ),
-        Element.LIGHT to mapOf(
-            Element.FIRE to 1.0f, Element.WATER to 1.0f, Element.AIR to 1.0f, Element.EARTH to 1.0f,
-            Element.LIGHT to 1.0f, Element.DARK to 2.0f, Element.SHADOW to 1.0f, Element.ELECTRIC to 1.0f,
-            Element.VOID to 1.0f, Element.NEUTRAL to 1.0f
-        ),
-        Element.DARK to mapOf(
-            Element.FIRE to 1.0f, Element.WATER to 1.0f, Element.AIR to 1.0f, Element.EARTH to 1.0f,
-            Element.LIGHT to 2.0f, Element.DARK to 1.0f, Element.SHADOW to 1.0f, Element.ELECTRIC to 1.0f,
-            Element.VOID to 1.0f, Element.NEUTRAL to 1.0f
-        ),
-        Element.SHADOW to mapOf(
-            Element.FIRE to 1.0f, Element.WATER to 1.0f, Element.AIR to 1.0f, Element.EARTH to 1.0f,
-            Element.LIGHT to 1.0f, Element.DARK to 1.0f, Element.SHADOW to 1.0f, Element.ELECTRIC to 1.0f,
-            Element.VOID to 2.0f, Element.NEUTRAL to 1.0f
-        ),
-        Element.ELECTRIC to mapOf(
-            Element.FIRE to 1.0f, Element.WATER to 1.0f, Element.AIR to 1.0f, Element.EARTH to 1.0f,
-            Element.LIGHT to 1.0f, Element.DARK to 1.0f, Element.SHADOW to 1.0f, Element.ELECTRIC to 1.0f,
-            Element.VOID to 2.0f, Element.NEUTRAL to 1.0f
-        ),
-        Element.VOID to mapOf(
-            Element.FIRE to 1.0f, Element.WATER to 1.0f, Element.AIR to 1.0f, Element.EARTH to 1.0f,
-            Element.LIGHT to 1.0f, Element.DARK to 1.0f,             Element.SHADOW to 0f, Element.ELECTRIC to 0.5f,
-            Element.VOID to 1.0f, Element.NEUTRAL to 1.0f
-        ),
-        Element.NEUTRAL to mapOf(
-            Element.FIRE to 1.0f, Element.WATER to 1.0f, Element.AIR to 1.0f, Element.EARTH to 1.0f,
-            Element.LIGHT to 1.0f, Element.DARK to 1.0f, Element.SHADOW to 1.0f, Element.ELECTRIC to 1.0f,
-            Element.VOID to 1.0f, Element.NEUTRAL to 1.0f
-        )
+        Element.FIRE to mapOf(Element.AIR to 1.5f, Element.WATER to 0.5f),
+        Element.WATER to mapOf(Element.FIRE to 1.5f, Element.EARTH to 0.5f),
+        Element.AIR to mapOf(Element.EARTH to 1.5f, Element.FIRE to 0.5f),
+        Element.EARTH to mapOf(Element.WATER to 1.5f, Element.AIR to 0.5f),
+        Element.LIGHT to mapOf(Element.DARK to 1.5f, Element.SHADOW to 1.5f, Element.VOID to 0.5f),
+        Element.DARK to mapOf(Element.LIGHT to 1.5f, Element.VOID to 0.5f),
+        Element.SHADOW to mapOf(Element.LIGHT to 1.5f),
+        Element.ELECTRIC to mapOf(Element.WATER to 1.5f, Element.EARTH to 0.5f),
+        Element.VOID to mapOf(Element.LIGHT to 1.5f, Element.DARK to 1.5f)
     )
 
     fun getElementMultiplier(attacker: Element, defender: Element): Float {
@@ -77,41 +35,26 @@ object BattleEngine {
     }
 
     fun computeDamage(
+        baseDamage: Int,
         attackerAtk: Int,
-        defenderDef: Int,
         attackerElement: Element,
         defenderElement: Element,
         damageComponent: DamageComponent? = null,
-        baseDamage: Int = 0,
+        atkBuffMultiplier: Float = 0f,
         isCrit: Boolean = false,
-        isDodged: Boolean = false,
-        variance: Float = 0.1f
+        isDodged: Boolean = false
     ): DamageResult {
         if (isDodged) {
             return DamageResult(0, isCrit = false, isDodged = true,
                 DamageBreakdown(DamageType.PHYSICAL, null, 0))
         }
 
-        var raw = (attackerAtk * 4) - (defenderDef * 2)
-        raw = maxOf(raw, (attackerAtk * 0.5f).toInt())
+        val elementMult = getElementMultiplier(attackerElement, damageComponent?.element ?: defenderElement)
+        val atkBonus = 1f + attackerAtk / 100f
+        val buffMult = 1f + atkBuffMultiplier
+        val pct = (damageComponent?.percentage ?: 100).toFloat()
 
-        var total = raw + baseDamage
-
-        if (damageComponent != null) {
-            total = (total * damageComponent.percentage / 100f).toInt()
-        }
-
-        val defElement = damageComponent?.element ?: defenderElement
-        val mult = getElementMultiplier(attackerElement, defElement)
-        total = (total * mult).toInt()
-
-        if (mult == 0f) {
-            return DamageResult(0, isCrit = false, isDodged = false,
-                DamageBreakdown(damageComponent?.type ?: DamageType.PHYSICAL, damageComponent?.element, 0))
-        }
-
-        val varianceAmount = (total * variance * (Random.nextFloat() * 2f - 1f)).toInt()
-        total += varianceAmount
+        var total = (baseDamage * (pct / 100f) * elementMult * atkBonus * buffMult).toInt()
 
         val wasCrit = isCrit
         if (isCrit) {
@@ -132,21 +75,21 @@ object BattleEngine {
         )
     }
 
-    fun computeHeal(casterAtk: Int, healScaling: HealScaling): Int {
-        return if (healScaling.isPercentage) {
-            (healScaling.baseHeal * casterAtk / 100).coerceAtLeast(1)
+    fun computeHeal(casterMaxHp: Int, scaling: HealScaling, level: Int = 1): Int {
+        return if (scaling.isPercentage) {
+            (scaling.baseHeal * casterMaxHp / 100).coerceAtLeast(1)
         } else {
-            healScaling.baseHeal + healScaling.healPerLevel
+            scaling.baseHeal + scaling.healPerLevel * level
         }
     }
 
-    fun computeShield(casterAtk: Int, shieldScaling: ShieldScaling): Int {
-        return if (shieldScaling.isPercentage && shieldScaling.percentage > 0) {
-            (shieldScaling.percentage * casterAtk).toInt()
-        } else if (shieldScaling.isPercentage) {
-            (shieldScaling.baseShield * casterAtk / 100).coerceAtLeast(1)
+    fun computeShield(casterMaxHp: Int, scaling: ShieldScaling, level: Int = 1): Int {
+        return if (scaling.isPercentage && scaling.percentage > 0) {
+            (scaling.percentage * casterMaxHp).toInt()
+        } else if (scaling.isPercentage) {
+            (scaling.baseShield * casterMaxHp / 100).coerceAtLeast(1)
         } else {
-            shieldScaling.baseShield + shieldScaling.shieldPerLevel
+            scaling.baseShield + scaling.shieldPerLevel * level
         }
     }
 
@@ -186,14 +129,15 @@ object BattleEngine {
                         val defenderElement = if (target is HeroInstance) target.element
                             else (target as MonsterInstance).element
                         val skillBase = skill.baseDamage + skill.damagePerLevel * hero.level
+                        val atkBuff = computeBuffMultiplier(state, hero.heroId, StatusEffectType.ATK_UP)
 
                         val result = computeDamage(
+                            baseDamage = skillBase,
                             attackerAtk = hero.atk,
-                            defenderDef = 0,
                             attackerElement = hero.element,
                             defenderElement = defenderElement,
                             damageComponent = component,
-                            baseDamage = skillBase
+                            atkBuffMultiplier = atkBuff
                         )
                         tDmg += result.amount
                         breakdown.add(result.breakdown)
@@ -203,13 +147,13 @@ object BattleEngine {
 
             skill.healScaling?.let { scaling ->
                 if (scaling.isPercentage || scaling.baseHeal > 0) {
-                    val heal = computeHeal(hero.atk, scaling)
+                    val heal = computeHeal(hero.maxHp, scaling, hero.level)
                     if (heal > 0) tHeal += heal
                 }
             }
 
             skill.shieldScaling?.let { scaling ->
-                val shield = computeShield(hero.atk, scaling)
+                val shield = computeShield(hero.maxHp, scaling, hero.level)
                 if (shield > 0) tShield += shield
             }
 
@@ -385,16 +329,11 @@ object BattleEngine {
             if (damageComponents.isNotEmpty()) {
                 repeat(skill.hits.coerceAtLeast(1)) {
                     for (component in damageComponents) {
-                        val result = computeDamage(
-                            attackerAtk = monster.atk,
-                            defenderDef = 0,
-                            attackerElement = monster.element,
-                            defenderElement = hero.element,
-                            damageComponent = component,
-                            baseDamage = skill.baseDamage
-                        )
-                        tDmg += result.amount
-                        breakdown.add(result.breakdown)
+                        val elementMult = getElementMultiplier(monster.element, component.element ?: hero.element)
+                        val dmgReduction = computeBuffMultiplier(state, hero.heroId, StatusEffectType.DAMAGE_REDUCTION)
+                        val dmg = (skill.baseDamage * elementMult * (1f - dmgReduction)).toInt().coerceAtLeast(1)
+                        tDmg += dmg
+                        breakdown.add(DamageBreakdown(component.type, component.element, dmg))
                     }
                 }
             }
@@ -544,23 +483,21 @@ object BattleEngine {
     }
 
     fun checkPhaseTriggers(
-        state: BattleState
+        state: BattleState,
+        monster: MonsterInstance
     ): List<BattleEvent> {
         val events = mutableListOf<BattleEvent>()
-        state.monsters.forEach { monster ->
-            val definition = DataLoader.getMonster(monster.monsterId)
-            for (i in definition.phases.indices) {
-                val phase = definition.phases[i]
-                if (monster.hpPercent <= phase.hpThreshold && monster.activePhase < i) {
-                    monster.activePhase = i
-                    phase.triggers.forEach { trigger ->
-                        events.add(BattleEvent.PhaseTriggered(monster.monsterId, i, trigger))
-                        when (trigger.type) {
-                            PhaseTriggerType.EXTRA_ACTION -> monster.extraActionsThisRound++
-                            PhaseTriggerType.DOUBLE_ACTIONS -> monster.extraActionsThisRound = 2
-                            PhaseTriggerType.GAIN_SHIELD -> monster.shield += (monster.maxHp * trigger.value).toInt()
-                            else -> {}
-                        }
+        for (i in monster.phases.indices) {
+            val phase = monster.phases[i]
+            if (monster.hpPercent <= phase.hpThreshold && monster.activePhase < i) {
+                monster.activePhase = i
+                phase.triggers.forEach { trigger ->
+                    events.add(BattleEvent.PhaseTriggered(monster.monsterId, i, trigger))
+                    when (trigger.type) {
+                        PhaseTriggerType.EXTRA_ACTION -> monster.extraActionsThisRound++
+                        PhaseTriggerType.DOUBLE_ACTIONS -> monster.extraActionsThisRound = 2
+                        PhaseTriggerType.GAIN_SHIELD -> monster.shield += (monster.maxHp * trigger.value).toInt()
+                        else -> {}
                     }
                 }
             }
@@ -598,8 +535,7 @@ object BattleEngine {
 
     private fun isComponentNullified(state: BattleState, component: DamageComponent): Boolean {
         return state.monsters.any { monster ->
-            val def = DataLoader.getMonster(monster.monsterId)
-            def?.phases?.getOrNull(monster.activePhase)?.triggers?.any { trigger ->
+            monster.phases.getOrNull(monster.activePhase)?.triggers?.any { trigger ->
                 trigger.type == PhaseTriggerType.NULLIFY_ELEMENT && (
                     (trigger.summonMonsterId == "ALL" && component.type == DamageType.ELEMENTAL) ||
                     component.element?.name == trigger.summonMonsterId

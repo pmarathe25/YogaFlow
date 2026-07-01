@@ -64,7 +64,7 @@ data class MonsterInstance(
     val aiBehavior: AIBehavior,
     val phases: List<MonsterPhase>,
     var shield: Int = 0,
-    var activePhase: Int = 0,
+    var activePhase: Int = -1,
     var isBoss: Boolean = false,
     var isDead: Boolean = false,
     var turnsSinceLastSpecial: Int = 0,

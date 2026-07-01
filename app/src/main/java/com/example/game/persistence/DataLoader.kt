@@ -12,7 +12,12 @@ object DataLoader {
 
     val heroes: List<Hero> by lazy { loadList("heroes.json") }
     val monsters: List<Monster> by lazy { loadList("monsters.json") }
-    val equipment: List<Equipment> by lazy { loadList("equipment.json") }
+    val equipment: List<Equipment> by lazy {
+        val text = context.assets.open("game/equipment.json").bufferedReader().use { it.readText() }
+        val map = gson.fromJson(text, Map::class.java)
+        val items = map["items"] as? List<Map<String, Any>> ?: emptyList()
+        gson.fromJson(gson.toJson(items), object : TypeToken<List<Equipment>>() {}.type)
+    }
     val combos: List<ComboSkill> by lazy { loadList("combos.json") }
     val trophies: List<Trophy> by lazy { loadList("trophies.json") }
 

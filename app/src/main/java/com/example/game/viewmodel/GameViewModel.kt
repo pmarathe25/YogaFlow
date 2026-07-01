@@ -426,7 +426,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val monster = state.monsters.find { it.monsterId == actor.id && !it.isDead } ?: return@launch
 
-            val preEvents = BattleEngine.checkPhaseTriggers(state)
+            val preEvents = BattleEngine.checkPhaseTriggers(state, monster)
             preEvents.filterIsInstance<BattleEvent.PhaseTriggered>().forEach { event ->
                 addBattleLog("${monster.name} triggers: ${event.trigger.type.name}!")
             }
@@ -460,7 +460,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 return@launch
             }
 
-            val postEvents = BattleEngine.checkPhaseTriggers(state)
+            val postEvents = BattleEngine.checkPhaseTriggers(state, monster)
             postEvents.filterIsInstance<BattleEvent.PhaseTriggered>().forEach { event ->
                 addBattleLog("${monster.name} triggers: ${event.trigger.type.name}!")
             }
