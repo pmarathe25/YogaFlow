@@ -19,6 +19,7 @@ import com.example.game.persistence.GameSaveManager.GameSaveData
 import com.example.model.LevelDefinitions
 import com.example.model.XpCalculator
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -57,6 +58,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val _isProcessingTurn = MutableStateFlow(false)
+    val isProcessingTurn: StateFlow<Boolean> = _isProcessingTurn.asStateFlow()
 
     init {
         loadGame()
@@ -99,6 +103,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
         if (updated != data) {
             _saveData.value = updated
+            restoreParty(updated) // Ensure party is synced with unlocked heroes
             saveGame()
         }
     }
@@ -126,13 +131,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun restoreParty(data: GameSaveData) {
-        if (data.party.isNotEmpty()) {
-            _party.value = data.party.map { hs ->
-                val hero = HeroDefinitions.getHero(hs.heroId) ?: return@map null
-                HeroDefinitions.createInstance(hero, hs.level, hs.equippedItemIds)
-                    .also { it.currentHp = hs.currentHp; it.shield = hs.shield; it.isDead = hs.isDead }
-            }.filterNotNull()
+        val unlocked = HeroDefinitions.allHeroes.filter { it.unlockYogaLevel <= data.yogaLevel }
+        val newParty = unlocked.map { heroDef ->
+            val savedHero = data.party.find { it.heroId == heroDef.id }
+            if (savedHero != null) {
+                HeroDefinitions.createInstance(heroDef, savedHero.level, savedHero.equippedItemIds)
+            } else {
+                HeroDefinitions.createInstance(heroDef, 1, emptyList())
+            }
         }
+        _party.value = newParty
     }
 
     fun getUnlockedHeroes(): List<Hero> {
@@ -144,18 +152,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun addHeroToParty(heroId: String) {
-        val hero = HeroDefinitions.getHero(heroId) ?: return
-        if (_party.value.any { it.heroId == heroId }) return
-        val instance = HeroDefinitions.createInstance(hero, 1)
-        _party.value = _party.value + instance
-        _saveData.value = _saveData.value.copy(party = _party.value.map { it.toSaveData() })
-        saveGame()
+        // Automatically handled by sync
     }
 
     fun removeHeroFromParty(heroId: String) {
-        _party.value = _party.value.filter { it.heroId != heroId }
-        _saveData.value = _saveData.value.copy(party = _party.value.map { it.toSaveData() })
-        saveGame()
+        // Automatically handled by sync
     }
 
     fun startBattle(monsterId: String) {
@@ -216,153 +217,253 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- Battle Actions ---
 
-    fun executeSkill(heroId: String, skill: Skill) {
+    fun cancelAction() {
         val state = _battleState.value ?: return
-        if (state.phase != PLAYER_TURN) return
+        state.pendingSkill = null
+        emitBattleState(state)
+    }
+
+    fun executeSkill(heroId: String, skill: Skill, customTargets: List<String>? = null) {
+        val state = _battleState.value ?: return
+        if (state.phase != PLAYER_TURN || _isProcessingTurn.value) return
         val hero = state.heroes.find { it.heroId == heroId && !it.isDead } ?: return
 
-        // Build target list
-        val targets = resolveTargets(state, hero, skill)
-        if (targets.isEmpty()) return
+        // Check if we need a target but haven't received one yet
+        if (customTargets == null) {
+            when (skill.targetType) {
+                SINGLE_ENEMY -> {
+                    // Auto-target first alive monster
+                    val monsterId = state.aliveMonsters.firstOrNull()?.monsterId
+                    if (monsterId != null) {
+                        return executeSkill(heroId, skill, listOf(monsterId))
+                    }
+                }
+                SINGLE_ALLY, SELF -> {
+                    state.pendingSkill = skill
+                    emitBattleState(state)
+                    return
+                }
+                else -> {} // Multi-target skills resolve in resolveTargets
+            }
+        }
 
-        val outcome = computeSkillOutcome(state, hero, skill, targets)
-        hero.ultimateGauge = (hero.ultimateGauge + skill.ultimateGain).coerceAtMost(100)
-        state.addEvent(BattleEvent.SkillUsed(heroId, skill, targets, listOf(outcome)))
-        addBattleLog("${hero.name} uses ${skill.name}!")
+        viewModelScope.launch {
+            _isProcessingTurn.value = true
+            state.pendingSkill = null // Clear pending skill as we are executing
 
-        applyOutcome(state, outcome)
-        advanceTurn(state)
-        emitBattleState(state)
+            // Build target list
+            val targets = customTargets ?: resolveTargets(state, hero, skill)
+            if (targets.isEmpty()) {
+                _isProcessingTurn.value = false
+                return@launch
+            }
+
+            val outcome = computeSkillOutcome(state, hero, skill, targets)
+            hero.ultimateGauge = (hero.ultimateGauge + skill.ultimateGain).coerceAtMost(100)
+            
+            // Set cooldown
+            if (skill.cooldown > 0) {
+                val cds = state.skillCooldowns.getOrPut(heroId) { mutableMapOf() }
+                cds[skill.id] = skill.cooldown
+            }
+
+            state.addEvent(BattleEvent.SkillUsed(heroId, skill, targets, listOf(outcome)))
+            addBattleLog("${hero.name} uses ${skill.name}!")
+            
+            if (outcome.healingDone > 0) {
+                addBattleLog("${hero.name} heals for ${outcome.healingDone} HP!")
+            }
+            if (outcome.shieldApplied > 0) {
+                addBattleLog("${hero.name} applies ${outcome.shieldApplied} shield!")
+            }
+
+            applyOutcome(state, outcome)
+            emitBattleState(state)
+            
+            delay(1000) // Wait for action animation
+            advanceTurn(state)
+            _isProcessingTurn.value = false
+        }
     }
 
     fun executeUltimate(heroId: String) {
         val state = _battleState.value ?: return
-        if (state.phase != PLAYER_TURN) return
+        if (state.phase != PLAYER_TURN || _isProcessingTurn.value) return
         val hero = state.heroes.find { it.heroId == heroId && !it.isDead } ?: return
         if (hero.ultimateGauge < 100) return
 
-        val skill = hero.ultimate
-        val targets = resolveTargets(state, hero, skill)
-        if (targets.isEmpty()) return
+        viewModelScope.launch {
+            _isProcessingTurn.value = true
+            val skill = hero.ultimate
+            val targets = resolveTargets(state, hero, skill)
+            if (targets.isEmpty()) {
+                _isProcessingTurn.value = false
+                return@launch
+            }
 
-        val outcome = computeSkillOutcome(state, hero, skill, targets)
-        hero.ultimateGauge = 0
-        state.addEvent(BattleEvent.SkillUsed(heroId, skill, targets, listOf(outcome)))
-        addBattleLog("${hero.name} unleashes ${skill.name}!")
+            val outcome = computeSkillOutcome(state, hero, skill, targets)
+            hero.ultimateGauge = 0
+            state.addEvent(BattleEvent.SkillUsed(heroId, skill, targets, listOf(outcome)))
+            addBattleLog("${hero.name} unleashes ${skill.name}!")
 
-        applyOutcome(state, outcome)
-        advanceTurn(state)
-        emitBattleState(state)
+            applyOutcome(state, outcome)
+            emitBattleState(state)
+            
+            delay(1500) // Wait for ultimate animation
+            advanceTurn(state)
+            _isProcessingTurn.value = false
+        }
     }
 
     fun executeCombo(participantIds: Set<String>) {
         val state = _battleState.value ?: return
-        if (state.phase != PLAYER_TURN) return
+        if (state.phase != PLAYER_TURN || _isProcessingTurn.value) return
         val combo = ComboSkillDefinitions.findCombo(participantIds) ?: return
         val participants = participantIds.mapNotNull { id -> state.heroes.find { it.heroId == id && !it.isDead } }
         if (participants.size != combo.requiredHeroes.size) return
 
-        val targets = when (combo.targetType) {
-            SELF -> listOf(participants.first().heroId)
-            SINGLE_ALLY -> listOf(state.aliveHeroes.firstOrNull()?.heroId ?: return)
-            SINGLE_ENEMY -> listOf(state.aliveMonsters.firstOrNull()?.monsterId ?: return)
-            ALL_ALLIES -> state.aliveHeroes.map { it.heroId }
-            ALL_ENEMIES -> state.aliveMonsters.map { it.monsterId }
-            ALL -> state.aliveHeroes.map { it.heroId } + state.aliveMonsters.map { it.monsterId }
+        viewModelScope.launch {
+            _isProcessingTurn.value = true
+            val targets = when (combo.targetType) {
+                SELF -> listOf(participants.first().heroId)
+                SINGLE_ALLY -> listOf(state.aliveHeroes.firstOrNull()?.heroId ?: run { _isProcessingTurn.value = false; return@launch })
+                SINGLE_ENEMY -> listOf(state.aliveMonsters.firstOrNull()?.monsterId ?: run { _isProcessingTurn.value = false; return@launch })
+                ALL_ALLIES -> state.aliveHeroes.map { it.heroId }
+                ALL_ENEMIES -> state.aliveMonsters.map { it.monsterId }
+                ALL -> state.aliveHeroes.map { it.heroId } + state.aliveMonsters.map { it.monsterId }
+            }
+            if (targets.isEmpty()) {
+                _isProcessingTurn.value = false
+                return@launch
+            }
+
+            val outcome = computeComboOutcome(state, participants, combo, targets)
+            participants.forEach { it.ultimateGauge = (it.ultimateGauge + 20).coerceAtMost(100) }
+            state.addEvent(BattleEvent.ComboUsed(participantIds, combo, targets, outcome))
+            addBattleLog("Party unleashes ${combo.name}!")
+
+            applyOutcome(state, outcome)
+            emitBattleState(state)
+            
+            delay(2000) // Wait for combo animation
+            advanceTurn(state, skipCount = participants.size)
+            _isProcessingTurn.value = false
         }
-        if (targets.isEmpty()) return
-
-        val outcome = computeComboOutcome(state, participants, combo, targets)
-        participants.forEach { it.ultimateGauge = (it.ultimateGauge + 20).coerceAtMost(100) }
-        state.addEvent(BattleEvent.ComboUsed(participantIds, combo, targets, outcome))
-        addBattleLog("Party unleashes ${combo.name}!")
-
-        applyOutcome(state, outcome)
-        advanceTurn(state, skipCount = participants.size)
-        emitBattleState(state)
     }
 
     private fun advanceTurn(state: BattleState, skipCount: Int = 1) {
-        state.turnsTaken++
+        viewModelScope.launch {
+            state.turnsTaken++
 
-        val oldIndex = state.currentTurnIndex
-        state.currentTurnIndex = (state.currentTurnIndex + skipCount) % state.turnOrder.size
-        val wrapped = state.currentTurnIndex < oldIndex ||
-                (state.currentTurnIndex == 0 && (oldIndex + skipCount) >= state.turnOrder.size)
+            val oldIndex = state.currentTurnIndex
+            state.currentTurnIndex = (state.currentTurnIndex + skipCount) % state.turnOrder.size
+            val wrapped = state.currentTurnIndex < oldIndex ||
+                    (state.currentTurnIndex == 0 && (oldIndex + skipCount) >= state.turnOrder.size)
 
-        // Advance round if we wrapped around the turn order
-        if (wrapped) {
-            state.advanceRound()
-            state.monsters.forEach { it.extraActionsThisRound = 0 }
-            calculateTurnOrder(state)
-        }
+            // Advance round if we wrapped around the turn order
+            if (wrapped) {
+                state.advanceRound()
+                state.monsters.forEach { it.extraActionsThisRound = 0 }
+                calculateTurnOrder(state)
+            }
 
-        // Check for victory/defeat
-        if (state.aliveMonsters.isEmpty()) {
-            state.phase = VICTORY
-            state.addEvent(BattleEvent.Victory(state.turnsTaken))
-            addBattleLog("Victory!")
+            // Check for victory/defeat
+            if (state.aliveMonsters.isEmpty()) {
+                state.phase = VICTORY
+                state.addEvent(BattleEvent.Victory(state.turnsTaken))
+                addBattleLog("Victory!")
+                emitBattleState(state)
+                delay(1000)
+                _currentScreen.value = GameScreen.BATTLE_RESULT
+                onBattleWon()
+                return@launch
+            }
+            if (state.aliveHeroes.isEmpty()) {
+                state.phase = DEFEAT
+                state.addEvent(BattleEvent.Defeat(state.round))
+                addBattleLog("Defeat...")
+                
+                // Reset stats even on defeat
+                _party.value.forEach { hero ->
+                    hero.currentHp = hero.maxHp
+                    hero.shield = 0
+                    hero.ultimateGauge = 0
+                    hero.isDead = false
+                }
+
+                emitBattleState(state)
+                delay(1000)
+                _currentScreen.value = GameScreen.BATTLE_RESULT
+                return@launch
+            }
+
+            val nextActor = state.turnOrder[state.currentTurnIndex]
+            state.currentActorId = nextActor.id
+            updateComboAvailability(state)
+
+            // Decrement cooldowns for the actor whose turn is starting
+            val actorCds = state.skillCooldowns[nextActor.id]
+            if (actorCds != null) {
+                val updatedCds = actorCds.toMutableMap()
+                updatedCds.forEach { (skillId, turns) ->
+                    if (turns > 0) updatedCds[skillId] = turns - 1
+                }
+                state.skillCooldowns[nextActor.id] = updatedCds
+            }
+
             emitBattleState(state)
-            _currentScreen.value = GameScreen.BATTLE_RESULT
-            onBattleWon()
-            return
-        }
-        if (state.aliveHeroes.isEmpty()) {
-            state.phase = DEFEAT
-            state.addEvent(BattleEvent.Defeat(state.round))
-            addBattleLog("Defeat...")
+            delay(1200) // Delay for Turn Banner to show
+
+            if (nextActor.isHero) {
+                state.phase = PLAYER_TURN
+            } else {
+                state.phase = ENEMY_TURN
+                executeMonsterTurn(state, nextActor)
+            }
             emitBattleState(state)
-            _currentScreen.value = GameScreen.BATTLE_RESULT
-            return
-        }
-
-        val nextActor = state.turnOrder[state.currentTurnIndex]
-        state.currentActorId = nextActor.id
-        updateComboAvailability(state)
-
-        if (nextActor.isHero) {
-            state.phase = PLAYER_TURN
-        } else {
-            state.phase = ENEMY_TURN
-            executeMonsterTurn(state, nextActor)
         }
     }
 
     private fun executeMonsterTurn(state: BattleState, actor: BattleActor) {
-        val monster = state.monsters.find { it.monsterId == actor.id && !it.isDead } ?: return
+        viewModelScope.launch {
+            val monster = state.monsters.find { it.monsterId == actor.id && !it.isDead } ?: return@launch
 
-        checkPhaseTriggers(state, monster)
+            checkPhaseTriggers(state, monster)
 
-        val useSpecial = Random.nextFloat() < monster.aiBehavior.specialChance ||
-                monster.turnsSinceLastSpecial >= 3
-        val skill = if (useSpecial) monster.specialAttack
-        else Skill("monster_attack", "Attack", "Basic attack.", SINGLE_ENEMY,
-            damageComponents = listOf(DamageComponent(PHYSICAL)), baseDamage = monster.atk)
+            val useSpecial = Random.nextFloat() < monster.aiBehavior.specialChance ||
+                    monster.turnsSinceLastSpecial >= 3
+            val skill = if (useSpecial) monster.specialAttack
+            else Skill("monster_attack", "Attack", "Basic attack.", SINGLE_ENEMY,
+                damageComponents = listOf(DamageComponent(PHYSICAL)), baseDamage = monster.atk)
 
-        if (useSpecial) monster.turnsSinceLastSpecial = 0
-        else monster.turnsSinceLastSpecial++
+            if (useSpecial) monster.turnsSinceLastSpecial = 0
+            else monster.turnsSinceLastSpecial++
 
-        val target = chooseMonsterTarget(state, monster)
-        val targets = if (skill.targetType == ALL_ENEMIES || skill.targetType == ALL)
-            state.aliveHeroes.map { it.heroId }
-        else listOf(target?.heroId ?: state.aliveHeroes.firstOrNull()?.heroId ?: return)
+            val target = chooseMonsterTarget(state, monster)
+            val targets = if (skill.targetType == ALL_ENEMIES || skill.targetType == ALL)
+                state.aliveHeroes.map { it.heroId }
+            else listOf(target?.heroId ?: state.aliveHeroes.firstOrNull()?.heroId ?: run { advanceTurn(state); return@launch })
 
-        val outcome = computeMonsterOutcome(state, monster, skill, targets)
-        state.addEvent(BattleEvent.MonsterTurn(monster.monsterId, skill, targets, outcome))
-        addBattleLog("${monster.name} uses ${skill.name}!")
-        applyOutcome(state, outcome)
+            val outcome = computeMonsterOutcome(state, monster, skill, targets)
+            state.addEvent(BattleEvent.MonsterTurn(monster.monsterId, skill, targets, outcome))
+            addBattleLog("${monster.name} uses ${skill.name}!")
+            applyOutcome(state, outcome)
+            emitBattleState(state)
 
-        // Check extra actions (only within same "slot")
-        if (monster.extraActionsThisRound > 0) {
-            monster.extraActionsThisRound--
-            executeMonsterTurn(state, actor)
-            return
+            delay(1000) // Wait for monster action animation
+
+            // Check extra actions (only within same "slot")
+            if (monster.extraActionsThisRound > 0) {
+                monster.extraActionsThisRound--
+                executeMonsterTurn(state, actor)
+                return@launch
+            }
+
+            checkPhaseTriggers(state, monster)
+
+            // Move to next turn; advanceTurn handles round advancement
+            advanceTurn(state)
         }
-
-        checkPhaseTriggers(state, monster)
-
-        // Move to next turn; advanceTurn handles round advancement
-        advanceTurn(state)
     }
 
     private fun checkPhaseTriggers(state: BattleState, monster: MonsterInstance) {
@@ -422,83 +523,69 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         var totalDamage = 0
         var totalHeal = 0
         var totalShield = 0
-        val appliedStatuses = mutableListOf<String>()
-        val cleansedStatuses = mutableListOf<String>()
-        val appliedBuffs = mutableListOf<String>()
-        val revived = mutableListOf<String>()
+        val perTarget = mutableMapOf<String, TargetResult>()
         val breakdown = mutableListOf<DamageBreakdown>()
 
         for (targetId in targets) {
-            // Damage
-            if (skill.damageComponents.isNotEmpty() || skill.baseDamage > 0) {
-                for (component in skill.damageComponents) {
-                    val dmg = computeDamage(state, hero, skill, component, targetId)
-                    if (dmg > 0) {
-                        totalDamage += dmg
-                        breakdown.add(DamageBreakdown(component.type, component.element, dmg))
+            var tDmg = 0
+            var tHeal = 0
+            var tShield = 0
+            val tStatuses = mutableListOf<String>()
+
+            // 1. Damage
+            val damageComponents = if (skill.damageComponents.isEmpty() && skill.baseDamage > 0) {
+                listOf(DamageComponent(DamageType.PHYSICAL))
+            } else {
+                skill.damageComponents
+            }
+
+            if (damageComponents.isNotEmpty()) {
+                repeat(skill.hits.coerceAtLeast(1)) {
+                    for (component in damageComponents) {
+                        val dmg = computeDamage(state, hero, skill, component, targetId)
+                        if (dmg > 0) {
+                            tDmg += dmg
+                            breakdown.add(DamageBreakdown(component.type, component.element, dmg))
+                        }
                     }
                 }
             }
 
-            // Heal
+            // 2. Heal
             skill.healScaling?.let { scaling ->
                 if (scaling.isPercentage || scaling.baseHeal > 0) {
                     val heal = computeHeal(hero, scaling, targetId)
-                    if (heal > 0) totalHeal += heal
+                    if (heal > 0) tHeal += heal
                 }
             }
 
-            // Shield
+            // 3. Shield
             skill.shieldScaling?.let { scaling ->
                 val shield = computeShield(hero, scaling)
-                if (shield > 0) totalShield += shield
+                if (shield > 0) tShield += shield
             }
 
-            // Status effects
+            // 4. Status effects
             skill.statusEffects.forEach { se ->
                 if (Random.nextFloat() < se.chance) {
-                    val existing = state.statusEffects.getOrPut(targetId) { mutableListOf() }
-                    existing.add(BattleStatus(targetId, se.type, se.duration, se.value))
-                    appliedStatuses.add(se.type.name)
+                    tStatuses.add(se.type.name)
                 }
             }
 
-            // Buffs
-            skill.buffs.forEach { buff ->
-                val targetsToBuff = if (buff.targetsParty) state.aliveHeroes.map { it.heroId }
-                else listOf(targetId)
-                targetsToBuff.forEach { id ->
-                    val existing = state.statusEffects.getOrPut(id) { mutableListOf() }
-                    existing.add(BattleStatus(id, buff.type, buff.duration, buff.value))
-                    appliedBuffs.add(buff.type.name)
-                }
-            }
-
-            // Cleanse
-            if (skill.cleanse) {
-                state.statusEffects.remove(targetId)
-                cleansedStatuses.add(targetId)
-            }
-
-            // Revive
-            if (skill.revive) {
-                val fallen = state.heroes.filter { it.isDead }
-                fallen.forEach { f ->
-                    f.isDead = false
-                    val healPct = skill.healScaling?.let {
-                        if (it.isPercentage) it.baseHeal else 50
-                    } ?: 50
-                    f.currentHp = (f.maxHp * healPct / 100).coerceAtLeast(1)
-                    revived.add(f.heroId)
-                }
-            }
+            perTarget[targetId] = TargetResult(
+                damage = tDmg, heal = tHeal, shield = tShield, 
+                statuses = tStatuses, cleansed = skill.cleanse
+            )
+            
+            totalDamage += tDmg
+            totalHeal += tHeal
+            totalShield += tShield
         }
 
         return ActionOutcome(
-            action = SKILL, actorId = hero.heroId, skillUsed = skill, targets = targets,
+            action = TurnAction.SKILL, actorId = hero.heroId, skillUsed = skill, targets = targets,
             damageDealt = totalDamage, healingDone = totalHeal, shieldApplied = totalShield,
-            statusApplied = appliedStatuses, statusCleansed = cleansedStatuses,
-            buffsApplied = appliedBuffs, revivals = revived, damageTypeBreakdown = breakdown
+            damageTypeBreakdown = breakdown, perTargetResult = perTarget
         )
     }
 
@@ -589,49 +676,45 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         state: BattleState, monster: MonsterInstance, skill: Skill, targets: List<String>
     ): ActionOutcome {
         var totalDamage = 0
-        val appliedStatuses = mutableListOf<String>()
+        val perTarget = mutableMapOf<String, TargetResult>()
         val breakdown = mutableListOf<DamageBreakdown>()
 
         for (targetId in targets) {
-            val hero = state.heroes.find { it.heroId == targetId } ?: continue
+            val hero = state.heroes.find { it.heroId == targetId && !it.isDead } ?: continue
+            var tDmg = 0
+            val tStatuses = mutableListOf<String>()
 
             // Damage
-            if (skill.damageComponents.isNotEmpty() || skill.baseDamage > 0) {
-                for (component in skill.damageComponents) {
-                    val dmg = computeMonsterDamage(state, monster, skill, component, hero)
-                    val shielded = hero.shield
-                    if (shielded >= dmg) {
-                        hero.shield -= dmg
-                    } else {
-                        val remaining = dmg - shielded
-                        hero.shield = 0
-                        hero.currentHp = (hero.currentHp - remaining).coerceAtLeast(0)
+            val damageComponents = if (skill.damageComponents.isEmpty() && skill.baseDamage > 0) {
+                listOf(DamageComponent(DamageType.PHYSICAL))
+            } else {
+                skill.damageComponents
+            }
+
+            if (damageComponents.isNotEmpty()) {
+                repeat(skill.hits.coerceAtLeast(1)) {
+                    for (component in damageComponents) {
+                        val dmg = computeMonsterDamage(state, monster, skill, component, hero)
+                        tDmg += dmg
+                        breakdown.add(DamageBreakdown(component.type, component.element, dmg))
                     }
-                    totalDamage += dmg
-                    breakdown.add(DamageBreakdown(component.type, component.element, dmg))
                 }
             }
 
             // Status effects
             skill.statusEffects.forEach { se ->
                 if (Random.nextFloat() < se.chance) {
-                    state.statusEffects.getOrPut(targetId) { mutableListOf() }
-                        .add(BattleStatus(targetId, se.type, se.duration, se.value))
-                    appliedStatuses.add(se.type.name)
+                    tStatuses.add(se.type.name)
                 }
             }
-
-            if (hero.currentHp <= 0) {
-                hero.isDead = true
-                hero.currentHp = 0
-                state.addEvent(BattleEvent.HeroDown(hero.heroId))
-            }
+            
+            perTarget[targetId] = TargetResult(damage = tDmg, statuses = tStatuses)
+            totalDamage += tDmg
         }
 
         return ActionOutcome(
-            action = SKILL, actorId = monster.monsterId, skillUsed = skill, targets = targets,
-            damageDealt = totalDamage, damageTypeBreakdown = breakdown,
-            statusApplied = appliedStatuses
+            action = TurnAction.SKILL, actorId = monster.monsterId, skillUsed = skill, targets = targets,
+            damageDealt = totalDamage, damageTypeBreakdown = breakdown, perTargetResult = perTarget
         )
     }
 
@@ -658,19 +741,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val atkBonus = 1f + hero.atk / 100f
         val buffMult = 1f + computeBuffMultiplier(state, hero.heroId, ATK_UP)
         val dmg = (base * (component.percentage / 100f) * elementMult * atkBonus * buffMult).toInt()
-        val shielded = monster.shield
-        if (shielded >= dmg) {
-            monster.shield -= dmg
-            return 0
-        }
-        val remaining = dmg - shielded
-        monster.shield = 0
-        monster.currentHp = (monster.currentHp - remaining).coerceAtLeast(0)
-        if (monster.currentHp <= 0) {
-            monster.isDead = true
-            monster.currentHp = 0
-            state.addEvent(BattleEvent.MonsterDown(monster.monsterId))
-        }
         return dmg
     }
 
@@ -725,31 +795,113 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun applyOutcome(state: BattleState, outcome: ActionOutcome) {
-        for (targetId in outcome.targets) {
+        val skill = outcome.skillUsed
+        
+        outcome.perTargetResult.forEach { (targetId, result) ->
             val hero = state.heroes.find { it.heroId == targetId }
             val monster = state.monsters.find { it.monsterId == targetId }
+            val target = hero ?: monster ?: return@forEach
 
-            // Healing
-            if (outcome.healingDone > 0 && hero != null) {
-                hero.currentHp = (hero.currentHp + outcome.healingDone).coerceAtMost(hero.maxHp)
+            // 1. Damage
+            if (result.damage > 0) {
+                val dmg = result.damage
+                if (hero != null) {
+                    if (hero.shield >= dmg) {
+                        hero.shield -= dmg
+                        addBattleLog("${hero.name}'s shield absorbs $dmg damage!")
+                    } else {
+                        val remaining = dmg - hero.shield
+                        hero.shield = 0
+                        hero.currentHp = (hero.currentHp - remaining).coerceAtLeast(0)
+                        addBattleLog("${hero.name} takes $remaining damage!")
+                    }
+                } else if (monster != null) {
+                    if (monster.shield >= dmg) {
+                        monster.shield -= dmg
+                        addBattleLog("${monster.name}'s shield absorbs $dmg damage!")
+                    } else {
+                        val remaining = dmg - monster.shield
+                        monster.shield = 0
+                        monster.currentHp = (monster.currentHp - remaining).coerceAtLeast(0)
+                        addBattleLog("${monster.name} takes $remaining damage!")
+                    }
+                }
             }
 
-            // Shield (only apply to heroes from player actions)
-            if (outcome.shieldApplied > 0 && hero != null) {
-                hero.shield += outcome.shieldApplied
+            // 2. Healing
+            if (result.heal > 0 && hero != null) {
+                hero.currentHp = (hero.currentHp + result.heal).coerceAtMost(hero.maxHp)
+                addBattleLog("${hero.name} heals for ${result.heal} HP!")
+            }
+
+            // 3. Shield
+            if (result.shield > 0 && hero != null) {
+                hero.shield += result.shield
+                addBattleLog("${hero.name} gains ${result.shield} shield!")
+            }
+            
+            // 4. Status Infliction
+            result.statuses.forEach { sName ->
+                val se = skill?.statusEffects?.find { it.type.name == sName }
+                if (se != null) {
+                    val list = state.statusEffects.getOrPut(targetId) { mutableListOf() }
+                    list.add(BattleStatus(targetId, se.type, se.duration, se.value))
+                    addBattleLog("${hero?.name ?: monster?.name} is inflicted with ${se.type.name}!")
+                }
+            }
+            
+            // 5. Cleanse
+            if (result.cleansed) {
+                state.statusEffects.remove(targetId)
+                addBattleLog("${hero?.name ?: monster?.name} is cleansed of negative effects!")
+            }
+        }
+
+        // Handle Party-wide Buffs (which aren't target-specific in the same way)
+        skill?.buffs?.forEach { buff ->
+            val targetsToBuff = if (buff.targetsParty) state.aliveHeroes.map { it.heroId } else outcome.targets
+            targetsToBuff.forEach { id ->
+                val h = state.heroes.find { it.heroId == id }
+                val m = state.monsters.find { it.monsterId == id }
+                val tName = h?.name ?: m?.name ?: "Unknown"
+                
+                val list = state.statusEffects.getOrPut(id) { mutableListOf() }
+                list.add(BattleStatus(id, buff.type, buff.duration, buff.value))
+                
+                // Log once if party-wide
+                if (!buff.targetsParty || id == targetsToBuff.first()) {
+                    addBattleLog("${if (buff.targetsParty) "Party" else tName} receives ${buff.type.name}!")
+                }
+            }
+        }
+        
+        // 6. Revive (Special handling)
+        if (skill?.revive == true) {
+            val fallen = state.heroes.filter { it.isDead }
+            fallen.forEach { h ->
+                h.isDead = false
+                val healPct = skill.healScaling?.let { if (it.isPercentage) it.baseHeal else 50 } ?: 50
+                h.currentHp = (h.maxHp * healPct / 100).coerceAtLeast(1)
+                addBattleLog("${h.name} is revived!")
             }
         }
 
         // Check deaths
-        state.heroes.filter { it.currentHp <= 0 && !it.isDead }.forEach { h ->
-            h.isDead = true
-            h.currentHp = 0
-            state.addEvent(BattleEvent.HeroDown(h.heroId))
+        state.heroes.forEach { h ->
+            if (h.currentHp <= 0 && !h.isDead) {
+                h.isDead = true
+                h.currentHp = 0
+                state.addEvent(BattleEvent.HeroDown(h.heroId))
+                addBattleLog("${h.name} has fallen!")
+            }
         }
-        state.monsters.filter { it.currentHp <= 0 && !it.isDead }.forEach { m ->
-            m.isDead = true
-            m.currentHp = 0
-            state.addEvent(BattleEvent.MonsterDown(m.monsterId))
+        state.monsters.forEach { m ->
+            if (m.currentHp <= 0 && !m.isDead) {
+                m.isDead = true
+                m.currentHp = 0
+                state.addEvent(BattleEvent.MonsterDown(m.monsterId))
+                addBattleLog("${m.name} is defeated!")
+            }
         }
     }
 
@@ -757,7 +909,17 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val monster = _currentMonster.value ?: return
         val data = _saveData.value
         val karmaReward = 50 + (monster.difficultyTier.ordinal * 25)
+        
+        // Reset hero stats after battle
+        _party.value.forEach { hero ->
+            hero.currentHp = hero.maxHp
+            hero.shield = 0
+            hero.ultimateGauge = 0
+            hero.isDead = false
+        }
+
         _saveData.value = data.copy(
+            party = _party.value.map { it.toSaveData() },
             totalBattlesWon = data.totalBattlesWon + 1,
             totalKarmaXp = data.totalKarmaXp + karmaReward,
             defeatedMonsterIds = data.defeatedMonsterIds + monster.id,
@@ -827,19 +989,34 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- Hero Level Up ---
 
+    fun getHeroLevelUpCost(heroId: String): Int {
+        val hero = _party.value.find { it.heroId == heroId } ?: return 0
+        return 100 * hero.level
+    }
+
     fun levelUpHero(heroId: String): Boolean {
         val hero = _party.value.find { it.heroId == heroId } ?: return false
+        val cost = getHeroLevelUpCost(heroId)
         val data = _saveData.value
-        val sparkCost = kotlin.math.ceil(hero.level * 1.5).toInt()
-        if (data.sparks < sparkCost) return false
-
-        hero.level++
-        _saveData.value = data.copy(
-            sparks = data.sparks - sparkCost,
-            party = _party.value.map { it.toSaveData() }
-        )
-        saveGame()
-        return true
+        val availableGold = data.totalKarmaXp - data.totalGoldSpent
+        
+        if (availableGold >= cost) {
+            val nextLevel = hero.level + 1
+            // Recalculate stats based on new level
+            val def = HeroDefinitions.getHero(heroId) ?: return false
+            val newInstance = HeroDefinitions.createInstance(def, nextLevel, hero.equippedItems)
+            
+            // Update the hero in the party list
+            _party.value = _party.value.map { if (it.heroId == heroId) newInstance else it }
+            
+            _saveData.value = data.copy(
+                totalGoldSpent = data.totalGoldSpent + cost,
+                party = _party.value.map { it.toSaveData() }
+            )
+            saveGame()
+            return true
+        }
+        return false
     }
 
     // --- Hero Purchase ---

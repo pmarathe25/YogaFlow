@@ -3,300 +3,136 @@ package com.example.game.ui.components
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
-
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.game.model.*
 
 private val hpGreen = Color(0xFF66BB6A)
-private val hpYellow = Color(0xFFFFA726)
-private val hpRed = Color(0xFFFF4444)
+private val hpYellow = Color(0xFFFFCA28)
+private val hpRed = Color(0xFFEF5350)
 
-private fun hpColorFromPercent(pct: Float): Color = when {
-    pct < 0.5f -> lerp(hpRed, hpYellow, (pct / 0.5f).coerceIn(0f, 1f))
-    else -> lerp(hpYellow, hpGreen, ((pct - 0.5f) / 0.5f).coerceIn(0f, 1f))
+fun hpColorFromPercent(pct: Float): Color {
+    return if (pct > 0.6f) hpGreen
+    else if (pct > 0.25f) hpYellow
+    else hpRed
 }
 
 @Composable
-fun HeroHUD(
-    hero: HeroInstance,
-    statuses: List<BattleStatus>,
-    isCurrentTurn: Boolean,
-    modifier: Modifier = Modifier
+fun FloatingHUD(
+    name: String,
+    hp: Int,
+    maxHp: Int,
+    modifier: Modifier = Modifier,
+    shield: Int = 0,
+    gauge: Int? = null, // null for monsters
+    element: Element,
+    statuses: List<BattleStatus> = emptyList(),
+    isCurrentTurn: Boolean = false,
+    width: Int = 80,
+    hpBarColor: Color? = null
 ) {
-    val accentColor = elementToColor(hero.element)
-
+    val accentColor = elementToColor(element)
+    val hpPercent = hp.toFloat() / maxHp.coerceAtLeast(1)
+    
     val animatedHpPercent by animateFloatAsState(
-        targetValue = hero.hpPercent,
-        animationSpec = tween(300)
+        targetValue = hpPercent,
+        animationSpec = tween(400, easing = FastOutSlowInEasing)
     )
 
-    val hpColor = hpColorFromPercent(animatedHpPercent)
-
-    val infiniteTransition = rememberInfiniteTransition()
-    val turnGlowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        )
-    )
-
-    val borderAlpha = if (isCurrentTurn) turnGlowAlpha else 0f
-
-    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
-
-    val gaugePct = hero.ultimateGauge / 100f
-    val isUltReady = gaugePct >= 1f
-    val ultGlowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(600, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        )
-    )
-
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
-        ),
-        border = if (isCurrentTurn) CardDefaults.outlinedCardBorder().copy(
-            brush = SolidColor(accentColor.copy(alpha = borderAlpha))
-        ) else null,
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    Column(
+        modifier = modifier.width(width.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(modifier = Modifier.padding(6.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (isCurrentTurn) {
-                    val turnAlpha by infiniteTransition.animateFloat(
-                        initialValue = 1f,
-                        targetValue = 0.3f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(500, easing = FastOutSlowInEasing),
-                            repeatMode = RepeatMode.Reverse
-                        )
-                    )
-                    Text(
-                        text = "\u25B6",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = accentColor.copy(alpha = turnAlpha),
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                    )
-                    Spacer(Modifier.width(2.dp))
-                }
-                Text(
-                    text = hero.name,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = accentColor,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+        // Name and Turn Indicator
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (isCurrentTurn) {
+                Text("▶ ", color = accentColor, fontSize = 9.sp, fontWeight = FontWeight.Black)
+            }
+            Text(
+                text = name,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (isCurrentTurn) accentColor else Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 9.sp
+            )
+        }
+        
+        Spacer(Modifier.height(2.dp))
+
+        // Shield Bar (if any)
+        if (shield > 0) {
+            val shieldPct = (shield.toFloat() / maxHp).coerceAtMost(1f)
+            Canvas(modifier = Modifier.fillMaxWidth().height(3.dp)) {
+                drawRoundRect(
+                    color = Color(0xFF42A5F5),
+                    size = Size(size.width * shieldPct, size.height),
+                    cornerRadius = CornerRadius(1f)
                 )
             }
-            Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(1.dp))
+        }
 
-            // HP bar
-            Box(modifier = Modifier.fillMaxWidth().height(8.dp)) {
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    drawRoundRect(
-                        surfaceVariant,
-                        cornerRadius = CornerRadius(2f)
-                    )
-                    drawRoundRect(
-                        color = hpColor,
-                        size = Size(size.width * animatedHpPercent, size.height),
-                        cornerRadius = CornerRadius(2f)
-                    )
-                    if (hero.shield > 0) {
-                        drawRoundRect(
-                            color = Color(0xFF42A5F5).copy(alpha = 0.5f),
-                            size = Size(size.width * hero.shield.toFloat() / hero.maxHp, size.height),
-                            cornerRadius = CornerRadius(2f),
-                            style = Stroke(width = 1f)
-                        )
-                    }
-                }
+        // HP Bar
+        Box(modifier = Modifier.fillMaxWidth().height(10.dp), contentAlignment = Alignment.Center) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                // Background
+                drawRoundRect(
+                    Color.Black.copy(alpha = 0.6f),
+                    cornerRadius = CornerRadius(2f)
+                )
+                // Fill
+                drawRoundRect(
+                    color = hpBarColor ?: hpColorFromPercent(animatedHpPercent),
+                    size = Size(size.width * animatedHpPercent, size.height),
+                    cornerRadius = CornerRadius(2f)
+                )
             }
-
+            
+            // Numerical HP
             Text(
-                text = "${hero.currentHp}/${hero.maxHp}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                text = "$hp/$maxHp",
+                color = Color.White,
+                fontSize = 7.sp,
+                fontWeight = FontWeight.ExtraBold,
+                style = MaterialTheme.typography.labelSmall
             )
+        }
+
+        // Ultimate Gauge (if present)
+        gauge?.let { g ->
             Spacer(Modifier.height(2.dp))
-
-            // Ultimate gauge
-            Box(modifier = Modifier.fillMaxWidth().height(6.dp)) {
+            val gPct = g.toFloat() / 100f
+            Box(modifier = Modifier.fillMaxWidth(0.8f).height(2.dp)) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
-                    val w = size.width
-                    val h = size.height
-                    val segments = 10
-                    val gap = 1f
-                    val segW = (w - gap * (segments - 1)) / segments
-                    val gradStart = Color(0xFFFF8F00)
-                    val gradEnd = Color(0xFFFFD700)
-                    for (i in 0 until segments) {
-                        val filled = i < (gaugePct * segments).toInt()
-                        val x = i * (segW + gap)
-                        val segColor = if (filled) {
-                            val t = i.toFloat() / segments.coerceAtLeast(1)
-                            val base = lerp(gradStart, gradEnd, t)
-                            if (isUltReady) base.copy(alpha = ultGlowAlpha) else base
-                        } else Color(0x40000000)
-                        drawRoundRect(
-                            color = segColor,
-                            topLeft = Offset(x, 0f),
-                            size = Size(segW, h),
-                            cornerRadius = CornerRadius(1f)
-                        )
-                    }
-                    if (isUltReady) {
-                        drawRoundRect(
-                            color = lerp(gradStart, gradEnd, 0.8f).copy(alpha = ultGlowAlpha * 0.3f),
-                            size = size,
-                            cornerRadius = CornerRadius(1f),
-                            style = Stroke(width = 2f)
-                        )
-                    }
-                }
-                // ─── Sparkle particles when full ──────────────────────
-                if (isUltReady) {
-                    val infiniteTransition = rememberInfiniteTransition()
-                    val sparklePhase by infiniteTransition.animateFloat(
-                        initialValue = 0f, targetValue = 1f,
-                        animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing))
+                    drawRoundRect(Color.Black.copy(alpha = 0.3f), cornerRadius = CornerRadius(1f))
+                    drawRoundRect(
+                        color = Color(0xFFFFD700),
+                        size = Size(size.width * gPct, size.height),
+                        cornerRadius = CornerRadius(1f)
                     )
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        val sparkleCount = 6
-                        for (i in 0 until sparkleCount) {
-                            val t = (sparklePhase + i.toFloat() / sparkleCount) % 1f
-                            val alpha = (1f - t * t).coerceIn(0f, 1f)
-                            val x = size.width * (0.1f + (i.toFloat() / sparkleCount) * 0.8f)
-                            val y = size.height * (0.5f + kotlin.math.cos(t.toDouble() * kotlin.math.PI * 4).toFloat() * 0.4f)
-                            val sparkleSize = (1.5f + t * 2f) * 2f
-                            val c = Offset(x, y)
-                            drawLine(
-                                Color.White.copy(alpha = alpha),
-                                Offset(c.x - sparkleSize, c.y),
-                                Offset(c.x + sparkleSize, c.y),
-                                strokeWidth = 1f
-                            )
-                            drawLine(
-                                Color.White.copy(alpha = alpha),
-                                Offset(c.x, c.y - sparkleSize),
-                                Offset(c.x, c.y + sparkleSize),
-                                strokeWidth = 1f
-                            )
-                            drawCircle(Color.White.copy(alpha = alpha * 0.5f), sparkleSize * 0.3f, c)
-                        }
-                    }
-                }
-            }
-
-            // Status effects
-            if (statuses.isNotEmpty()) {
-                Spacer(Modifier.height(2.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                    statuses.take(3).forEach { status ->
-                        StatusIcon(status.statusType)
-                    }
                 }
             }
         }
-    }
-}
 
-@Composable
-fun MonsterHUD(
-    monster: MonsterInstance,
-    statuses: List<BattleStatus>,
-    modifier: Modifier = Modifier
-) {
-    val accentColor = elementToColor(monster.element)
-
-    val animatedHpPercent by animateFloatAsState(
-        targetValue = monster.hpPercent,
-        animationSpec = tween(300)
-    )
-
-    val hpColor = hpColorFromPercent(animatedHpPercent)
-
-    val surfaceVariantMonster = MaterialTheme.colorScheme.surfaceVariant
-
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = monster.name,
-                style = MaterialTheme.typography.titleSmall,
-                color = accentColor,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-            )
-            if (monster.isBoss) {
-                Text(
-                    text = "\u2605 BOSS \u2605",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.error,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                )
-            }
-            Spacer(Modifier.height(4.dp))
-
-            // HP bar
-            Box(modifier = Modifier.fillMaxWidth(0.8f).height(12.dp)) {
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    drawRoundRect(
-                        surfaceVariantMonster,
-                        cornerRadius = CornerRadius(3f)
-                    )
-                    drawRoundRect(
-                        color = hpColor,
-                        size = Size(size.width * animatedHpPercent, size.height),
-                        cornerRadius = CornerRadius(3f)
-                    )
-                    if (monster.shield > 0) {
-                        drawRoundRect(
-                            color = Color(0xFF42A5F5).copy(alpha = 0.5f),
-                            size = Size(size.width * monster.shield.toFloat() / monster.maxHp, size.height),
-                            cornerRadius = CornerRadius(3f),
-                            style = Stroke(width = 1.5f)
-                        )
-                    }
-                }
-            }
-
-            Text(
-                text = "${monster.currentHp}/${monster.maxHp}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-            )
-
-            if (statuses.isNotEmpty()) {
-                Spacer(Modifier.height(4.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    statuses.forEach { status ->
-                        StatusIcon(status.statusType, iconSize = 16)
-                    }
+        // Status Effects
+        if (statuses.isNotEmpty()) {
+            Spacer(Modifier.height(2.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                statuses.take(4).forEach { status ->
+                    StatusIcon(status.statusType, iconSize = 10)
                 }
             }
         }
@@ -305,90 +141,52 @@ fun MonsterHUD(
 
 @Composable
 fun StatusIcon(type: StatusEffectType, iconSize: Int = 12) {
-    val color = when (type) {
-        StatusEffectType.BURN -> Color(0xFFFF4444)
-        StatusEffectType.ATK_UP -> Color(0xFFFFA726)
-        StatusEffectType.ATK_DOWN -> Color(0xFFEF5350)
-        StatusEffectType.SPD_UP -> Color(0xFF42A5F5)
-        StatusEffectType.SPD_DOWN -> Color(0xFF7E57C2)
-        StatusEffectType.DAMAGE_REDUCTION -> Color(0xFF66BB6A)
-        StatusEffectType.TAUNT -> Color(0xFFFF7043)
-        StatusEffectType.STUN -> Color(0xFFBDBDBD)
-        StatusEffectType.CONFUSE -> Color(0xFFAB47BC)
-        StatusEffectType.SHIELD -> Color(0xFF42A5F5)
-        else -> Color.Gray
+    val (icon, color) = when (type) {
+        StatusEffectType.ATK_UP -> "⚔️" to Color(0xFFEF5350)
+        StatusEffectType.ATK_DOWN -> "⚔️" to Color.Gray
+        StatusEffectType.SPD_UP -> "👟" to Color(0xFF66BB6A)
+        StatusEffectType.SPD_DOWN -> "👟" to Color.Gray
+        StatusEffectType.BURN -> "🔥" to Color(0xFFFFA500)
+        StatusEffectType.STUN -> "💫" to Color.Yellow
+        StatusEffectType.TAUNT -> "🎯" to Color.Red
+        StatusEffectType.CONFUSE -> "🌀" to Color.LightGray
+        StatusEffectType.DAMAGE_REDUCTION -> "🛡️" to Color.Blue
+        StatusEffectType.DEF_DOWN -> "🛡️" to Color.Gray
+        StatusEffectType.SHIELD -> "🛡️" to Color.Cyan
     }
 
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { visible = true }
-    val iconScale by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = spring(dampingRatio = 0.5f, stiffness = 800f)
-    )
-
-    Box(modifier = Modifier.scale(iconScale)) {
-        Canvas(modifier = Modifier.size(iconSize.dp)) {
-            val c = Offset(size.width / 2f, size.height / 2f)
-            val r = size.minDimension / 2f
-
-            drawCircle(color.copy(alpha = 0.15f), r, c)
-            drawCircle(color, r * 0.6f, c, style = Stroke(width = 1.5f))
-            drawCircle(color.copy(alpha = 0.3f), r * 0.4f, c)
-
-            when (type) {
-                StatusEffectType.BURN -> {
-                    val flamePath = Path().apply {
-                        moveTo(c.x, c.y - r * 0.4f)
-                        lineTo(c.x - r * 0.15f, c.y + r * 0.2f)
-                        lineTo(c.x, c.y + r * 0.05f)
-                        lineTo(c.x + r * 0.15f, c.y + r * 0.2f)
-                        close()
-                    }
-                    drawPath(flamePath, Color.White.copy(alpha = 0.7f))
-                }
-                StatusEffectType.STUN -> {
-                    val boltPath = Path().apply {
-                        moveTo(c.x - r * 0.08f, c.y - r * 0.4f)
-                        lineTo(c.x + r * 0.12f, c.y - r * 0.1f)
-                        lineTo(c.x - r * 0.05f, c.y - r * 0.05f)
-                        lineTo(c.x + r * 0.08f, c.y + r * 0.4f)
-                        lineTo(c.x - r * 0.12f, c.y + r * 0.1f)
-                        lineTo(c.x + r * 0.05f, c.y + r * 0.05f)
-                        close()
-                    }
-                    drawPath(boltPath, Color.White.copy(alpha = 0.7f))
-                }
-                StatusEffectType.ATK_UP -> {
-                    drawLine(Color.White, Offset(c.x, c.y - r * 0.3f), Offset(c.x, c.y + r * 0.3f), 1.5f)
-                    drawLine(Color.White, Offset(c.x - r * 0.3f, c.y), Offset(c.x + r * 0.3f, c.y), 1.5f)
-                }
-                StatusEffectType.SPD_UP -> {
-                    val arrowPath = Path().apply {
-                        moveTo(c.x, c.y - r * 0.4f)
-                        lineTo(c.x - r * 0.25f, c.y)
-                        lineTo(c.x + r * 0.25f, c.y)
-                        close()
-                    }
-                    drawPath(arrowPath, Color.White)
-                }
-                StatusEffectType.SHIELD -> {
-                    drawCircle(Color.White.copy(alpha = 0.5f), r * 0.3f, c)
-                }
-                else -> {}
-            }
+    Surface(
+        shape = RoundedCornerShape(2.dp),
+        color = color.copy(alpha = 0.2f),
+        modifier = Modifier.size(iconSize.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(text = icon, fontSize = (iconSize - 2).sp)
         }
     }
 }
 
-fun elementToColor(element: Element): Color = when (element) {
-    Element.FIRE -> Color(0xFFFF6B35)
-    Element.WATER -> Color(0xFF42A5F5)
-    Element.AIR -> Color(0xFFB2EBF2)
-    Element.EARTH -> Color(0xFF8D6E63)
-    Element.LIGHT -> Color(0xFFFFD54F)
-    Element.DARK -> Color(0xFF7E57C2)
-    Element.SHADOW -> Color(0xFF4A148C)
-    Element.ELECTRIC -> Color(0xFFFFD740)
-    Element.VOID -> Color(0xFFCE93D8)
-    Element.NEUTRAL -> Color(0xFFBDBDBD)
+fun elementToColor(element: Element): Color {
+    return when (element) {
+        Element.FIRE -> Color(0xFFF44336)
+        Element.WATER -> Color(0xFF2196F3)
+        Element.AIR -> Color(0xFFE1F5FE)
+        Element.EARTH -> Color(0xFF795548)
+        Element.LIGHT -> Color(0xFFFFF176)
+        Element.DARK -> Color(0xFF3F51B5)
+        Element.SHADOW -> Color(0xFF455A64)
+        Element.ELECTRIC -> Color(0xFFFFEB3B)
+        Element.VOID -> Color(0xFF9C27B0)
+        Element.NEUTRAL -> Color(0xFF9E9E9E)
+    }
+}
+
+@Composable
+fun HeroHUD(hero: HeroInstance, statuses: List<BattleStatus>, isCurrentTurn: Boolean, modifier: Modifier = Modifier) {
+    FloatingHUD(hero.name, hero.currentHp, hero.maxHp, modifier, hero.shield, hero.ultimateGauge, hero.element, statuses, isCurrentTurn, width = 60)
+}
+
+@Composable
+fun MonsterHUD(monster: MonsterInstance, statuses: List<BattleStatus>, modifier: Modifier = Modifier) {
+    FloatingHUD(monster.name, monster.currentHp, monster.maxHp, modifier, monster.shield, null, monster.element, statuses, false, width = 100, hpBarColor = Color.Red)
 }

@@ -22,7 +22,7 @@ data class ActionOutcome(
     val actorId: String,
     val skillUsed: Skill? = null,
     val targets: List<String> = emptyList(),
-    val damageDealt: Int = 0,
+    val damageDealt: Int = 0, // Total damage for summary/logs
     val healingDone: Int = 0,
     val shieldApplied: Int = 0,
     val statusApplied: List<String> = emptyList(),
@@ -32,7 +32,16 @@ data class ActionOutcome(
     val wasCrit: Boolean = false,
     val wasDodged: Boolean = false,
     val damageTypeBreakdown: List<DamageBreakdown> = emptyList(),
-    val comboTriggered: ComboSkill? = null
+    val comboTriggered: ComboSkill? = null,
+    val perTargetResult: Map<String, TargetResult> = emptyMap()
+)
+
+data class TargetResult(
+    val damage: Int = 0,
+    val heal: Int = 0,
+    val shield: Int = 0,
+    val statuses: List<String> = emptyList(),
+    val cleansed: Boolean = false
 )
 
 data class DamageBreakdown(
@@ -96,7 +105,8 @@ class BattleState(
     var currentCombo: ComboSkill? = null,
     var pendingAction: TurnAction? = null,
     var pendingSkill: Skill? = null,
-    var showTargetSelection: Boolean = false
+    var showTargetSelection: Boolean = false,
+    val skillCooldowns: MutableMap<String, MutableMap<String, Int>> = mutableMapOf() // heroId -> (skillId -> remainingTurns)
 ) {
     val eventLog: List<BattleEvent> get() = _eventLog.toList()
     val aliveHeroes: List<HeroInstance> get() = heroes.filter { !it.isDead }
@@ -126,8 +136,8 @@ class BattleState(
     }
 
     fun snapshot(): BattleState = BattleState(
-        heroes = heroes.toMutableList(),
-        monsters = monsters.toMutableList(),
+        heroes = heroes.map { it.copy(equippedItems = it.equippedItems.toMutableList()) }.toMutableList(),
+        monsters = monsters.map { it.copy() }.toMutableList(),
         turnOrder = turnOrder.toMutableList(),
         currentTurnIndex = currentTurnIndex,
         currentActorId = currentActorId,
@@ -141,7 +151,8 @@ class BattleState(
         currentCombo = currentCombo,
         pendingAction = pendingAction,
         pendingSkill = pendingSkill,
-        showTargetSelection = showTargetSelection
+        showTargetSelection = showTargetSelection,
+        skillCooldowns = skillCooldowns.mapValues { it.value.toMutableMap() }.toMutableMap()
     )
 }
 
