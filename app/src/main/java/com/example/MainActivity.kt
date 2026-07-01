@@ -33,6 +33,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.model.FlowLoader
 import com.example.navigation.Screen
+import com.example.game.persistence.DataLoader
 import com.example.game.ui.components.GameApp
 import com.example.game.viewmodel.GameViewModel
 import com.example.ui.components.*
@@ -44,6 +45,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        DataLoader.init(this)
         
         val flowId = intent?.getStringExtra("FLOW_ID")
         if (flowId != null) {

@@ -1,6 +1,7 @@
 package com.example.game.viewmodel
 
 import com.example.game.model.*
+import com.example.game.persistence.DataLoader
 import kotlin.math.*
 import kotlin.random.Random
 
@@ -547,7 +548,7 @@ object BattleEngine {
     ): List<BattleEvent> {
         val events = mutableListOf<BattleEvent>()
         state.monsters.forEach { monster ->
-            val definition = MonsterDefinitions.getMonster(monster.monsterId) ?: return@forEach
+            val definition = DataLoader.getMonster(monster.monsterId)
             for (i in definition.phases.indices) {
                 val phase = definition.phases[i]
                 if (monster.hpPercent <= phase.hpThreshold && monster.activePhase < i) {
@@ -597,7 +598,7 @@ object BattleEngine {
 
     private fun isComponentNullified(state: BattleState, component: DamageComponent): Boolean {
         return state.monsters.any { monster ->
-            val def = MonsterDefinitions.getMonster(monster.monsterId)
+            val def = DataLoader.getMonster(monster.monsterId)
             def?.phases?.getOrNull(monster.activePhase)?.triggers?.any { trigger ->
                 trigger.type == PhaseTriggerType.NULLIFY_ELEMENT && (
                     (trigger.summonMonsterId == "ALL" && component.type == DamageType.ELEMENTAL) ||

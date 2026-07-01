@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.lazy.rememberLazyListState
 import com.example.game.model.Monster
-import com.example.game.model.MonsterDefinitions
+import com.example.game.persistence.DataLoader
 import kotlin.math.sin
 
 @Composable
@@ -40,7 +40,7 @@ fun MonsterRoadSelection(
     onSelectMonster: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val monsters = MonsterDefinitions.allMonsters
+    val monsters = DataLoader.monsters
     val listState = rememberLazyListState()
     
     // Auto-scroll to the first undefeated monster

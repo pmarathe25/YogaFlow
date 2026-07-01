@@ -22,13 +22,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.game.model.*
+import com.example.game.persistence.DataLoader
 import com.example.game.viewmodel.GameViewModel
 
 @Composable
 fun PartyScreen(viewModel: GameViewModel) {
     val party by viewModel.party.collectAsState()
     val saveData by viewModel.saveData.collectAsState()
-    val allHeroes = HeroDefinitions.allHeroes
+    val allHeroes = DataLoader.heroes
     
     var detailHeroId by remember { mutableStateOf<String?>(null) }
 
@@ -252,7 +253,7 @@ fun HeroDetailsDialog(
                 
                 // Inventory (Available for this hero)
                 Text("Available Inventory", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-                val available = EquipmentDefinitions.allEquipment.filter { eq ->
+                val available = DataLoader.equipment.filter { eq ->
                     eq.id in saveData.inventory && (eq.heroId == null || eq.heroId == hero.id) &&
                     equipped.none { it.slot == eq.slot }
                 }

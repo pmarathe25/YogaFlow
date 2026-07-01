@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.example.game.model.*
+import com.example.game.persistence.DataLoader
 import kotlin.math.*
 
 @Composable
@@ -61,7 +62,7 @@ fun ActionPanel(
             .filter { it.currentHp > 0 && !it.isDead }
             .map { it.name }
             .toSet()
-        ComboSkillDefinitions.allCombos.filter { combo ->
+        DataLoader.combos.filter { combo ->
             currentHero.name in combo.requiredHeroes &&
             combo.requiredHeroes.all { name -> name in aliveHeroNames } &&
             combo.requiredHeroes.mapNotNull { name ->

@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ReminderItem
 import com.example.db.ReminderEntity
+import com.example.game.persistence.DataLoader
 
 @Composable
 fun LevelsInfoDialog(
@@ -152,7 +153,7 @@ fun LevelsInfoDialog(
                                         )
                                         
                                         // Rewards display
-                                        val heroReward = com.example.game.model.HeroDefinitions.allHeroes.find { it.unlockYogaLevel == levelDef.level }
+                                        val heroReward = DataLoader.heroes.find { it.unlockYogaLevel == levelDef.level }
                                         if (heroReward != null) {
                                             Text(
                                                 text = "Unlocks Hero: ${heroReward.name}",
@@ -161,7 +162,7 @@ fun LevelsInfoDialog(
                                                 fontWeight = FontWeight.Bold
                                             )
                                         }
-                                        val gearRewards = com.example.game.model.EquipmentDefinitions.all().filter { it.minYogaLevel == levelDef.level }
+                                        val gearRewards = DataLoader.equipment.filter { it.minYogaLevel == levelDef.level }
                                         if (gearRewards.isNotEmpty()) {
                                             Text(
                                                 text = "Unlocks ${gearRewards.size} new gear items",

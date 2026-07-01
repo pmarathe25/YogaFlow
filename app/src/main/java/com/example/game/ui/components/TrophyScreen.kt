@@ -14,13 +14,14 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.game.model.*
+import com.example.game.persistence.DataLoader
 import com.example.game.viewmodel.GameViewModel
 
 @Composable
 fun TrophyScreen(viewModel: GameViewModel) {
     val saveData by viewModel.saveData.collectAsState()
     val earnedTrophies = saveData.earnedTrophyIds
-    val totalTrophies = TrophyDefinitions.allTrophies.size
+    val totalTrophies = DataLoader.trophies.size
     val earnedCount = earnedTrophies.size
 
     Box(
@@ -58,7 +59,7 @@ fun TrophyScreen(viewModel: GameViewModel) {
             Spacer(Modifier.height(16.dp))
 
             LazyColumn(modifier = Modifier.weight(1f)) {
-                items(TrophyDefinitions.allTrophies) { trophy ->
+                items(DataLoader.trophies) { trophy ->
                     val earned = trophy.id in earnedTrophies
                     TrophyCard(trophy = trophy, earned = earned)
                 }

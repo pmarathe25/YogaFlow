@@ -24,8 +24,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.game.model.Trophy
-import com.example.game.model.TrophyDefinitions
 import com.example.game.model.TrophyRarity
+import com.example.game.persistence.DataLoader
 import com.example.ui.components.AchievementBadgeCard
 import com.example.viewmodel.Achievement
 
@@ -97,7 +97,7 @@ fun TrophyModal(
                         Spacer(Modifier.height(16.dp))
                         SectionHeader("Zen Battle Trophies")
                     }
-                    items(TrophyDefinitions.all()) { trophy ->
+                    items(DataLoader.trophies) { trophy ->
                         val isEarned = earnedTrophyIds.contains(trophy.id)
                         BattleTrophyCard(trophy = trophy, isEarned = isEarned)
                     }

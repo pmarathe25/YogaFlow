@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.game.model.*
+import com.example.game.persistence.DataLoader
 import com.example.game.viewmodel.GameViewModel
 
 @Composable
@@ -99,7 +100,7 @@ fun ShopScreen(viewModel: GameViewModel) {
             Spacer(Modifier.height(12.dp))
 
             LazyColumn(modifier = Modifier.weight(1f)) {
-                val available = EquipmentDefinitions.allEquipment.filter { eq ->
+                val available = DataLoader.equipment.filter { eq ->
                     eq.slot == selectedCategory
                 }
                 items(available) { item ->
