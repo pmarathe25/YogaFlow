@@ -8,6 +8,7 @@ data class YogaPose(
     val benefits: String,
     val instructions: List<String>,
     val voicePrompt: String,
+    val sanskritInstructions: String,
     val holdDurationSec: Int = 30
 )
 

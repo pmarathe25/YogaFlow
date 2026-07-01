@@ -1,0 +1,340 @@
+{
+  "poses": [
+    {
+      "id": 1,
+      "sanskritName": "Pranamasana",
+      "englishName": "Prayer Pose",
+      "description": "Stand upright with feet together and palms pressed together at the heart center.",
+      "benefits": "Establishes calm, centers attention, and prepares the mind.",
+      "instructions": [
+        "Stand at the front edge of your mat with feet together.",
+        "Distribute your weight evenly on both feet.",
+        "Inhale, expand your chest, and relax your shoulders.",
+        "Exhale and press your palms together in front of your chest."
+      ],
+      "voicePrompt": "Prayer Pose, or Pranamasana. Stand tall at the front of your mat. Bring your hands together at your heart center. Exhale, grounding yourself, and set a calm intention.",
+      "sanskritInstructions": "प्रणामासनं कुर्यात्। करसम्पुटं हृदयस्थाने धारयन्तु। दीर्घं निःश्वस्य शान्तं भवन्तु।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 2,
+      "sanskritName": "Hastauttanasana",
+      "englishName": "Raised Arms Pose",
+      "description": "Inhale and reach arms upward and backward, stretching the whole body.",
+      "benefits": "Stretches chest and abdomen, improves digestion, tones arm muscles.",
+      "instructions": [
+        "Inhale and lift your arms up and backward.",
+        "Keep your biceps close to your ears.",
+        "Gently push your hips forward and arch back slightly.",
+        "Stretches the whole body from the heels to the tips of the fingers."
+      ],
+      "voicePrompt": "Raised Arms Pose, Hastauttanasana. Inhale deeply, sweep your arms up and slightly back. Reach through your fingertips, stretching your entire front body.",
+      "sanskritInstructions": "हस्तौत्तानासनं कुर्यात्। उद्गस्य हस्तौ ऊर्ध्वं प्रयच्छन्तु। सर्वशरीरं दीर्घतानन्तु।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 3,
+      "sanskritName": "Uttanasana",
+      "englishName": "Standing Forward Bend",
+      "description": "Exhale, hinge at the hips, and fold forward to touch the ground or shins.",
+      "benefits": "Stretches hamstrings and spine, relieves tension, increases circulation.",
+      "instructions": [
+        "Exhale and bend forward from the hips, keeping the spine long.",
+        "Bring the hands down next to the feet on the mat.",
+        "Relax your head and neck downward.",
+        "Softly bend knees if hamstrings are tight."
+      ],
+      "voicePrompt": "Standing Forward Bend, Uttanasana. Exhale, hinge from your hips, and fold forward completely. Let your head hand heavy and touch the mat or your shins.",
+      "sanskritInstructions": "उत्तानासनं कुर्यात्। अधोगत्वा पार्श्वपादौ स्पृशन्तु। शिरोग्रीवं शिथिलीकुर्यात्।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 4,
+      "sanskritName": "Ashwa Sanchalanasana",
+      "englishName": "Equestrian / Lunge Pose",
+      "description": "Inhale, step your right leg far back, drop knee down, and lift chest up.",
+      "benefits": "Stretches hip flexors, strengthens legs, opens chest.",
+      "instructions": [
+        "Inhale and step your right leg as far back as comfortable.",
+        "Lower your right knee to the mat and untuck the toes.",
+        "Keep your left knee aligned directly over your left ankle.",
+        "Lift your chest, roll shoulders back, and look forward or slightly up."
+      ],
+      "voicePrompt": "Lunge Pose, Ashwa Sanchalanasana. Inhale, step your right leg far back, lowering the knee. Lift your chest and gaze forward, opening your hips.",
+      "sanskritInstructions": "अश्वसञ्चालनासनं कुर्यात्। दक्षिणपादं पृष्ठे स्थापयन्तु। वक्षःप्रसास्य अग्रे पश्यन्तु।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 5,
+      "sanskritName": "Phalakasana",
+      "englishName": "Plank Pose",
+      "description": "Step left leg back into a strong, straight-line plank posture.",
+      "benefits": "Strengthens core, arms, shoulders, and wrists.",
+      "instructions": [
+        "Hold your breath and step your left foot back next to the right foot.",
+        "Align your shoulders directly over your wrists.",
+        "Keep your body in a straight line from head to heels.",
+        "Engage your core and thighs, do not let your lower back sag."
+      ],
+      "voicePrompt": "Plank Pose, Phalakasana. Step your left foot back to meet the right. Hold your breath and support your body in a solid, straight line from head to heels.",
+      "sanskritInstructions": "फलकासनं कुर्यात्। वामपादं पृष्ठे स्थापयन्तु। शरीरं सरलरेखा-रूपेण धारयन्तु।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 6,
+      "sanskritName": "Ashtanga Namaskara",
+      "englishName": "Eight-Limbed Pose",
+      "description": "Lower knees, chest, and chin down to the floor, hips slightly raised.",
+      "benefits": "Strengthens back, shoulders, arms, and chest.",
+      "instructions": [
+        "Exhale and gently lower your knees to the mat.",
+        "Lower your chest and chin to the floor between your hands.",
+        "Keep your hips slightly elevated off the ground.",
+        "Eight points of the body should touch the floor."
+      ],
+      "voicePrompt": "Eight-Limbed Pose, Ashtanga Namaskara. Exhale and lower your knees, chest, and chin to the mat. Keep your hips slightly elevated.",
+      "sanskritInstructions": "अष्टाङ्गनमस्कारं कुर्यात्। जानु-वक्षः-हनु भूमौ स्थापयन्तु। नितम्बं कोष्ठोन्नतं धारयन्तु।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 7,
+      "sanskritName": "Bhujangasana",
+      "englishName": "Cobra Pose",
+      "description": "Inhale, slide forward and lift chest up with bent elbows.",
+      "benefits": "Strengthens spine, opens shoulders and chest, tones back.",
+      "instructions": [
+        "Slide your chest forward, untuck your toes, and press tops of feet into mat.",
+        "Inhale and lift your chest, keeping elbows bent and tucked in.",
+        "Keep your shoulders rolled away from your ears.",
+        "Gaze forward or slightly upward."
+      ],
+      "voicePrompt": "Cobra Pose, Bhujangasana. Inhale, slide forward and lift your chest up. Keep your elbows bent and close to your body, opening your heart.",
+      "sanskritInstructions": "भुजङ्गासनं कुर्यात्। अग्रे सर्प-रूपेण शरीरं ऊर्ध्वं उत्थापयन्तु। वक्षःप्रसास्य हृदयं उद्भासन्तु।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 8,
+      "sanskritName": "Adho Mukha Svanasana",
+      "englishName": "Downward-Facing Dog",
+      "description": "Exhale, tuck toes, lift hips up and back into an inverted V-shape.",
+      "benefits": "Energizes body, stretches hamstrings, calves, and shoulders.",
+      "instructions": [
+        "Exhale, tuck your toes, and push your hips up and backward.",
+        "Form an inverted 'V' shape with your body.",
+        "Press your palms firmly into the mat, fingers spread wide.",
+        "Try to lower your heels toward the ground, relaxing your neck."
+      ],
+      "voicePrompt": "Downward-Facing Dog, Adho Mukha Svanasana. Exhale, tuck your toes, and lift your hips high and back. Press your hands into the mat, stretching your spine.",
+      "sanskritInstructions": "अधोमुखश्वानासनं कुर्यात्। नितम्बं ऊर्ध्वं प्रयच्छन्तु। सर्वशरीरं पर्वताकारं धारयन्तु।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 9,
+      "sanskritName": "Ashwa Sanchalanasana",
+      "englishName": "Lunge Pose (Left knee down)",
+      "description": "Inhale, step your right foot forward between your hands, left knee down.",
+      "benefits": "Opens hip flexors and pelvis, improves posture.",
+      "instructions": [
+        "Inhale and step your right foot forward between your hands.",
+        "Lower your left knee to the mat.",
+        "Roll your shoulders back, lift your chest, and look forward.",
+        "Ensure your right knee is stacked directly above your right ankle."
+      ],
+      "voicePrompt": "Lunge Pose, Ashwa Sanchalanasana. Inhale, step your right foot forward between your hands, and drop your left knee. Lift your gaze and shine your chest.",
+      "sanskritInstructions": "अश्वसञ्चालनासनं कुर्यात्। दक्षिणपादं अग्रे स्थापयन्तु। अग्रे पश्यन्तु।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 10,
+      "sanskritName": "Uttanasana",
+      "englishName": "Standing Forward Bend",
+      "description": "Exhale, step left foot forward next to right, and fold down.",
+      "benefits": "Calms mind, stretches calves and spine.",
+      "instructions": [
+        "Exhale and step your left foot forward next to your right foot.",
+        "Extend your legs and fold forward from the hips.",
+        "Touch your fingertips or palms to the floor, if possible.",
+        "Allow your head to hang completely relaxed."
+      ],
+      "voicePrompt": "Standing Forward Bend, Uttanasana. Exhale, step your left foot forward next to the right, and fold deeply. Let all tension drain from your neck.",
+      "sanskritInstructions": "उत्तानासनं कुर्यात्। वामपादं अग्रे स्थापयन्तु, दीर्घं नमन्तु।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 11,
+      "sanskritName": "Hastauttanasana",
+      "englishName": "Raised Arms Pose",
+      "description": "Inhale, reach up and back, lengthening the spine.",
+      "benefits": "Expands lungs, energizes nervous system.",
+      "instructions": [
+        "Inhale, roll your spine up slowly, and reach your arms overhead.",
+        "Keep biceps by your ears and stretch your arms up and backward.",
+        "Push hips slightly forward and open your heart to the sky.",
+        "Feel the breath fill your chest."
+      ],
+      "voicePrompt": "Raised Arms Pose, Hastauttanasana. Inhale, rise all the way up, sweep your arms overhead, and gently arch back. Lift your spirit and stretch.",
+      "sanskritInstructions": "हस्तौत्तानासनं कुर्यात्। उद्गस्य हस्तौ ऊर्ध्वं प्रयच्छन्तु, वक्षः उद्भासन्तु।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 12,
+      "sanskritName": "Pranamasana",
+      "englishName": "Prayer Pose",
+      "description": "Exhale, lower arms, and return palms together at chest.",
+      "benefits": "Restores baseline heart rate, returns focus to center.",
+      "instructions": [
+        "Exhale and slowly lower your arms.",
+        "Bring your palms together in front of your chest.",
+        "Close your eyes for a moment, observing the flow of energy.",
+        "Stand quiet and steady in Tadasana / Prayer Pose."
+      ],
+      "voicePrompt": "Prayer Pose, Pranamasana. Exhale and lower your hands back to your heart center. Stand still, breathe, and feel the vibrant energy flowing through your entire body.",
+      "sanskritInstructions": "प्रणामासनं कुर्यात्। निःश्वस्य हस्तौ हृदयस्थाने स्थापयन्तु। ओम् शान्तिः शान्तिः शान्तिः।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 201,
+      "sanskritName": "Tadasana",
+      "englishName": "Mountain Pose",
+      "description": "Ground your feet, stand upright with arms by your side, and breathe steadily.",
+      "benefits": "Improves posture, strengthens thighs, knees, and ankles.",
+      "instructions": [
+        "Stand with big toes touching, heels slightly apart.",
+        "Engage your thighs and lift your kneecaps.",
+        "Let your arms hang naturally with palms facing forward.",
+        "Inhale deeply, expanding your torso."
+      ],
+      "voicePrompt": "Mountain Pose, Tadasana. Ground your feet firmly into the earth. Stand tall, relax your shoulders, and breathe with power and clarity.",
+      "sanskritInstructions": "ताडासनं कुर्यात्। समस्थिति। पादौ भूमौ धारयन्तु। स्वास्थ्य स्थितौ भवन्तु।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 202,
+      "sanskritName": "Virabhadrasana I",
+      "englishName": "Warrior I",
+      "description": "Step your left leg back, bend your front knee, and sweep your arms high.",
+      "benefits": "Stretches chest and lungs, strengthens shoulders, arms, and back.",
+      "instructions": [
+        "Step your left foot back about 3 to 4 feet.",
+        "Turn your left foot out 45 degrees and align your hips to the front.",
+        "Bend your right knee to 90 degrees.",
+        "Inhale, sweep your arms high with palms facing."
+      ],
+      "voicePrompt": "Warrior 1. Step your left leg back and sweep your arms high. Square your hips forward, bend your front knee, and stand strong.",
+      "sanskritInstructions": "वीरभद्रासनं प्रथमं कुर्यात्। वामपादं पृष्ठे धारयन्तु, हस्तौ ऊर्ध्वं उत्थापयन्तु।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 203,
+      "sanskritName": "Virabhadrasana II",
+      "englishName": "Warrior II",
+      "description": "Open your arms wide parallel to the floor, gazing forward over your right hand.",
+      "benefits": "Strengthens legs and ankles, stretches chest and shoulders.",
+      "instructions": [
+        "From Warrior I, open your hips and arms to the side.",
+        "Extend your arms straight in opposite directions.",
+        "Keep your right knee bent at 90 degrees.",
+        "Gaze steadily over your right fingertips."
+      ],
+      "voicePrompt": "Warrior 2. Open your arms and hips to the side. Extend your energy through both fingertips, looking forward past your front hand.",
+      "sanskritInstructions": "वीरभद्रासनं द्वितीयं कुर्यात्। हस्तौ पार्श्वे प्रसार्यन्तु, अग्रे पश्यन्तु।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 204,
+      "sanskritName": "Trikonasana",
+      "englishName": "Triangle Pose",
+      "description": "Straighten your front leg, hinge at your hip, and reach down to your shin or floor.",
+      "benefits": "Stretches spine, chest, hips, and hamstrings; relieves stress.",
+      "instructions": [
+        "Straighten your front right leg.",
+        "Hinge at the front hip, reaching forward with your right hand.",
+        "Tilt your torso down, bringing your right hand to your shin or floor.",
+        "Extend your left arm straight up toward the sky."
+      ],
+      "voicePrompt": "Triangle Pose, Trikonasana. Straighten your front leg, lean forward, and open your arms vertically. Feel the deep side stretch and spine lengthening.",
+      "sanskritInstructions": "त्रिकोणासनं कुर्यात्। पार्श्वभङ्गेन हस्त-शिखरे पश्यन्तु।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 205,
+      "sanskritName": "Balasana",
+      "englishName": "Child's Pose",
+      "description": "Rest your knees on the floor, push your hips to your heels, and relax your forehead down.",
+      "benefits": "Calms brain, relieves back and neck pain, gently stretches hips.",
+      "instructions": [
+        "Drop your knees to the mat and sit back on your heels.",
+        "Extend your arms fully in front of you.",
+        "Lower your chest and forehead to the floor.",
+        "Breathe deeply into your lower back."
+      ],
+      "voicePrompt": "Child's Pose, Balasana. Sink your hips back to your heels and rest your forehead. Let go of all effort and breathe deeply.",
+      "sanskritInstructions": "बालासनं कुर्यात्। नितम्बौ पादपृष्ठे स्थापयन्तु, शिरो भूमौ नमन्तु। शान्तं भवन्तु।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 301,
+      "sanskritName": "Salamba Bhujangasana",
+      "englishName": "Sphinx Pose",
+      "description": "Lie on your belly, resting on your forearms with chest gently lifted.",
+      "benefits": "Gently stimulates the lumbar curve, opens chest, stimulates thyroid.",
+      "instructions": [
+        "Lie face down on the mat.",
+        "Bring elbows directly under your shoulders, forearms flat on the floor.",
+        "Inhale, press into your forearms, and gently lift your chest.",
+        "Relax your glutes and lower back completely."
+      ],
+      "voicePrompt": "Sphinx Pose. Prop yourself onto your forearms, relaxing your lower body completely. Lift your chest gently and enjoy this mild back-bend.",
+      "sanskritInstructions": "सालम्बभुजङ्गासनं कुर्यात्। कूर्परौ भूमौ धारयन्तु, ऊर्ध्वं पश्यन्तु।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 302,
+      "sanskritName": "Baddha Konasana",
+      "englishName": "Butterfly Pose",
+      "description": "Sit upright, bring soles of your feet together, and let your knees fall out wide.",
+      "benefits": "Opens groin and inner thighs, relieves fatigue, improves hip flexibility.",
+      "instructions": [
+        "Sit tall and draw your feet in toward your pelvis.",
+        "Press the soles of your feet together.",
+        "Allow your knees to fall open toward the sides.",
+        "Gently fold forward if comfortable."
+      ],
+      "voicePrompt": "Butterfly Pose, Baddha Konasana. Bring the soles of your feet together, letting your knees open wide. Fold forward slightly to release the hips.",
+      "sanskritInstructions": "बद्धकोणासनं कुर्यात्। पादतलौ परस्परं संयोजयन्तु।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 303,
+      "sanskritName": "Supta Matsyendrasana",
+      "englishName": "Reclined Spinal Twist",
+      "description": "Lie on your back, draw knees to chest, and drop them to the side.",
+      "benefits": "Massages abdominal organs, stretches spine and glutes, calms mind.",
+      "instructions": [
+        "Lie flat on your back.",
+        "Bring your knees to a 90-degree bend above your hips.",
+        "Lower both knees to the left side while keeping shoulders flat.",
+        "Extend your right arm to the side and look over your right shoulder."
+      ],
+      "voicePrompt": "Reclined Spinal Twist. Lay on your back and drop your knees to the side. Open your chest flat toward the sky, breathing ease into your spine.",
+      "sanskritInstructions": "सुप्तमत्स्येन्द्रासनं कुर्यात्। पार्श्वपरिवर्तनेन ध्यानं कुर्यात्।",
+      "holdDurationSec": 30
+    },
+    {
+      "id": 304,
+      "sanskritName": "Savasana",
+      "englishName": "Corpse Pose",
+      "description": "Lie flat on your back, feet wide, arms relaxed with palms up.",
+      "benefits": "Reduces heart rate, deeply integrates physical practice, calms central nervous system.",
+      "instructions": [
+        "Lie fully flat on your back.",
+        "Let your feet turn out naturally.",
+        "Bring arms slightly away from the body with palms up.",
+        "Close your eyes and sink into complete stillness."
+      ],
+      "voicePrompt": "Corpse Pose, Savasana. Lie completely flat on your back, letting your whole body surrender. Close your eyes, be absolutely still, and rest. Namaste.",
+      "sanskritInstructions": "शवासनं कुर्यात्। सर्वशरीरं शिथिलीकुर्यात्, ध्यानमयस्थितौ विश्रामन्तु। ओम्, शान्तिः, शान्तिः, शान्तिः।",
+      "holdDurationSec": 30
+    }
+  ]
+}

@@ -5,11 +5,45 @@ import org.json.JSONObject
 
 object FlowLoader {
     private var cachedFlows: List<YogaFlow>? = null
-    private var cachedSanskritPrompts: Map<Int, String>? = null
+    private var cachedPoses: Map<Int, YogaPose>? = null
+
+    fun loadPoses(context: Context): Map<Int, YogaPose> {
+        cachedPoses?.let { return it }
+
+        val json = context.assets.open("poses.json").bufferedReader().use { it.readText() }
+        val root = JSONObject(json)
+        val posesArray = root.getJSONArray("poses")
+        val posesMap = mutableMapOf<Int, YogaPose>()
+
+        for (i in 0 until posesArray.length()) {
+            val poseObj = posesArray.getJSONObject(i)
+            val instructionsArray = poseObj.getJSONArray("instructions")
+            val instructions = mutableListOf<String>()
+            for (k in 0 until instructionsArray.length()) {
+                instructions.add(instructionsArray.getString(k))
+            }
+            val id = poseObj.getInt("id")
+            posesMap[id] = YogaPose(
+                id = id,
+                sanskritName = poseObj.getString("sanskritName"),
+                englishName = poseObj.getString("englishName"),
+                description = poseObj.optString("description", ""),
+                benefits = poseObj.optString("benefits", ""),
+                instructions = instructions,
+                voicePrompt = poseObj.optString("voicePrompt", ""),
+                sanskritInstructions = poseObj.optString("sanskritInstructions", ""),
+                holdDurationSec = poseObj.optInt("holdDurationSec", 30),
+            )
+        }
+
+        cachedPoses = posesMap
+        return posesMap
+    }
 
     fun loadFlows(context: Context): List<YogaFlow> {
         cachedFlows?.let { return it }
 
+        val posesMap = loadPoses(context)
         val json = context.assets.open("flows.json").bufferedReader().use { it.readText() }
         val root = JSONObject(json)
         val flowsArray = root.getJSONArray("flows")
@@ -17,28 +51,12 @@ object FlowLoader {
 
         for (i in 0 until flowsArray.length()) {
             val flowObj = flowsArray.getJSONObject(i)
-            val posesArray = flowObj.getJSONArray("poses")
+            val posesIdsArray = flowObj.getJSONArray("poses")
             val poses = mutableListOf<YogaPose>()
 
-            for (j in 0 until posesArray.length()) {
-                val poseObj = posesArray.getJSONObject(j)
-                val instructionsArray = poseObj.getJSONArray("instructions")
-                val instructions = mutableListOf<String>()
-                for (k in 0 until instructionsArray.length()) {
-                    instructions.add(instructionsArray.getString(k))
-                }
-                poses.add(
-                    YogaPose(
-                        id = poseObj.getInt("id"),
-                        sanskritName = poseObj.getString("sanskritName"),
-                        englishName = poseObj.getString("englishName"),
-                        description = poseObj.optString("description", ""),
-                        benefits = poseObj.optString("benefits", ""),
-                        instructions = instructions,
-                        voicePrompt = poseObj.optString("voicePrompt", ""),
-                        holdDurationSec = poseObj.optInt("holdDurationSec", 30)
-                    )
-                )
+            for (j in 0 until posesIdsArray.length()) {
+                val poseId = posesIdsArray.getInt(j)
+                posesMap[poseId]?.let { poses.add(it) }
             }
 
             flows.add(
@@ -57,25 +75,8 @@ object FlowLoader {
         return flows
     }
 
-    fun loadSanskritPrompts(context: Context): Map<Int, String> {
-        cachedSanskritPrompts?.let { return it }
-        
-        val json = context.assets.open("sanskrit_prompts.json").bufferedReader().use { it.readText() }
-        val root = JSONObject(json)
-        val prompts = mutableMapOf<Int, String>()
-        
-        val keys = root.keys()
-        while (keys.hasNext()) {
-            val key = keys.next()
-            prompts[key.toInt()] = root.getString(key)
-        }
-        
-        cachedSanskritPrompts = prompts
-        return prompts
-    }
-
-    fun getSanskritPrompt(context: Context, poseId: Int): String? {
-        return loadSanskritPrompts(context)[poseId]
+    fun getPoseById(context: Context, id: Int): YogaPose? {
+        return loadPoses(context)[id]
     }
 
     fun getFlowById(context: Context, id: String): YogaFlow? {

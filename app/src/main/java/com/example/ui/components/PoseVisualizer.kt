@@ -166,7 +166,7 @@ fun getPoseSkeleton(poseId: Int, angle: PoseAngle, w: Float, h: Float, matY: Flo
                 joints.addAll(listOf(shoulder, hip, knees))
             }
         }
-        7, 302 -> { // Cobra / Sphinx
+        7, 301 -> { // Cobra / Sphinx
             if (angle == PoseAngle.FRONT) {
                 head = Offset(w * 0.5f, h * 0.32f)
                 shoulder = Offset(w * 0.5f, h * 0.48f)
@@ -180,7 +180,7 @@ fun getPoseSkeleton(poseId: Int, angle: PoseAngle, w: Float, h: Float, matY: Flo
                 shoulder = Offset(w * 0.66f, h * 0.50f)
                 head = Offset(w * 0.72f, h * 0.34f)
                 limbs.add(hip to Offset(w * 0.22f, matY))
-                val contactY = if (poseId == 302) h * 0.72f else matY
+                val contactY = if (poseId == 301) h * 0.72f else matY
                 limbs.add(shoulder to Offset(w * 0.64f, contactY))
                 joints.addAll(listOf(shoulder, hip))
             }
@@ -318,7 +318,7 @@ fun getPoseSkeleton(poseId: Int, angle: PoseAngle, w: Float, h: Float, matY: Flo
                 joints.addAll(listOf(shoulder, hip))
             }
         }
-        303 -> { // Butterfly
+        302 -> { // Butterfly
             if (angle == PoseAngle.SIDE) {
                 head = Offset(w * 0.45f, h * 0.35f)
                 shoulder = Offset(w * 0.45f, h * 0.50f)
@@ -344,7 +344,7 @@ fun getPoseSkeleton(poseId: Int, angle: PoseAngle, w: Float, h: Float, matY: Flo
                 joints.addAll(listOf(shoulder, hip))
             }
         }
-        304 -> { // Spinal Twist
+        303 -> { // Spinal Twist
             if (angle == PoseAngle.SIDE) {
                 head = Offset(w * 0.48f, h * 0.40f)
                 shoulder = Offset(w * 0.48f, h * 0.55f)
@@ -366,7 +366,7 @@ fun getPoseSkeleton(poseId: Int, angle: PoseAngle, w: Float, h: Float, matY: Flo
                 joints.addAll(listOf(shoulder, hip))
             }
         }
-        305 -> { // Savasana
+        304 -> { // Savasana
             if (angle == PoseAngle.SIDE) {
                 head = Offset(w * 0.25f, matY - 6f)
                 shoulder = Offset(w * 0.35f, matY - 8f)
