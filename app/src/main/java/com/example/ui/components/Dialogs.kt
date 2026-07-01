@@ -150,6 +150,26 @@ fun LevelsInfoDialog(
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
+                                        
+                                        // Rewards display
+                                        val heroReward = com.example.game.model.HeroDefinitions.allHeroes.find { it.unlockYogaLevel == levelDef.level }
+                                        if (heroReward != null) {
+                                            Text(
+                                                text = "Unlocks Hero: ${heroReward.name}",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.tertiary,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                        val gearRewards = com.example.game.model.EquipmentDefinitions.all().filter { it.minYogaLevel == levelDef.level }
+                                        if (gearRewards.isNotEmpty()) {
+                                            Text(
+                                                text = "Unlocks ${gearRewards.size} new gear items",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.secondary,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
                                     }
 
                                     if (isCurrent) {

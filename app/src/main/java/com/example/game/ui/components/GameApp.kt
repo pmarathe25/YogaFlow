@@ -1,5 +1,6 @@
 package com.example.game.ui.components
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.*
@@ -9,6 +10,10 @@ import com.example.game.viewmodel.GameViewModel
 @Composable
 fun GameApp(viewModel: GameViewModel) {
     val currentScreen by viewModel.currentScreen.collectAsState()
+
+    BackHandler(enabled = currentScreen != GameScreen.HUB) {
+        viewModel.navigateBack()
+    }
 
     AnimatedContent(
         targetState = currentScreen,
@@ -26,7 +31,7 @@ fun GameApp(viewModel: GameViewModel) {
             GameScreen.HUB -> HubScreen(viewModel)
             GameScreen.BATTLE -> BattleScreen(viewModel)
             GameScreen.PARTY -> PartyScreen(viewModel)
-            GameScreen.EQUIPMENT -> EquipmentScreen(viewModel)
+            GameScreen.EQUIPMENT -> PartyScreen(viewModel) // Consolidated
             GameScreen.TROPHIES -> TrophyScreen(viewModel)
             GameScreen.SHOP -> ShopScreen(viewModel)
             GameScreen.BATTLE_RESULT -> BattleResultScreen(viewModel)

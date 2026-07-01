@@ -19,7 +19,9 @@ data class Hero(
     val skills: List<Skill>,
     val ultimate: Skill,
     val uniqueItemIds: List<String> = emptyList(),
-    val setBonusId: String? = null
+    val setBonusId: String? = null,
+    val colorTheme: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color.Gray,
+    val flavorQuote: String = ""
 )
 
 enum class HeroRole {
@@ -29,7 +31,7 @@ enum class HeroRole {
 data class HeroInstance(
     val heroId: String,
     val name: String,
-    val level: Int,
+    var level: Int,
     val maxHp: Int,
     var currentHp: Int,
     val atk: Int,
@@ -55,17 +57,17 @@ object HeroDefinitions {
         shantiBasic,
         Skill("shanti_skill1", "Pranayama Breath", "Heal target ally and cleanse 1 status effect.",
             SINGLE_ALLY, healScaling = HealScaling(35, 5),
-            cleanse = true, speedWeight = FAST, ultimateGain = 20),
+            cleanse = true, speedWeight = FAST, ultimateGain = 20, cooldown = 2),
         Skill("shanti_skill2", "Calming Presence", "Grant target shield and SPD+.",
             SINGLE_ALLY, shieldScaling = ShieldScaling(0, 0, isPercentage = true),
             buffs = listOf(BuffApplication(SPD_UP, 2, 0.20f)),
-            speedWeight = FAST, ultimateGain = 20),
+            speedWeight = FAST, ultimateGain = 20, cooldown = 2),
         Skill("shanti_skill3", "Serene Renewal", "Small party heal and cleanse all statuses.",
             ALL_ALLIES, healScaling = HealScaling(20, 3),
-            cleanse = true, speedWeight = NORMAL, ultimateGain = 20),
+            cleanse = true, speedWeight = NORMAL, ultimateGain = 20, cooldown = 3),
         Skill("shanti_skill4", "Rippling Current", "A splash of water energy that damages the enemy.",
             SINGLE_ENEMY, damageComponents = listOf(DamageComponent(ELEMENTAL, WATER, 100)),
-            baseDamage = 15, damagePerLevel = 4, speedWeight = NORMAL, ultimateGain = 20)
+            baseDamage = 15, damagePerLevel = 4, speedWeight = NORMAL, ultimateGain = 20, cooldown = 1)
     )
 
     private val shantiUltimate = Skill("shanti_ultimate", "Calming Radiance",
@@ -83,20 +85,20 @@ object HeroDefinitions {
         Skill("santosha_skill1", "Inner Sanctuary", "Gain a massive shield and taunt all enemies for 2 turns.",
             SELF, shieldScaling = ShieldScaling(45, 8),
             statusEffects = listOf(StatusEffectInfliction(TAUNT, 1f, 2)),
-            speedWeight = FAST, ultimateGain = 20),
+            speedWeight = FAST, ultimateGain = 20, cooldown = 3),
         Skill("santosha_skill2", "Solid Foundation", "Grant lowest-HP ally a shield and damage reduction.",
             SINGLE_ALLY, shieldScaling = ShieldScaling(30, 5),
             buffs = listOf(BuffApplication(DAMAGE_REDUCTION, 1, 0.20f)),
-            speedWeight = FAST, ultimateGain = 20),
+            speedWeight = FAST, ultimateGain = 20, cooldown = 2),
         Skill("santosha_skill3", "Grounding Aura", "Party-wide 15% damage reduction for 1 turn.",
             ALL_ALLIES,
             buffs = listOf(BuffApplication(DAMAGE_REDUCTION, 1, 0.15f, targetsParty = true)),
-            speedWeight = NORMAL, ultimateGain = 20),
+            speedWeight = NORMAL, ultimateGain = 20, cooldown = 3),
         Skill("santosha_skill4", "Seismic Slam", "Slam the ground to damage and slow the enemy.",
             SINGLE_ENEMY, damageComponents = listOf(DamageComponent(ELEMENTAL, EARTH, 100)),
             baseDamage = 12, damagePerLevel = 3,
             statusEffects = listOf(StatusEffectInfliction(SPD_DOWN, 1f, 2)),
-            speedWeight = NORMAL, ultimateGain = 20)
+            speedWeight = NORMAL, ultimateGain = 20, cooldown = 2)
     )
 
     private val santoshaUltimate = Skill("santosha_ultimate", "Unshakable Mountain",
@@ -115,18 +117,18 @@ object HeroDefinitions {
             SINGLE_ENEMY, damageComponents = listOf(DamageComponent(ELEMENTAL, FIRE, 100)),
             baseDamage = 32, damagePerLevel = 7,
             statusEffects = listOf(StatusEffectInfliction(BURN, 1f, 3)),
-            speedWeight = NORMAL, ultimateGain = 20),
+            speedWeight = NORMAL, ultimateGain = 20, cooldown = 2),
         Skill("virya_skill2", "Inner Fire", "Boost own attack power for 3 turns.",
             SELF, buffs = listOf(BuffApplication(ATK_UP, 3, 0.25f)),
-            speedWeight = FAST, ultimateGain = 20),
+            speedWeight = FAST, ultimateGain = 20, cooldown = 3),
         Skill("virya_skill3", "Vigorous Assault", "3-hit random physical attack — good for breaking shields.",
             SINGLE_ENEMY, damageComponents = listOf(DamageComponent(PHYSICAL)),
             baseDamage = 10, damagePerLevel = 2, hits = 3,
-            speedWeight = FAST, ultimateGain = 20),
+            speedWeight = FAST, ultimateGain = 20, cooldown = 1),
         Skill("virya_skill4", "Inferno Wave", "Unleash a wave of fire that scorches all enemies.",
             ALL_ENEMIES, damageComponents = listOf(DamageComponent(ELEMENTAL, FIRE, 100)),
             baseDamage = 18, damagePerLevel = 4,
-            speedWeight = NORMAL, ultimateGain = 20)
+            speedWeight = NORMAL, ultimateGain = 20, cooldown = 3)
     )
 
     private val viryaUltimate = Skill("virya_ultimate", "Blazing Ascension",
@@ -146,18 +148,18 @@ object HeroDefinitions {
             SINGLE_ENEMY, damageComponents = listOf(DamageComponent(PHYSICAL, null, 50), DamageComponent(ELEMENTAL, LIGHT, 50)),
             baseDamage = 20, damagePerLevel = 4,
             buffs = listOf(BuffApplication(ATK_UP, 0, 4f, targetsParty = true, stacksPermanently = true, permanentValue = 4)),
-            speedWeight = NORMAL, ultimateGain = 20),
+            speedWeight = NORMAL, ultimateGain = 20, cooldown = 2),
         Skill("dhairya_skill2", "Steadfast Inspiration", "Boost party speed for 3 turns.",
             ALL_ALLIES, buffs = listOf(BuffApplication(SPD_UP, 3, 0.20f, targetsParty = true)),
-            speedWeight = FAST, ultimateGain = 20),
+            speedWeight = FAST, ultimateGain = 20, cooldown = 3),
         Skill("dhairya_skill3", "Shield of Faith", "Grant target ally a protective shield.",
             SINGLE_ALLY, shieldScaling = ShieldScaling(25, 5),
-            cleanse = true, speedWeight = FAST, ultimateGain = 20),
+            cleanse = true, speedWeight = FAST, ultimateGain = 20, cooldown = 2),
         Skill("dhairya_skill4", "Radiant Burst", "A burst of light that damages all enemies and inspires the party.",
             ALL_ENEMIES, damageComponents = listOf(DamageComponent(ELEMENTAL, LIGHT, 100)),
             baseDamage = 14, damagePerLevel = 3,
             buffs = listOf(BuffApplication(ATK_UP, 2, 0.15f, targetsParty = true)),
-            speedWeight = NORMAL, ultimateGain = 20)
+            speedWeight = NORMAL, ultimateGain = 20, cooldown = 3)
     )
 
     private val dhairyaUltimate = Skill("dhairya_ultimate", "Rallying Cry",
@@ -179,18 +181,18 @@ object HeroDefinitions {
             ALL_ENEMIES, damageComponents = listOf(DamageComponent(ELEMENTAL, AIR, 100)),
             baseDamage = 22, damagePerLevel = 5,
             healScaling = HealScaling(15, 3),
-            speedWeight = NORMAL, ultimateGain = 20),
+            speedWeight = NORMAL, ultimateGain = 20, cooldown = 2),
         Skill("maitri_skill2", "Compassion's Touch", "Heal a single ally for a large amount.",
             SINGLE_ALLY, healScaling = HealScaling(50, 8),
-            speedWeight = FAST, ultimateGain = 20),
+            speedWeight = FAST, ultimateGain = 20, cooldown = 2),
         Skill("maitri_skill3", "Gentle Breeze", "Small party heal and speed boost.",
             ALL_ALLIES, healScaling = HealScaling(12, 2),
             buffs = listOf(BuffApplication(SPD_UP, 2, 0.20f, targetsParty = true)),
-            speedWeight = FAST, ultimateGain = 20),
+            speedWeight = FAST, ultimateGain = 20, cooldown = 3),
         Skill("maitri_skill4", "Zephyr's Wrath", "Unleash cutting winds against all enemies.",
             ALL_ENEMIES, damageComponents = listOf(DamageComponent(ELEMENTAL, AIR, 100)),
             baseDamage = 18, damagePerLevel = 4,
-            speedWeight = NORMAL, ultimateGain = 20)
+            speedWeight = NORMAL, ultimateGain = 20, cooldown = 2)
     )
 
     private val maitriUltimate = Skill("maitri_ultimate", "Universal Embrace",
@@ -203,22 +205,32 @@ object HeroDefinitions {
     val allHeroes: List<Hero> = listOf(
         Hero("Shanti", "Shanti (Calm)", "The restorative spirit of peaceful calm.", WATER, HeroRole.HEALER,
             100, 10, 14, 1, shantiSkills, shantiUltimate,
-            uniqueItemIds = listOf("shanti_prayer_beads")),
+            uniqueItemIds = listOf("shanti_prayer_beads"),
+            colorTheme = androidx.compose.ui.graphics.Color(0xFF2196F3),
+            flavorQuote = "True peace begins with a single breath."),
         Hero("Santosha", "Santosha (Content)", "The unbreakable shield of contentment.", EARTH, HeroRole.TANK,
             160, 7, 8, 2, santoshaSkills, santoshaUltimate,
-            uniqueItemIds = listOf("santosha_foundation_stone")),
+            uniqueItemIds = listOf("santosha_foundation_stone"),
+            colorTheme = androidx.compose.ui.graphics.Color(0xFF795548),
+            flavorQuote = "Stability comes from within."),
         Hero("Virya", "Virya (Vigor)", "The blazing fire of yoga-fueled vigor.", FIRE, HeroRole.DPS,
             110, 22, 12, 3, viryaSkills, viryaUltimate,
             uniqueItemIds = listOf("virya_ember_core", "virya_inferno_wrath"),
-            setBonusId = "Virya"),
+            setBonusId = "Virya",
+            colorTheme = androidx.compose.ui.graphics.Color(0xFFF44336),
+            flavorQuote = "Let your inner fire burn through obstacles."),
         Hero("Dhairya", "Dhairya (Courage)", "Patient, courageous fortitude.", LIGHT, HeroRole.BUFFER,
             135, 15, 10, 4, dhairyaSkills, dhairyaUltimate,
             uniqueItemIds = listOf("dhairya_battle_standard", "dhairya_light_vanguard"),
-            setBonusId = "Dhairya"),
+            setBonusId = "Dhairya",
+            colorTheme = androidx.compose.ui.graphics.Color(0xFFFFEB3B),
+            flavorQuote = "Courage is not the absence of fear, but the mastery of it."),
         Hero("Maitri", "Maitri (Loving-Kindness)", "Universal benevolence.", AIR, HeroRole.MAGE,
             95, 18, 13, 5, maitriSkills, maitriUltimate,
             uniqueItemIds = listOf("maitri_universal_key", "maitri_wind_caress", "maitri_heart_embrace"),
-            setBonusId = "Maitri")
+            setBonusId = "Maitri",
+            colorTheme = androidx.compose.ui.graphics.Color(0xFFE1F5FE),
+            flavorQuote = "Love is the only energy that can transform the world.")
     )
 
     fun getHero(id: String): Hero? = allHeroes.find { it.id == id }

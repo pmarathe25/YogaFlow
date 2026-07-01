@@ -32,8 +32,7 @@ import com.example.viewmodel.YogaViewModel
 fun YogaDashboardScreen(
     viewModel: YogaViewModel,
     onViewFlowDetails: (com.example.model.YogaFlow) -> Unit,
-    onOpenSettings: () -> Unit,
-    onNavigateToBattle: () -> Unit = {}
+    onOpenSettings: () -> Unit
 ) {
     val context = LocalContext.current
     val allFlows = remember { com.example.model.FlowLoader.loadFlows(context) }
@@ -107,69 +106,6 @@ fun YogaDashboardScreen(
                         imageVector = Icons.Default.Settings,
                         contentDescription = "Settings",
                         tint = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-            }
-        }
-
-        // Zen Battle Entry
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onNavigateToBattle() },
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                brush = Brush.linearGradient(
-                                    colors = listOf(
-                                        MaterialTheme.colorScheme.primary,
-                                        MaterialTheme.colorScheme.secondary
-                                    )
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Whatshot,
-                            contentDescription = "Battle",
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Zen Battle",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "Test your party in tactical RPG combat",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
-                    }
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Enter",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(28.dp)
                     )
                 }
             }

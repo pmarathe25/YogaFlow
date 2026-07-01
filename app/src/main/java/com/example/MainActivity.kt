@@ -82,6 +82,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun YogaAppContent(
     viewModel: YogaViewModel,
+    gameViewModel: GameViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     modifier: Modifier = Modifier,
     notificationFlowId: String? = null,
     onHandledNotification: () -> Unit = {}
@@ -210,11 +211,6 @@ fun YogaAppContent(
                         },
                         onOpenSettings = {
                             navController.navigate(Screen.Settings.route)
-                        },
-                        onNavigateToBattle = {
-                            navController.navigate(Screen.ZenBattle.route) {
-                                launchSingleTop = true
-                            }
                         }
                     )
                 }
@@ -285,6 +281,7 @@ fun YogaAppContent(
                 composable(Screen.ExpandedDashboard.route) {
                     ExpandedDashboardScreen(
                         viewModel = viewModel,
+                        gameViewModel = gameViewModel,
                         onBack = { navController.popBackStack() },
                         onNavigateToHistory = {
                             navController.navigate(Screen.History.route)
@@ -292,6 +289,11 @@ fun YogaAppContent(
                         onOpenSettings = {
                             navController.navigate(Screen.Settings.route) {
                                 popUpTo(Screen.Dashboard.route)
+                            }
+                        },
+                        onNavigateToBattle = {
+                            navController.navigate(Screen.ZenBattle.route) {
+                                launchSingleTop = true
                             }
                         }
                     )
@@ -317,7 +319,6 @@ fun YogaAppContent(
                 }
 
                 composable(Screen.ZenBattle.route) {
-                    val gameViewModel: GameViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
                     BackHandler { navController.popBackStack() }
                     GameApp(viewModel = gameViewModel)
                 }

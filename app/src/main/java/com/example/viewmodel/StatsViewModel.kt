@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.example.game.model.TrophyRarity
 
 class StatsViewModel(application: Application) : AndroidViewModel(application) {
     private val database = YogaDatabase.getDatabase(application)
@@ -122,10 +123,16 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
     }
 }
 
+interface AchievementWithRarity {
+    val rarity: TrophyRarity?
+}
+
 data class Achievement(
     val id: String,
     val title: String,
     val description: String,
     val isUnlocked: Boolean,
     val progressText: String = ""
-)
+) : AchievementWithRarity {
+    override val rarity: TrophyRarity? get() = null
+}

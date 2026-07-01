@@ -1,18 +1,25 @@
 package com.example.game.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.game.model.*
 import com.example.game.viewmodel.GameViewModel
 
@@ -20,23 +27,28 @@ import com.example.game.viewmodel.GameViewModel
 fun ShopScreen(viewModel: GameViewModel) {
     val saveData by viewModel.saveData.collectAsState()
     val party by viewModel.party.collectAsState()
+    
+    var selectedItemForDetail by remember { mutableStateOf<Equipment?>(null) }
 
     Box(
         modifier = Modifier.fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
         Column(modifier = Modifier.fillMaxSize().statusBarsPadding().padding(16.dp)) {
-            // Header with sparks
+            // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                IconButton(onClick = { viewModel.navigateBack() }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                }
                 Text(
                     "Shop",
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
                 )
                 Surface(
                     shape = MaterialTheme.shapes.large,
@@ -88,38 +100,32 @@ fun ShopScreen(viewModel: GameViewModel) {
 
             LazyColumn(modifier = Modifier.weight(1f)) {
                 val available = EquipmentDefinitions.allEquipment.filter { eq ->
-                    eq.slot == selectedCategory &&
-                            eq.yogaLevelRequired <= saveData.yogaLevel
+                    eq.slot == selectedCategory
                 }
                 items(available) { item ->
                     val owned = item.id in saveData.inventory
                     val canAfford = saveData.sparks >= item.sparksCost
                     val partyHasHero = item.heroId == null || party.any { it.heroId == item.heroId }
+                    val levelLocked = item.yogaLevelRequired > saveData.yogaLevel
 
                     ShopItemCard(
                         item = item,
                         owned = owned,
                         canAfford = canAfford,
                         partyHasHero = partyHasHero,
-                        onPurchase = { viewModel.purchaseItem(item.id) }
+                        levelLocked = levelLocked,
+                        onPurchase = { viewModel.purchaseItem(item.id) },
+                        onShowDetail = { selectedItemForDetail = item }
                     )
                 }
             }
-
-            Spacer(Modifier.height(16.dp))
-            Button(
-                onClick = { viewModel.navigateBack() },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    "Back",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
+        }
+        
+        selectedItemForDetail?.let { item ->
+            GearDetailsDialog(
+                item = item,
+                onDismiss = { selectedItemForDetail = null }
+            )
         }
     }
 }
@@ -130,21 +136,29 @@ private fun ShopItemCard(
     owned: Boolean,
     canAfford: Boolean,
     partyHasHero: Boolean,
-    onPurchase: () -> Unit
+    levelLocked: Boolean,
+    onPurchase: () -> Unit,
+    onShowDetail: () -> Unit
 ) {
     GlassCard(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).alpha(if (levelLocked) 0.6f else 1f).clickable { onShowDetail() },
         elevation = 2.dp
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Icon
+            Text(item.getIcon(), fontSize = 28.sp, modifier = Modifier.padding(end = 12.dp))
+            
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    if (levelLocked) {
+                        Icon(Icons.Default.Lock, contentDescription = "Locked", modifier = Modifier.size(14.dp))
+                    }
                     Text(
                         item.name,
                         style = MaterialTheme.typography.titleSmall,
@@ -155,47 +169,13 @@ private fun ShopItemCard(
                             EquipmentTier.GENERIC -> MaterialTheme.colorScheme.onSurface
                         }
                     )
-                    // Tier badge
-                    Surface(
-                        shape = MaterialTheme.shapes.small,
-                        color = when (item.tier) {
-                            EquipmentTier.UNIQUE -> Color(0xFFFFD740).copy(alpha = 0.2f)
-                            EquipmentTier.CLASS_SPECIFIC -> Color(0xFFB388FF).copy(alpha = 0.2f)
-                            EquipmentTier.GENERIC -> MaterialTheme.colorScheme.surfaceVariant
-                        }
-                    ) {
-                        Text(
-                            text = item.tier.name,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = when (item.tier) {
-                                EquipmentTier.UNIQUE -> Color(0xFFFFD740)
-                                EquipmentTier.CLASS_SPECIFIC -> Color(0xFFB388FF)
-                                EquipmentTier.GENERIC -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            },
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
                 }
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    "[${item.slot.name}]  Lv.${item.yogaLevelRequired}",
+                    if (levelLocked) "Requires Yoga Lv.${item.yogaLevelRequired}" else "Yoga Lv.${item.yogaLevelRequired}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    color = if (levelLocked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
-                item.bonusDescription?.let {
-                    Text(
-                        it,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                }
-                if (!partyHasHero && item.heroId != null) {
-                    Text(
-                        "Requires: ${item.heroId}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
-                    )
-                }
             }
 
             Column(horizontalAlignment = Alignment.End) {
@@ -217,12 +197,12 @@ private fun ShopItemCard(
                         "${item.sparksCost} \u2726",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        color = if (canAfford) Color(0xFFFFD740) else MaterialTheme.colorScheme.error
+                        color = if (canAfford && !levelLocked) Color(0xFFFFD740) else MaterialTheme.colorScheme.error
                     )
                     Spacer(Modifier.height(4.dp))
                     FilledTonalButton(
                         onClick = onPurchase,
-                        enabled = canAfford && partyHasHero,
+                        enabled = canAfford && partyHasHero && !levelLocked,
                         modifier = Modifier.height(32.dp),
                         colors = ButtonDefaults.filledTonalButtonColors(
                             containerColor = MaterialTheme.colorScheme.tertiaryContainer,
@@ -234,6 +214,62 @@ private fun ShopItemCard(
                             style = MaterialTheme.typography.labelSmall
                         )
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun GearDetailsDialog(item: Equipment, onDismiss: () -> Unit) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            modifier = Modifier.fillMaxWidth().padding(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(item.getIcon(), fontSize = 48.sp)
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    item.name, 
+                    style = MaterialTheme.typography.titleLarge, 
+                    fontWeight = FontWeight.Bold,
+                    color = when (item.tier) {
+                        EquipmentTier.UNIQUE -> Color(0xFFFFD740)
+                        EquipmentTier.CLASS_SPECIFIC -> Color(0xFFB388FF)
+                        else -> MaterialTheme.colorScheme.onSurface
+                    }
+                )
+                Text(item.tier.name, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                
+                HorizontalDivider(Modifier.padding(vertical = 12.dp))
+                
+                Text(
+                    item.description, 
+                    style = MaterialTheme.typography.bodyMedium.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Spacer(Modifier.height(16.dp))
+                
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        item.bonusDescription,
+                        modifier = Modifier.padding(12.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                
+                Spacer(Modifier.height(24.dp))
+                Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                    Text("Close")
                 }
             }
         }

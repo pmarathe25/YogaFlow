@@ -40,6 +40,7 @@ import com.example.audio.AudioCueManager
 import com.example.model.YogaFlow
 import com.example.ui.theme.*
 import com.example.viewmodel.Achievement
+import com.example.viewmodel.AchievementWithRarity
 import com.example.viewmodel.YogaViewModel
 import com.example.game.model.TrophyRarity
 import androidx.compose.material.icons.outlined.*
@@ -526,12 +527,12 @@ fun AchievementBadgeCard(
 ) {
     val alpha = if (achievement.isUnlocked) 1.0f else 0.4f
     
-    val rarityColor = when (achievement.rarity) {
+    val rarityColor = when ((achievement as? AchievementWithRarity)?.rarity) {
         TrophyRarity.BRONZE -> Color(0xFFCD7F32)
         TrophyRarity.SILVER -> Color(0xFFC0C0C0)
         TrophyRarity.GOLD -> Color(0xFFFFD700)
         TrophyRarity.PLATINUM -> Color(0xFFE5E4E2)
-        null -> null
+        else -> null
     }
 
     val cardBg = if (achievement.isUnlocked) {
