@@ -8,7 +8,10 @@ import com.example.game.viewmodel.GameScreen
 import com.example.game.viewmodel.GameViewModel
 
 @Composable
-fun GameApp(viewModel: GameViewModel) {
+fun GameApp(
+    viewModel: GameViewModel,
+    onExitHub: () -> Unit
+) {
     val currentScreen by viewModel.currentScreen.collectAsState()
 
     BackHandler(enabled = currentScreen != GameScreen.HUB) {
@@ -28,14 +31,20 @@ fun GameApp(viewModel: GameViewModel) {
         label = "GameScreenTransition"
     ) { screen ->
         when (screen) {
-            GameScreen.HUB -> HubScreen(viewModel)
-            GameScreen.BATTLE -> BattleScreen(viewModel)
-            GameScreen.PARTY -> PartyScreen(viewModel)
-            GameScreen.EQUIPMENT -> PartyScreen(viewModel) // Consolidated
-            GameScreen.TROPHIES -> TrophyScreen(viewModel)
-            GameScreen.SHOP -> ShopScreen(viewModel)
-            GameScreen.BATTLE_RESULT -> BattleResultScreen(viewModel)
-            GameScreen.SETTINGS -> HubScreen(viewModel)
+            GameScreen.HUB -> HubScreen(
+                viewModel = viewModel,
+                onExitHub = onExitHub
+            )
+            GameScreen.BATTLE -> BattleScreen(viewModel = viewModel)
+            GameScreen.PARTY -> PartyScreen(viewModel = viewModel)
+            GameScreen.EQUIPMENT -> PartyScreen(viewModel = viewModel)
+            GameScreen.TROPHIES -> TrophyScreen(viewModel = viewModel)
+            GameScreen.SHOP -> ShopScreen(viewModel = viewModel)
+            GameScreen.BATTLE_RESULT -> BattleResultScreen(viewModel = viewModel)
+            GameScreen.SETTINGS -> HubScreen(
+                viewModel = viewModel,
+                onExitHub = onExitHub
+            )
         }
     }
 }

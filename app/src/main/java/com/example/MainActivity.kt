@@ -118,7 +118,9 @@ fun YogaAppContent(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val isInPlayerFlow = currentRoute == Screen.Player.route
-    val showBottomBar = !isInPlayerFlow && currentRoute != Screen.SessionComplete.route
+    val showBottomBar = !isInPlayerFlow
+        && currentRoute != Screen.SessionComplete.route
+        && currentRoute != Screen.ZenBattle.route
 
     FrostedGlassBackground(
         modifier = modifier.fillMaxSize()
@@ -320,7 +322,10 @@ fun YogaAppContent(
 
                 composable(Screen.ZenBattle.route) {
                     BackHandler { navController.popBackStack() }
-                    GameApp(viewModel = gameViewModel)
+                    GameApp(
+                        viewModel = gameViewModel,
+                        onExitHub = { navController.popBackStack() }
+                    )
                 }
             }
         }

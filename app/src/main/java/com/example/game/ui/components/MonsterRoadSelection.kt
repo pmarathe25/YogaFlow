@@ -91,21 +91,22 @@ fun MonsterRoadSelection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    "The Path of Zen",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Black,
-                    color = Color(0xFF1B5E20)
-                )
                 IconButton(
                     onClick = onDismiss,
                     modifier = Modifier.background(Color.White.copy(alpha = 0.8f), CircleShape)
                 ) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "The Path of Zen",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Black,
+                    color = Color(0xFF1B5E20)
+                )
+                Spacer(modifier = Modifier.weight(1f))
             }
 
             LazyColumn(

@@ -11,7 +11,10 @@ import com.example.game.viewmodel.GameViewModel
 import com.example.game.ui.components.MonsterRoadSelection
 
 @Composable
-fun HubScreen(viewModel: GameViewModel) {
+fun HubScreen(
+    viewModel: GameViewModel,
+    onExitHub: () -> Unit
+) {
     val saveData by viewModel.saveData.collectAsState()
     val error by viewModel.error.collectAsState()
 
@@ -28,7 +31,7 @@ fun HubScreen(viewModel: GameViewModel) {
             onSelectMonster = { monsterId ->
                 viewModel.startBattle(monsterId)
             },
-            onDismiss = { viewModel.navigateBack() }
+            onDismiss = onExitHub
         )
 
         // Error snackbar

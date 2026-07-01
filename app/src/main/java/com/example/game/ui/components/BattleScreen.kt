@@ -227,7 +227,7 @@ fun BattleScreen(viewModel: GameViewModel) {
         )
 
         Box(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize().padding(bottom = 400.dp)) {
                 // ─── Top Bar: Turn Order & Log ───────────────────────────
                 Row(
                     modifier = Modifier
@@ -394,8 +394,7 @@ fun BattleScreen(viewModel: GameViewModel) {
                     }
                 }
                 
-                // Bottom Spacer to make room for ActionPanel overlay
-                Spacer(modifier = Modifier.height(100.dp))
+
             }
 
             // ─── Action Panel Overlay ────────────────────────────────
