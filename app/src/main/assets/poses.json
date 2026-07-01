@@ -51,7 +51,7 @@
     {
       "id": 4,
       "sanskritName": "Ashwa Sanchalanasana",
-      "englishName": "Equestrian / Lunge Pose",
+      "englishName": "Lunge Pose (Right leg back)",
       "description": "Inhale, step your right leg far back, drop knee down, and lift chest up.",
       "benefits": "Stretches hip flexors, strengthens legs, opens chest.",
       "instructions": [
@@ -131,7 +131,7 @@
     {
       "id": 9,
       "sanskritName": "Ashwa Sanchalanasana",
-      "englishName": "Lunge Pose (Left knee down)",
+      "englishName": "Lunge Pose (Left leg back)",
       "description": "Inhale, step your right foot forward between your hands, left knee down.",
       "benefits": "Opens hip flexors and pelvis, improves posture.",
       "instructions": [
@@ -140,56 +140,8 @@
         "Roll your shoulders back, lift your chest, and look forward.",
         "Ensure your right knee is stacked directly above your right ankle."
       ],
-      "voicePrompt": "Lunge Pose, Ashwa Sanchalanasana. Inhale, step your right foot forward between your hands, and drop your left knee. Lift your gaze and shine your chest.",
+      "voicePrompt": "Lunge Pose, Ashwa Sanchalanasana. Inhale, step your left leg far back, lowering the knee. Lift your chest and gaze forward, opening your hips.",
       "sanskritInstructions": "अश्वसञ्चालनासनं कुर्यात्। दक्षिणपादं अग्रे स्थापयन्तु। अग्रे पश्यन्तु।",
-      "holdDurationSec": 30
-    },
-    {
-      "id": 10,
-      "sanskritName": "Uttanasana",
-      "englishName": "Standing Forward Bend",
-      "description": "Exhale, step left foot forward next to right, and fold down.",
-      "benefits": "Calms mind, stretches calves and spine.",
-      "instructions": [
-        "Exhale and step your left foot forward next to your right foot.",
-        "Extend your legs and fold forward from the hips.",
-        "Touch your fingertips or palms to the floor, if possible.",
-        "Allow your head to hang completely relaxed."
-      ],
-      "voicePrompt": "Standing Forward Bend, Uttanasana. Exhale, step your left foot forward next to the right, and fold deeply. Let all tension drain from your neck.",
-      "sanskritInstructions": "उत्तानासनं कुर्यात्। वामपादं अग्रे स्थापयन्तु, दीर्घं नमन्तु।",
-      "holdDurationSec": 30
-    },
-    {
-      "id": 11,
-      "sanskritName": "Hastauttanasana",
-      "englishName": "Raised Arms Pose",
-      "description": "Inhale, reach up and back, lengthening the spine.",
-      "benefits": "Expands lungs, energizes nervous system.",
-      "instructions": [
-        "Inhale, roll your spine up slowly, and reach your arms overhead.",
-        "Keep biceps by your ears and stretch your arms up and backward.",
-        "Push hips slightly forward and open your heart to the sky.",
-        "Feel the breath fill your chest."
-      ],
-      "voicePrompt": "Raised Arms Pose, Hastauttanasana. Inhale, rise all the way up, sweep your arms overhead, and gently arch back. Lift your spirit and stretch.",
-      "sanskritInstructions": "हस्तौत्तानासनं कुर्यात्। उद्गस्य हस्तौ ऊर्ध्वं प्रयच्छन्तु, वक्षः उद्भासन्तु।",
-      "holdDurationSec": 30
-    },
-    {
-      "id": 12,
-      "sanskritName": "Pranamasana",
-      "englishName": "Prayer Pose",
-      "description": "Exhale, lower arms, and return palms together at chest.",
-      "benefits": "Restores baseline heart rate, returns focus to center.",
-      "instructions": [
-        "Exhale and slowly lower your arms.",
-        "Bring your palms together in front of your chest.",
-        "Close your eyes for a moment, observing the flow of energy.",
-        "Stand quiet and steady in Tadasana / Prayer Pose."
-      ],
-      "voicePrompt": "Prayer Pose, Pranamasana. Exhale and lower your hands back to your heart center. Stand still, breathe, and feel the vibrant energy flowing through your entire body.",
-      "sanskritInstructions": "प्रणामासनं कुर्यात्। निःश्वस्य हस्तौ हृदयस्थाने स्थापयन्तु। ओम् शान्तिः शान्तिः शान्तिः।",
       "holdDurationSec": 30
     },
     {

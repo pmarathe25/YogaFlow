@@ -41,7 +41,7 @@ fun getPoseSkeleton(poseId: Int, angle: PoseAngle, w: Float, h: Float, matY: Flo
     val joints = mutableListOf<Offset>()
 
     when (poseId) {
-        1, 12 -> { // Prayer Pose
+        1 -> { // Prayer Pose
             if (angle == PoseAngle.SIDE) {
                 head = Offset(w * 0.48f, h * 0.25f)
                 shoulder = Offset(w * 0.48f, h * 0.41f)
@@ -67,7 +67,7 @@ fun getPoseSkeleton(poseId: Int, angle: PoseAngle, w: Float, h: Float, matY: Flo
                 joints.addAll(listOf(shoulder, hip, elbowL, elbowR))
             }
         }
-        2, 11 -> { // Raised Arms
+        2 -> { // Raised Arms
             if (angle == PoseAngle.SIDE) {
                 head = Offset(w * 0.42f, h * 0.26f)
                 shoulder = Offset(w * 0.46f, h * 0.41f)
@@ -86,7 +86,7 @@ fun getPoseSkeleton(poseId: Int, angle: PoseAngle, w: Float, h: Float, matY: Flo
             }
             joints.addAll(listOf(shoulder, hip))
         }
-        3, 10 -> { // Standing Forward Bend
+        3 -> { // Standing Forward Bend
             val dx = if (angle == PoseAngle.FRONT) 0f else if (angle == PoseAngle.SIDE) 0.05f else 0.03f
             hip = Offset(w * (0.5f + dx), h * 0.46f)
             shoulder = Offset(w * (0.5f - dx * 0.5f), h * 0.72f)
