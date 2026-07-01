@@ -61,7 +61,7 @@ object BattleEngine {
         ),
         Element.VOID to mapOf(
             Element.FIRE to 1.0f, Element.WATER to 1.0f, Element.AIR to 1.0f, Element.EARTH to 1.0f,
-            Element.LIGHT to 1.0f, Element.DARK to 1.0f, Element.SHADOW to 0.5f, Element.ELECTRIC to 0.5f,
+            Element.LIGHT to 1.0f, Element.DARK to 1.0f,             Element.SHADOW to 0f, Element.ELECTRIC to 0.5f,
             Element.VOID to 1.0f, Element.NEUTRAL to 1.0f
         ),
         Element.NEUTRAL to mapOf(
@@ -83,8 +83,14 @@ object BattleEngine {
         damageComponent: DamageComponent? = null,
         baseDamage: Int = 0,
         isCrit: Boolean = false,
+        isDodged: Boolean = false,
         variance: Float = 0.1f
     ): DamageResult {
+        if (isDodged) {
+            return DamageResult(0, isCrit = false, isDodged = true,
+                DamageBreakdown(DamageType.PHYSICAL, null, 0))
+        }
+
         var raw = (attackerAtk * 4) - (defenderDef * 2)
         raw = maxOf(raw, (attackerAtk * 0.5f).toInt())
 
@@ -97,6 +103,11 @@ object BattleEngine {
         val defElement = damageComponent?.element ?: defenderElement
         val mult = getElementMultiplier(attackerElement, defElement)
         total = (total * mult).toInt()
+
+        if (mult == 0f) {
+            return DamageResult(0, isCrit = false, isDodged = false,
+                DamageBreakdown(damageComponent?.type ?: DamageType.PHYSICAL, damageComponent?.element, 0))
+        }
 
         val varianceAmount = (total * variance * (Random.nextFloat() * 2f - 1f)).toInt()
         total += varianceAmount
@@ -241,6 +252,7 @@ object BattleEngine {
         val appliedBuffs = mutableListOf<String>()
         val revived = mutableListOf<String>()
         val breakdown = mutableListOf<DamageBreakdown>()
+        val perTarget = mutableMapOf<String, TargetResult>()
 
         val participants = (listOf(casterId) + partnerIds).mapNotNull { id ->
             state.heroes.find { it.heroId == id && !it.isDead }
@@ -261,53 +273,76 @@ object BattleEngine {
             TargetType.ALL -> state.aliveHeroes.map { it.heroId } + state.aliveMonsters.map { it.monsterId }
         }
 
+        var comboHeal = 0
+        combo.healScaling?.let { scaling ->
+            val avgHero = participants.first()
+            val heal = if (scaling.isPercentage) {
+                (scaling.baseHeal * avgHero.maxHp / 100).coerceAtLeast(1)
+            } else {
+                scaling.baseHeal + scaling.healPerLevel * avgLevel
+            }
+            if (heal > 0) comboHeal = heal
+        }
+
+        var comboShield = 0
+        combo.shieldScaling?.let { scaling ->
+            val shield = if (scaling.isPercentage && scaling.percentage > 0) {
+                (scaling.percentage * participants.first().maxHp).toInt()
+            } else if (scaling.isPercentage) {
+                (scaling.baseShield * participants.first().maxHp / 100).coerceAtLeast(1)
+            } else {
+                scaling.baseShield + scaling.shieldPerLevel * avgLevel
+            }
+            if (shield > 0) comboShield = shield
+        }
+
         for (targetId in targets) {
+            var tDmg = 0
+
             if (combo.damageComponents.isNotEmpty()) {
                 for (component in combo.damageComponents) {
                     if (isComponentNullified(state, component)) continue
                     val dmg = combo.baseDamage + combo.damagePerLevel * avgLevel
-                    totalDamage += dmg
+                    tDmg += dmg
                     breakdown.add(DamageBreakdown(component.type, component.element, dmg))
                 }
             }
 
-            combo.healScaling?.let { scaling ->
-                val avgHero = participants.first()
-                val heal = if (scaling.isPercentage) {
-                    (scaling.baseHeal * avgHero.maxHp / 100).coerceAtLeast(1)
-                } else {
-                    scaling.baseHeal + scaling.healPerLevel * avgLevel
-                }
-                if (heal > 0) totalHeal += heal
-            }
+            totalDamage += tDmg
 
-            combo.shieldScaling?.let { scaling ->
-                val shield = if (scaling.isPercentage && scaling.percentage > 0) {
-                    (scaling.percentage * participants.first().maxHp).toInt()
-                } else if (scaling.isPercentage) {
-                    (scaling.baseShield * participants.first().maxHp / 100).coerceAtLeast(1)
-                } else {
-                    scaling.baseShield + scaling.shieldPerLevel * avgLevel
-                }
-                if (shield > 0) totalShield += shield
-            }
-
-            combo.buffs.forEach { buff ->
-                val targetsToBuff = if (buff.targetsParty) state.aliveHeroes.map { it.heroId }
-                else listOf(targetId)
-                targetsToBuff.forEach { _ ->
-                    appliedBuffs.add(buff.type.name)
-                }
-            }
+            perTarget[targetId] = TargetResult(
+                damage = tDmg, heal = 0, shield = 0,
+                cleansed = combo.cleanse
+            )
 
             if (combo.cleanse) {
                 cleansedStatuses.add(targetId)
             }
+        }
 
-            if (combo.revive) {
-                state.heroes.filter { it.isDead }.forEach { h ->
-                    revived.add(h.heroId)
-                }
+        totalHeal = comboHeal
+        totalShield = comboShield
+
+        state.aliveHeroes.forEach { h ->
+            val existing = perTarget[h.heroId]
+            val healAmt = if (comboHeal > 0) comboHeal else 0
+            val shieldAmt = if (comboShield > 0) comboShield else 0
+            perTarget[h.heroId] = existing?.let {
+                it.copy(heal = it.heal + healAmt, shield = it.shield + shieldAmt,
+                    cleansed = it.cleansed || combo.cleanse)
+            } ?: TargetResult(heal = healAmt, shield = shieldAmt, cleansed = combo.cleanse)
+        }
+
+        combo.buffs.forEach { buff ->
+            val targetsToBuff = state.aliveHeroes.map { it.heroId }
+            targetsToBuff.forEach { id ->
+                appliedBuffs.add(buff.type.name)
+            }
+        }
+
+        if (combo.revive) {
+            state.heroes.filter { it.isDead }.forEach { h ->
+                revived.add(h.heroId)
             }
         }
 
@@ -318,7 +353,8 @@ object BattleEngine {
                 damageDealt = totalDamage, healingDone = totalHeal, shieldApplied = totalShield,
                 statusApplied = appliedStatuses, statusCleansed = cleansedStatuses,
                 buffsApplied = appliedBuffs, revivals = revived,
-                damageTypeBreakdown = breakdown, comboTriggered = combo
+                damageTypeBreakdown = breakdown, comboTriggered = combo,
+                perTargetResult = perTarget
             ),
             events = emptyList()
         )
