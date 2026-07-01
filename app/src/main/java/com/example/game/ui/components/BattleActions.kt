@@ -44,18 +44,31 @@ fun ActionPanel(
     currentHero: HeroInstance,
     heroes: List<HeroInstance>,
     monsters: List<MonsterInstance>,
-    skillCooldowns: Map<String, Int>, // ADDED
-    comboAvailable: Boolean,
+    skillCooldowns: Map<String, Int>,
     onSkill: (Skill, List<String>) -> Unit,
     onUltimate: () -> Unit,
-    onCombo: (Set<String>) -> Unit,
+    onComboById: (String) -> Unit,
     isTargeting: Boolean,
     selectedTargets: List<String>,
     onCancelTargeting: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showComboSelector by remember { mutableStateOf(false) }
     var selectedCardId by remember { mutableStateOf<String?>(null) }
+    
+    // Available combos for current hero
+    val availableCombos = remember(heroes) {
+        val aliveHeroNames = heroes
+            .filter { it.currentHp > 0 && !it.isDead }
+            .map { it.name }
+            .toSet()
+        ComboSkillDefinitions.allCombos.filter { combo ->
+            currentHero.name in combo.requiredHeroes &&
+            combo.requiredHeroes.all { name -> name in aliveHeroNames } &&
+            combo.requiredHeroes.mapNotNull { name ->
+                heroes.find { it.name == name }
+            }.all { it.ultimateGauge >= 100 }
+        }
+    }
     
     // Animation for laying the card down
     var isUsingSkill by remember { mutableStateOf(false) }
@@ -135,11 +148,15 @@ fun ActionPanel(
         if (!isUsingSkill && !isTargeting) {
             HandOfCards(
                 currentHero = currentHero,
-                skillCooldowns = skillCooldowns, // PASSED
+                skillCooldowns = skillCooldowns,
+                availableCombos = availableCombos,
                 selectedCardId = selectedCardId,
                 onCardSelect = { selectedCardId = if (selectedCardId == it) null else it },
                 onUse = { skill ->
                     isUsingSkill = true
+                },
+                onComboSelect = { comboId ->
+                    onComboById(comboId)
                 }
             )
         }
@@ -167,7 +184,8 @@ fun ActionPanel(
                         skill = skill,
                         isUltimate = skill.ultimateGain == 0,
                         ultReady = currentHero.ultimateGauge >= 100,
-                        cooldown = cooldown, // PASSED
+                        baseCooldown = skill.cooldown,
+                        cooldownRemaining = cooldown,
                         isSelected = true,
                         onClick = { if (!isUsingSkill) selectedCardId = null },
                         onUse = {
@@ -222,45 +240,7 @@ fun ActionPanel(
             }
         }
 
-        // 4. Combo Button
-        if (comboAvailable && selectedCardId == null && !isTargeting) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(end = 16.dp, top = 40.dp)
-            ) {
-                FloatingActionButton(
-                    onClick = { showComboSelector = !showComboSelector },
-                    containerColor = Color(0xFF9C27B0),
-                    contentColor = Color.White,
-                    shape = CircleShape,
-                    modifier = Modifier.size(56.dp)
-                ) {
-                    Icon(Icons.Default.AutoAwesome, contentDescription = "Combo", modifier = Modifier.size(28.dp))
-                }
-            }
-        }
 
-        // 5. Combo Selector Modal
-        if (showComboSelector) {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .align(Alignment.Center),
-                shape = RoundedCornerShape(24.dp),
-                tonalElevation = 12.dp
-            ) {
-                ComboSelector(
-                    heroes = heroes,
-                    onSelect = { participants ->
-                        onCombo(participants)
-                        showComboSelector = false
-                    },
-                    onDismiss = { showComboSelector = false }
-                )
-            }
-        }
     }
 }
 
@@ -271,13 +251,21 @@ private fun lerp(start: Float, stop: Float, fraction: Float): Float =
 fun HandOfCards(
     currentHero: HeroInstance,
     skillCooldowns: Map<String, Int>,
+    availableCombos: List<ComboSkill>,
     selectedCardId: String?,
     onCardSelect: (String) -> Unit,
-    onUse: (Skill) -> Unit
+    onUse: (Skill) -> Unit,
+    onComboSelect: (String) -> Unit
 ) {
-    val allCards = currentHero.skills + currentHero.ultimate
+    val allCards: List<Any> = buildList {
+        currentHero.skills.forEach { add(it) }
+        if (currentHero.ultimateGauge >= 100) {
+            add(currentHero.ultimate)
+        }
+        availableCombos.forEach { add(it) }
+    }
     val cardCount = allCards.size
-    
+
     var scrollOffset by remember { mutableStateOf(0f) }
     val draggableState = rememberDraggableState { delta ->
         scrollOffset += delta
@@ -293,37 +281,152 @@ fun HandOfCards(
             ),
         contentAlignment = Alignment.BottomCenter
     ) {
-        allCards.forEachIndexed { index, skill ->
-            val isSelected = selectedCardId == skill.id
-            val isUlt = skill.ultimateGain == 0
-            val ultReady = currentHero.ultimateGauge >= 100
-            val cooldown = skillCooldowns[skill.id] ?: 0
-            
+        allCards.forEachIndexed { index, item ->
             val centerIndex = (cardCount - 1) / 2f
             val relativeIndex = index - centerIndex + (scrollOffset / 150f)
             val rotation = relativeIndex * 12f
             val ty = (relativeIndex.pow(2) * 10f)
             val tx = relativeIndex * 85f
 
-            SkillCard(
-                skill = skill,
-                isUltimate = isUlt,
-                ultReady = ultReady,
-                cooldown = cooldown,
-                isSelected = isSelected,
-                onClick = { onCardSelect(skill.id) },
-                onUse = { onUse(skill) },
-                modifier = Modifier
-                    .graphicsLayer {
-                        translationX = tx.dp.toPx()
-                        translationY = ty.dp.toPx()
-                        rotationZ = rotation
-                        alpha = if (selectedCardId != null && !isSelected) 0.3f else 1f
-                        scaleX = if (selectedCardId != null && !isSelected) 0.8f else 1f
-                        scaleY = if (selectedCardId != null && !isSelected) 0.8f else 1f
-                    }
-                    .zIndex(index.toFloat())
-            )
+            when (item) {
+                is Skill -> {
+                    val isUlt = item.ultimateGain == 0
+                    val ultReady = currentHero.ultimateGauge >= 100
+                    val cooldown = skillCooldowns[item.id] ?: 0
+                    val isSelected = selectedCardId == item.id
+
+                    SkillCard(
+                        skill = item,
+                        isUltimate = isUlt,
+                        ultReady = ultReady,
+                        baseCooldown = item.cooldown,
+                        cooldownRemaining = cooldown,
+                        isSelected = isSelected,
+                        onClick = { onCardSelect(item.id) },
+                        onUse = { onUse(item) },
+                        modifier = Modifier
+                            .graphicsLayer {
+                                translationX = tx.dp.toPx()
+                                translationY = ty.dp.toPx()
+                                rotationZ = rotation
+                                alpha = if (selectedCardId != null && !isSelected) 0.3f else 1f
+                                scaleX = if (selectedCardId != null && !isSelected) 0.8f else 1f
+                                scaleY = if (selectedCardId != null && !isSelected) 0.8f else 1f
+                            }
+                            .zIndex(index.toFloat())
+                    )
+                }
+                is ComboSkill -> {
+                    val isSelected = selectedCardId == item.id
+                    ComboCard(
+                        combo = item,
+                        isSelected = isSelected,
+                        onClick = {
+                            selectedCardId?.let { onCardSelect(it) }
+                            onComboSelect(item.id)
+                        },
+                        modifier = Modifier
+                            .graphicsLayer {
+                                translationX = tx.dp.toPx()
+                                translationY = ty.dp.toPx() - 20f
+                                rotationZ = rotation
+                                alpha = if (selectedCardId != null && !isSelected) 0.3f else 1f
+                                scaleX = if (selectedCardId != null && !isSelected) 0.8f else 1f
+                                scaleY = if (selectedCardId != null && !isSelected) 0.8f else 1f
+                            }
+                            .zIndex(index.toFloat())
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ComboCard(
+    combo: ComboSkill,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition()
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse)
+    )
+
+    Card(
+        modifier = modifier
+            .width(150.dp)
+            .height(220.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF4A148C).copy(alpha = 0.3f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 16.dp else 4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp)
+                .border(
+                    width = 3.dp,
+                    color = Color(0xFF9C27B0).copy(alpha = if (isSelected) 1f else glowAlpha),
+                    shape = RoundedCornerShape(12.dp)
+                )
+        ) {
+            Column(
+                modifier = Modifier.padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("\uD83D\uDCA5", fontSize = 28.sp)
+
+                Spacer(Modifier.height(4.dp))
+
+                Text(
+                    text = combo.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color(0xFFCE93D8),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                Text(
+                    text = combo.description,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 9.sp,
+                    color = Color(0xFFE1BEE7).copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center,
+                    lineHeight = 11.sp,
+                    maxLines = 3
+                )
+
+                Spacer(Modifier.weight(1f))
+
+                Text(
+                    text = combo.requiredHeroes.joinToString(" + "),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 8.sp,
+                    color = Color(0xFFCE93D8).copy(alpha = 0.6f),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            if (isSelected) {
+                val pulseScale by infiniteTransition.animateFloat(
+                    initialValue = 1f, targetValue = 1.05f,
+                    animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse)
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { scaleX = pulseScale; scaleY = pulseScale }
+                        .border(4.dp, Color(0xFF9C27B0).copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+                )
+            }
         }
     }
 }
@@ -333,13 +436,14 @@ fun SkillCard(
     skill: Skill,
     isUltimate: Boolean,
     ultReady: Boolean,
-    cooldown: Int,
+    baseCooldown: Int = 0,
+    cooldownRemaining: Int = 0,
     isSelected: Boolean,
     onClick: () -> Unit,
     onUse: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isOnCooldown = cooldown > 0
+    val isOnCooldown = cooldownRemaining > 0
     val canUse = if (isUltimate) ultReady else !isOnCooldown
 
     val bgColor = when {
@@ -412,14 +516,25 @@ fun SkillCard(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(getSkillIcon(skill), fontSize = 32.sp, modifier = Modifier.alpha(if (isOnCooldown) 0.5f else 1f))
-                    if (isOnCooldown) {
-                        Text(
-                            text = cooldown.toString(),
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color.White,
-                            modifier = Modifier.background(Color.Black.copy(alpha = 0.5f), CircleShape).padding(horizontal = 8.dp)
-                        )
+
+                    if (baseCooldown > 0 || isOnCooldown) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .background(
+                                    if (isOnCooldown) Color.Red.copy(alpha = 0.8f)
+                                    else Color.Black.copy(alpha = 0.5f),
+                                    RoundedCornerShape(4.dp)
+                                )
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = if (isOnCooldown) "$cooldownRemaining" else "CD:$baseCooldown",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
                 
@@ -506,63 +621,4 @@ fun getSkillIcon(skill: Skill): String {
     }
 }
 
-@Composable
-fun ComboSelector(
-    heroes: List<HeroInstance>,
-    onSelect: (Set<String>) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var selectedIds by remember { mutableStateOf(setOf<String>()) }
-    
-    Column(modifier = Modifier.padding(24.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("Select Combo Partners", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = "Close") }
-        }
-        
-        Spacer(Modifier.height(16.dp))
-        
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            heroes.forEach { hero ->
-                val isSelected = selectedIds.contains(hero.heroId)
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable {
-                        selectedIds = if (isSelected) selectedIds - hero.heroId else selectedIds + hero.heroId
-                    }
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(CircleShape)
-                            .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
-                            .border(3.dp, if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(hero.name.take(1), fontWeight = FontWeight.ExtraBold, color = if (isSelected) Color.White else Color.Gray, fontSize = 24.sp)
-                    }
-                    Text(hero.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-        
-        Spacer(Modifier.height(32.dp))
-        
-        Button(
-            onClick = { onSelect(selectedIds) },
-            enabled = selectedIds.size >= 2,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9C27B0))
-        ) {
-            Text("UNLEASH ULTIMATE COMBO", fontWeight = FontWeight.Black)
-        }
-    }
-}
+

@@ -351,6 +351,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun executeComboById(comboId: String) {
+        val combo = ComboSkillDefinitions.getCombo(comboId) ?: return
+        val participantIds = combo.requiredHeroes.mapNotNull { name ->
+            _battleState.value?.heroes?.find { it.name == name && !it.isDead }?.heroId
+        }.toSet()
+        if (participantIds.size != combo.requiredHeroes.size) return
+        executeCombo(participantIds)
+    }
+
     private fun advanceTurn(state: BattleState, skipCount: Int = 1) {
         viewModelScope.launch {
             state.turnsTaken++

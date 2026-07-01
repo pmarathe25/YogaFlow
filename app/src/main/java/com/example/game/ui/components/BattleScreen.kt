@@ -406,13 +406,12 @@ fun BattleScreen(viewModel: GameViewModel) {
                         heroes = state.heroes,
                         monsters = state.monsters,
                         skillCooldowns = state.skillCooldowns[currentHero.heroId] ?: emptyMap(),
-                        comboAvailable = state.isComboAvailable,
                         onSkill = { skill, targets -> 
                             viewModel.executeSkill(currentHero.heroId, skill, targets.ifEmpty { null })
                             selectedTargets.clear()
                         },
                         onUltimate = { viewModel.executeUltimate(currentHero.heroId) },
-                        onCombo = { viewModel.executeCombo(it) },
+                        onComboById = { comboId -> viewModel.executeComboById(comboId) },
                         isTargeting = isTargeting,
                         selectedTargets = selectedTargets.toList(),
                         onCancelTargeting = { 
