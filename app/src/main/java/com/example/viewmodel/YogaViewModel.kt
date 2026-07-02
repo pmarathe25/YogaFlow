@@ -19,7 +19,8 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
 
     // Managers
     val settingsManager = SettingsManager(application)
-    val statsManager = StatsManager(viewModelScope, repository)
+    private val _statsManager = StatsManager(viewModelScope, repository)
+    val statsManager: StatsManager get() = _statsManager
     val reminderManager = ReminderManager(application, viewModelScope, YogaDatabase.getDatabase(application), repository)
     val sessionManager = SessionManager(application, viewModelScope, repository, settingsManager)
 

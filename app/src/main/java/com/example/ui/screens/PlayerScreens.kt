@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.*
 import com.example.ui.theme.*
+import com.example.model.XpCalculator
 import com.example.viewmodel.YogaViewModel
 
 @Composable
@@ -346,6 +347,19 @@ fun SessionCompleteScreen(
     onDone: () -> Unit
 ) {
     val flow by viewModel.flow.collectAsState()
+    val statsManager = viewModel.statsManager
+
+    val totalXp by statsManager.totalXp.collectAsState()
+    val currentLevel by statsManager.currentLevel.collectAsState()
+    val levelName by statsManager.currentLevelName.collectAsState()
+    val levelProgress by statsManager.levelProgress.collectAsState()
+    val totalSparks by statsManager.totalSparks.collectAsState()
+
+    val sessionXp = remember(flow) {
+        XpCalculator.calculateSessionXp(flow.totalDurationMinutes, flow.id)
+    }
+
+    val gold = totalXp / 10
 
     Column(
         modifier = Modifier
@@ -407,51 +421,56 @@ fun SessionCompleteScreen(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        GlassCard(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Rewards", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "12",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "Postures Held",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "360s",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "Practice Time",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
-                    }
+                    RewardItem(value = "+$sessionXp", label = "XP Earned", color = Color(0xFF7C4DFF))
+                    RewardItem(value = "$totalXp", label = "Total XP", color = Color(0xFF448AFF))
+                    RewardItem(value = "$currentLevel", label = levelName, color = Color(0xFFFFA000))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    RewardItem(value = "$totalSparks", label = "Zen Sparks", color = Color(0xFF00BCD4))
+                    RewardItem(value = "$gold", label = "Gold", color = Color(0xFFFFD600))
                 }
             }
         }
 
-        Text(
-            text = "You have mindfully completed the 12 steps of the Sun Salutation flow. Carry this sense of calm, posture, and strength with you throughout your day.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-            textAlign = TextAlign.Center,
-            lineHeight = 22.sp,
-            modifier = Modifier.padding(horizontal = 8.dp)
-        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            Text(
+                text = "Level ${currentLevel} — ${levelName}",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            LinearProgressIndicator(
+                progress = levelProgress,
+                modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        }
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = onDone,
@@ -469,6 +488,14 @@ fun SessionCompleteScreen(
                 fontSize = 16.sp
             )
         }
+    }
+}
+
+@Composable
+private fun RewardItem(value: String, label: String, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = value, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = color)
+        Text(text = label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
     }
 }
 

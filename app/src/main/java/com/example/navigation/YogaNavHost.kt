@@ -145,6 +145,7 @@ fun YogaNavHost(
         composable(Screen.Settings.route) {
             SettingsScreen(
                 viewModel = viewModel,
+                gameViewModel = gameViewModel,
                 onBack = { navController.popBackStack() }
             )
         }

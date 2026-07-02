@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.testTag
+import com.example.game.viewmodel.GameViewModel
 import com.example.viewmodel.YogaViewModel
 import com.example.ui.components.ReminderDialog
 
@@ -97,6 +98,7 @@ fun ReminderItem(reminder: com.example.db.ReminderEntity, onEdit: () -> Unit, on
 @Composable
 fun SettingsScreen(
     viewModel: YogaViewModel,
+    gameViewModel: GameViewModel,
     onBack: () -> Unit
 ) {
     var showResetConfirmation by remember { mutableStateOf(false) }
@@ -122,7 +124,7 @@ fun SettingsScreen(
             },
             text = {
                 Text(
-                    text = "Are you sure you want to permanently erase all your completed sessions, XP progress, and level history? This action cannot be undone.",
+                    text = "Are you sure you want to permanently erase all completed sessions, XP, level history, battle progress, gold, and heroes? This action cannot be undone.",
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
@@ -130,6 +132,7 @@ fun SettingsScreen(
                 Button(
                     onClick = {
                         viewModel.clearAllCompletedSessions()
+                        gameViewModel.resetAllProgress()
                         showResetConfirmation = false
                     },
                     colors = ButtonDefaults.buttonColors(

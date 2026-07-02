@@ -57,7 +57,7 @@ fun PartyScreen(viewModel: GameViewModel) {
             
             Spacer(Modifier.height(8.dp))
             Text(
-                "Yoga Level: ${saveData.yogaLevel} | Gold: ${saveData.totalKarmaXp - saveData.totalGoldSpent} 🪙",
+                "Yoga Level: ${saveData.yogaLevel} | Gold: ${(saveData.totalYogaXp / 10) - saveData.totalGoldSpent} 🪙",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 modifier = Modifier.padding(start = 12.dp)
@@ -159,7 +159,7 @@ fun HeroDetailsDialog(
     onDismiss: () -> Unit
 ) {
     val heroColor = elementToColor(hero.element)
-    val gold = saveData.totalKarmaXp - saveData.totalGoldSpent
+    val gold = (saveData.totalYogaXp / 10) - saveData.totalGoldSpent
     val levelUpCost = viewModel.getHeroLevelUpCost(hero.id)
     val canLevelUp = gold >= levelUpCost
 

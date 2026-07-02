@@ -1,0 +1,21 @@
+{
+  "battleState": null,
+  "party": [],
+  "unlockedHeroIds": [],
+  "sparks": 0,
+  "yogaLevel": 1,
+  "earnedTrophyIds": [],
+  "totalBattlesWon": 0,
+  "consumables": {},
+  "inventory": [],
+  "equippedSkins": {},
+  "unlockedSkinIds": [],
+  "totalPlayTimeMs": 0,
+  "highestComboHits": 0,
+  "fastestBattleTurns": 2147483647,
+  "lastPlayedTimestamp": 0,
+  "lastSyncedMainSparks": 0,
+  "totalYogaXp": 0,
+  "totalGoldSpent": 0,
+  "defeatedMonsterIds": []
+}

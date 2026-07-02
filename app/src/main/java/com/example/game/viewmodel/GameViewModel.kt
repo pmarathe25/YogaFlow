@@ -107,6 +107,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         if (updated.lastSyncedMainSparks != mainSparks) {
             updated = updated.copy(lastSyncedMainSparks = mainSparks)
         }
+        updated = updated.copy(totalYogaXp = xpSum)
         if (updated != data) {
             _saveData.value = updated
             restoreParty(updated)
@@ -371,7 +372,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun onBattleWon() {
         val monster = _currentMonster.value ?: return
         val data = _saveData.value
-        val karmaReward = 50 + (monster.difficultyTier.ordinal * 25)
 
         _party.value.forEach { hero ->
             hero.currentHp = hero.maxHp
@@ -381,13 +381,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         _saveData.value = data.copy(
-            party = _party.value.map { it.toSaveData() },
             totalBattlesWon = data.totalBattlesWon + 1,
-            totalKarmaXp = data.totalKarmaXp + karmaReward,
             defeatedMonsterIds = data.defeatedMonsterIds + monster.id,
             lastPlayedTimestamp = System.currentTimeMillis()
         )
         saveGame()
+    }
+
+    fun resetAllProgress() {
+        val app = getApplication<Application>()
+        saveManager.resetToDefault()
+        _party.value = emptyList()
+        _battleState.value = null
+        viewModelScope.launch { syncWithMainApp() }
     }
 
     // --- Equipment ---
@@ -395,7 +401,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun purchaseItem(itemId: String): Boolean {
         val item = DataLoader.getEquipment(itemId)
         val data = _saveData.value
-        val availableGold = data.totalKarmaXp - data.totalGoldSpent
+        val availableGold = (data.totalYogaXp / 10) - data.totalGoldSpent
         if (data.yogaLevel < item.yogaLevelRequired) return false
         if (availableGold < item.goldCost) return false
         if (itemId in data.inventory) return false
@@ -445,7 +451,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun getAvailableGold(): Int {
         val data = _saveData.value
-        return data.totalKarmaXp - data.totalGoldSpent
+        return (data.totalYogaXp / 10) - data.totalGoldSpent
     }
 
     // --- Hero Level Up ---
@@ -459,7 +465,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val hero = _party.value.find { it.heroId == heroId } ?: return false
         val cost = getHeroLevelUpCost(heroId)
         val data = _saveData.value
-        val availableGold = data.totalKarmaXp - data.totalGoldSpent
+        val availableGold = (data.totalYogaXp / 10) - data.totalGoldSpent
 
         if (availableGold >= cost) {
             val nextLevel = hero.level + 1

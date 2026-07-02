@@ -6,7 +6,7 @@ import com.example.game.model.*
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
-class GameSaveManager(context: Context) {
+class GameSaveManager(private val context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("game_save", Context.MODE_PRIVATE)
 
     private companion object {
@@ -27,7 +27,7 @@ class GameSaveManager(context: Context) {
         const val KEY_FASTEST_BATTLE_TURNS = "fastest_battle_turns"
         const val KEY_LAST_PLAYED_TIMESTAMP = "last_played_timestamp"
         const val KEY_LAST_SYNCED_MAIN_SPARKS = "last_synced_main_sparks"
-        const val KEY_TOTAL_KARMA_XP = "total_karma_xp"
+        const val KEY_TOTAL_YOGA_XP = "total_yoga_xp"
         const val KEY_TOTAL_GOLD_SPENT = "total_gold_spent"
         const val KEY_DEFEATED_MONSTER_IDS = "defeated_monster_ids"
     }
@@ -49,7 +49,7 @@ class GameSaveManager(context: Context) {
         val fastestBattleTurns: Int = Int.MAX_VALUE,
         val lastPlayedTimestamp: Long = 0L,
         val lastSyncedMainSparks: Int = 0,
-        val totalKarmaXp: Int = 0,
+        val totalYogaXp: Int = 0,
         val totalGoldSpent: Int = 0,
         val defeatedMonsterIds: Set<String> = emptySet()
     ) {
@@ -70,13 +70,16 @@ class GameSaveManager(context: Context) {
             KEY_FASTEST_BATTLE_TURNS to fastestBattleTurns.toString(),
             KEY_LAST_PLAYED_TIMESTAMP to lastPlayedTimestamp.toString(),
             KEY_LAST_SYNCED_MAIN_SPARKS to lastSyncedMainSparks.toString(),
-            KEY_TOTAL_KARMA_XP to totalKarmaXp.toString(),
+            KEY_TOTAL_YOGA_XP to totalYogaXp.toString(),
             KEY_TOTAL_GOLD_SPENT to totalGoldSpent.toString(),
             KEY_DEFEATED_MONSTER_IDS to gson.toJson(defeatedMonsterIds.toList())
         )
     }
 
     fun loadGame(): GameSaveData {
+        if (prefs.all.isEmpty()) {
+            return loadDefaultSave()
+        }
         val battleStateStr = prefs.getString(KEY_BATTLE_STATE, "") ?: ""
         val battleState = if (battleStateStr.isNotBlank()) {
             try { gson.fromJson(battleStateStr, BattleSaveData::class.java) } catch (e: Exception) { null }
@@ -120,8 +123,8 @@ class GameSaveManager(context: Context) {
             fastestBattleTurns = prefs.getInt(KEY_FASTEST_BATTLE_TURNS, Int.MAX_VALUE),
             lastPlayedTimestamp = prefs.getLong(KEY_LAST_PLAYED_TIMESTAMP, 0L),
             lastSyncedMainSparks = prefs.getInt(KEY_LAST_SYNCED_MAIN_SPARKS, 0),
-            totalKarmaXp = try {
-                prefs.getString(KEY_TOTAL_KARMA_XP, "0")?.toIntOrNull() ?: 0
+            totalYogaXp = try {
+                prefs.getString(KEY_TOTAL_YOGA_XP, "0")?.toIntOrNull() ?: 0
             } catch (e: Exception) { 0 },
             totalGoldSpent = try {
                 prefs.getString(KEY_TOTAL_GOLD_SPENT, "0")?.toIntOrNull() ?: 0
@@ -146,6 +149,27 @@ class GameSaveManager(context: Context) {
             putLong(KEY_LAST_PLAYED_TIMESTAMP, data.lastPlayedTimestamp)
             putInt(KEY_LAST_SYNCED_MAIN_SPARKS, data.lastSyncedMainSparks)
             apply()
+        }
+    }
+
+    fun resetToDefault() {
+        try {
+            val json = context.assets.open("game/default_save.json")
+                .bufferedReader().use { it.readText() }
+            val defaultData = gson.fromJson(json, GameSaveData::class.java)
+            saveGame(defaultData)
+        } catch (e: Exception) {
+            clearSave()
+        }
+    }
+
+    private fun loadDefaultSave(): GameSaveData {
+        return try {
+            val json = context.assets.open("game/default_save.json")
+                .bufferedReader().use { it.readText() }
+            gson.fromJson(json, GameSaveData::class.java)
+        } catch (e: Exception) {
+            GameSaveData()
         }
     }
 

@@ -287,7 +287,7 @@ fun StatisticsPanel(
                 isSelected = activeDialogType == "sparks",
                 modifier = Modifier.weight(1f)
             )
-            val availableGold = gameSaveData.totalKarmaXp - gameSaveData.totalGoldSpent
+            val availableGold = (gameSaveData.totalYogaXp / 10) - gameSaveData.totalGoldSpent
             StatCard(
                 value = "$availableGold",
                 label = "Zen Gold",
