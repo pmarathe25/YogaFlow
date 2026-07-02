@@ -165,7 +165,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
         _currentMonster.value = monster
         val monsterInstance = monster.createInstance()
-        val initialState = turnManager.startBattle(_party.value, listOf(monsterInstance))
+
+        _party.value.forEach { hero ->
+            hero.currentHp = hero.maxHp
+            hero.shield = 0
+            hero.ultimateGauge = 0
+            hero.isDead = false
+        }
+
+        val battleHeroes = _party.value.map { hero ->
+            hero.copy(equippedItems = hero.equippedItems.toMutableList())
+        }.toMutableList()
+
+        val initialState = turnManager.startBattle(battleHeroes, listOf(monsterInstance))
         val firstActor = initialState.turnOrder.firstOrNull()
         val introState = if (firstActor != null) {
             initialState.copy(phase = BattlePhase.INTRO, currentActorId = firstActor.id)
