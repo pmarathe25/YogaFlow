@@ -274,7 +274,14 @@ fun BattleScreen(viewModel: GameViewModel) {
                             val animState = heroAnimStates[hero.heroId] ?: SpriteAnimState()
                             val heroFlash = heroFlashAlphas[hero.heroId] ?: 0f
                             val isTargeted = selectedTargets.contains(hero.heroId)
-                            val canTarget = state.pendingSkill?.let { it.targetType == TargetType.SINGLE_ALLY || it.targetType == TargetType.ALL_ALLIES || it.targetType == TargetType.ALL || it.targetType == TargetType.SELF } ?: false
+                            val canTarget = state.pendingSkill?.let { skill ->
+                                when (skill.targetType) {
+                                    TargetType.SINGLE_ALLY -> hero.heroId != state.currentActorId
+                                    TargetType.ALL_ALLIES, TargetType.ALL -> true
+                                    TargetType.SELF -> hero.heroId == state.currentActorId
+                                    else -> false
+                                }
+                            } ?: false
                             val heroEntry by animateFloatAsState(targetValue = if (heroVisibilities[hero.heroId] == true) 0f else 150f, animationSpec = spring(0.7f, 150f))
                             val density = LocalDensity.current
                             
