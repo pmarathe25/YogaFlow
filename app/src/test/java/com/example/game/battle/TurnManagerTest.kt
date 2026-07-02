@@ -47,37 +47,53 @@ class TurnManagerTest {
     )
 
     private fun makeHero(
-        id: String = "Hero", name: String = "Hero",
-        baseHp: Int = 500, baseAtk: Int = 100, baseSpd: Int = 100,
-        level: Int = 1
-    ): HeroInstance {
-        val hero = Hero(
-            id = id, name = name, description = "",
-            element = Element.NEUTRAL, role = HeroRole.DPS,
-            baseHp = baseHp, baseAtk = baseAtk, baseSpd = baseSpd,
-            unlockYogaLevel = 1,
-            skills = listOf(dummySkill), ultimate = dummyUltimate
-        )
-        return hero.createInstance(level)
-    }
+        id: String = "Hero",
+        name: String = "Hero",
+        baseHp: Int = 500,
+        hp: Int = baseHp,
+        baseAtk: Int = 100,
+        baseSpd: Int = 100,
+        level: Int = 1,
+        isDefeated: Boolean = false
+    ): CombatantState = CombatantState(
+        id = id,
+        side = CombatSide.HERO,
+        name = name,
+        element = Element.NEUTRAL,
+        maxHp = baseHp,
+        hp = hp,
+        attack = baseAtk,
+        speed = baseSpd,
+        level = level,
+        skills = listOf(dummySkill),
+        ultimate = dummyUltimate,
+        isDefeated = isDefeated
+    )
 
     private fun makeMonster(
-        id: String = "Monster", name: String = "Monster",
-        baseHp: Int = 1000, baseAtk: Int = 50, baseSpd: Int = 50,
-        phases: List<MonsterPhase> = listOf(MonsterPhase(1f, emptyList()))
-    ): MonsterInstance {
-        val monster = Monster(
-            id = id, name = name, englishName = name,
-            element = Element.NEUTRAL, baseHp = baseHp, baseAtk = baseAtk, baseSpd = baseSpd,
-            specialAttack = dummySkill, mechanicDescription = "",
-            aiBehavior = AIBehavior(specialChance = 0f),
-            difficultyTier = DifficultyTier.EASY,
-            phases = phases, isBoss = false
-        )
-        return monster.createInstance()
-    }
-
-    // --- startBattle tests ---
+        id: String = "Monster",
+        name: String = "Monster",
+        baseHp: Int = 1000,
+        hp: Int = baseHp,
+        baseAtk: Int = 50,
+        baseSpd: Int = 50,
+        phases: List<MonsterPhase> = listOf(MonsterPhase(1f, emptyList())),
+        isDefeated: Boolean = false
+    ): CombatantState = CombatantState(
+        id = id,
+        side = CombatSide.MONSTER,
+        name = name,
+        element = Element.NEUTRAL,
+        maxHp = baseHp,
+        hp = hp,
+        attack = baseAtk,
+        speed = baseSpd,
+        level = 1,
+        phases = phases,
+        aiBehavior = AIBehavior(specialChance = 0f),
+        specialAttack = dummySkill,
+        isDefeated = isDefeated
+    )
 
     @Test
     fun `startBattle_createsTurnOrder_includesAllAliveActors`() {
@@ -115,12 +131,10 @@ class TurnManagerTest {
         assertEquals(BattlePhase.ENEMY_TURN, state.phase)
     }
 
-    // --- advanceTurn tests ---
-
     @Test
     fun `advanceTurn_allMonstersDead_setsPhaseToVictory`() {
         val hero = makeHero(id = "H1")
-        val monster = makeMonster(id = "M1").apply { currentHp = 0; isDead = true }
+        val monster = makeMonster(id = "M1", hp = 0, isDefeated = true)
         val state = BattleState(
             heroes = listOf(hero), monsters = listOf(monster),
             turnOrder = listOf(BattleActor("H1", "Hero", 100, true)),
@@ -133,7 +147,7 @@ class TurnManagerTest {
 
     @Test
     fun `advanceTurn_allHeroesDead_setsPhaseToDefeat`() {
-        val hero = makeHero(id = "H1").apply { currentHp = 0; isDead = true }
+        val hero = makeHero(id = "H1", hp = 0, isDefeated = true)
         val monster = makeMonster(id = "M1")
         val state = BattleState(
             heroes = listOf(hero), monsters = listOf(monster),
@@ -225,28 +239,29 @@ class TurnManagerTest {
         assertEquals(6, result.newState.turnsTaken)
     }
 
-    // --- executeSkill tests ---
-
     @Test
     fun `executeSkill_damageSkill_reducesTargetHP`() {
         val hero = makeHero(id = "H1", baseAtk = 100)
         val monster = makeMonster(id = "M1", baseHp = 1000)
         val state = turnManager.startBattle(listOf(hero), listOf(monster))
         val result = turnManager.executeSkill(state, "H1", damageSkill, listOf("M1"))
-        val updatedMonster = result.newState.monsters.find { it.monsterId == "M1" }
+        val updatedMonster = result.newState.monsters.find { it.id == "M1" }
         assertNotNull(updatedMonster)
-        assertTrue(updatedMonster!!.currentHp < 1000)
+        assertTrue(updatedMonster!!.hp < 1000)
     }
 
     @Test
     fun `executeSkill_healSkill_restoresAllyHP`() {
-        val hero = makeHero(id = "H1", baseHp = 500).apply { currentHp = 200 }
+        val hero = makeHero(id = "H1", baseHp = 500)
         val monster = makeMonster(id = "M1")
-        val state = turnManager.startBattle(listOf(hero), listOf(monster))
+        var state = turnManager.startBattle(listOf(hero), listOf(monster))
+        state = state.copy(
+            heroes = state.heroes.map { if (it.id == "H1") it.copy(hp = 200) else it }
+        )
         val result = turnManager.executeSkill(state, "H1", healSkill, listOf("H1"))
-        val updatedHero = result.newState.heroes.find { it.heroId == "H1" }
+        val updatedHero = result.newState.heroes.find { it.id == "H1" }
         assertNotNull(updatedHero)
-        assertTrue(updatedHero!!.currentHp > 200)
+        assertTrue(updatedHero!!.hp > 200)
     }
 
     @Test
@@ -255,7 +270,7 @@ class TurnManagerTest {
         val monster = makeMonster(id = "M1")
         val state = turnManager.startBattle(listOf(hero), listOf(monster))
         val result = turnManager.executeSkill(state, "H1", shieldSkill, listOf("H1"))
-        val updatedHero = result.newState.heroes.find { it.heroId == "H1" }
+        val updatedHero = result.newState.heroes.find { it.id == "H1" }
         assertNotNull(updatedHero)
         assertTrue(updatedHero!!.shield > 0)
     }
@@ -267,8 +282,8 @@ class TurnManagerTest {
         val state = turnManager.startBattle(listOf(hero), listOf(monster))
         val result = turnManager.executeSkill(state, "H1", damageSkill, listOf("M1"))
         assertTrue(result.events.any { it is BattleEvent.MonsterDown })
-        val updatedMonster = result.newState.monsters.find { it.monsterId == "M1" }
-        assertTrue(updatedMonster!!.isDead)
+        val updatedMonster = result.newState.monsters.find { it.id == "M1" }
+        assertTrue(updatedMonster!!.isDefeated)
     }
 
     @Test
@@ -303,27 +318,31 @@ class TurnManagerTest {
         val monster = makeMonster(id = "M1")
         val state = turnManager.startBattle(listOf(hero), listOf(monster))
         val result = turnManager.executeSkill(state, "H1", damageSkill, listOf("M1"))
-        val updatedHero = result.newState.heroes.find { it.heroId == "H1" }
-        assertTrue(updatedHero!!.ultimateGauge > 0)
+        val updatedHero = result.newState.heroes.find { it.id == "H1" }
+        assertTrue(updatedHero!!.gauge > 0)
     }
-
-    // --- executeUltimate tests ---
 
     @Test
     fun `executeUltimate_resetsUltimateGaugeToZero`() {
-        val hero = makeHero(id = "H1").apply { ultimateGauge = 100 }
+        val hero = makeHero(id = "H1")
         val monster = makeMonster(id = "M1")
-        val state = turnManager.startBattle(listOf(hero), listOf(monster))
+        var state = turnManager.startBattle(listOf(hero), listOf(monster))
+        state = state.copy(
+            heroes = state.heroes.map { if (it.id == "H1") it.copy(gauge = 100) else it }
+        )
         val result = turnManager.executeUltimate(state, "H1")
-        val updatedHero = result.newState.heroes.find { it.heroId == "H1" }
-        assertEquals(0, updatedHero!!.ultimateGauge)
+        val updatedHero = result.newState.heroes.find { it.id == "H1" }
+        assertEquals(0, updatedHero!!.gauge)
     }
 
     @Test
     fun `executeUltimate_whenGaugeNotFull_noOp`() {
-        val hero = makeHero(id = "H1").apply { ultimateGauge = 50 }
+        val hero = makeHero(id = "H1")
         val monster = makeMonster(id = "M1")
-        val state = turnManager.startBattle(listOf(hero), listOf(monster))
+        var state = turnManager.startBattle(listOf(hero), listOf(monster))
+        state = state.copy(
+            heroes = state.heroes.map { if (it.id == "H1") it.copy(gauge = 50) else it }
+        )
         val result = turnManager.executeUltimate(state, "H1")
         assertEquals(state, result.newState)
     }
@@ -334,14 +353,12 @@ class TurnManagerTest {
         val monster = makeMonster(id = "M1", baseHp = 2000)
         var state = turnManager.startBattle(listOf(hero), listOf(monster))
         state = state.copy(
-            heroes = state.heroes.map { if (it.heroId == "H1") it.copy(ultimateGauge = 100) else it }
+            heroes = state.heroes.map { if (it.id == "H1") it.copy(gauge = 100) else it }
         )
         val result = turnManager.executeUltimate(state, "H1")
-        val updatedMonster = result.newState.monsters.find { it.monsterId == "M1" }
-        assertTrue(updatedMonster!!.currentHp < 2000)
+        val updatedMonster = result.newState.monsters.find { it.id == "M1" }
+        assertTrue(updatedMonster!!.hp < 2000)
     }
-
-    // --- executeMonsterTurn tests ---
 
     @Test
     fun `executeMonsterTurn_basicAttack_damagesHero`() {
@@ -349,9 +366,9 @@ class TurnManagerTest {
         val monster = makeMonster(id = "M1", baseAtk = 100, baseSpd = 200)
         val state = turnManager.startBattle(listOf(hero), listOf(monster))
         val result = turnManager.executeMonsterTurn(state, "M1")
-        val updatedHero = result.newState.heroes.find { it.heroId == "H1" }
+        val updatedHero = result.newState.heroes.find { it.id == "H1" }
         assertNotNull(updatedHero)
-        assertTrue(updatedHero!!.currentHp < 500)
+        assertTrue(updatedHero!!.hp < 500)
     }
 
     @Test
@@ -371,23 +388,21 @@ class TurnManagerTest {
             damageComponents = listOf(DamageComponent(DamageType.PHYSICAL)),
             baseDamage = 500
         )
-        val monster = Monster(
-            id = "M1", name = "Monster", englishName = "Monster",
-            element = Element.NEUTRAL, baseHp = 1000, baseAtk = 50, baseSpd = 200,
-            specialAttack = specialSkill, mechanicDescription = "",
+        val monster = CombatantState(
+            id = "M1", side = CombatSide.MONSTER, name = "Monster",
+            element = Element.NEUTRAL, maxHp = 1000, hp = 1000,
+            attack = 50, speed = 200,
+            specialAttack = specialSkill,
             aiBehavior = AIBehavior(specialChance = 1f),
-            difficultyTier = DifficultyTier.EASY,
             phases = listOf(MonsterPhase(1f, emptyList()))
-        ).createInstance()
+        )
         val hero = makeHero(id = "H1", baseHp = 2000, baseSpd = 10)
         val state = turnManager.startBattle(listOf(hero), listOf(monster))
         val result = turnManager.executeMonsterTurn(state, "M1")
-        val updatedHero = result.newState.heroes.find { it.heroId == "H1" }
+        val updatedHero = result.newState.heroes.find { it.id == "H1" }
         assertNotNull(updatedHero)
-        assertTrue(updatedHero!!.currentHp < 2000)
+        assertTrue(updatedHero!!.hp < 2000)
     }
-
-    // --- Phase trigger tests ---
 
     @Test
     fun `monster_phaseTrigger_gainShield_atThreshold`() {
@@ -400,10 +415,10 @@ class TurnManagerTest {
         val hero = makeHero(id = "H1", baseHp = 500, baseSpd = 10)
         var state = turnManager.startBattle(listOf(hero), listOf(monster))
         state = state.copy(
-            monsters = state.monsters.map { if (it.monsterId == "M1") it.copy(currentHp = 400) else it }
+            monsters = state.monsters.map { if (it.id == "M1") it.copy(hp = 400) else it }
         )
         val result = turnManager.executeMonsterTurn(state, "M1")
-        val updatedMonster = result.newState.monsters.find { it.monsterId == "M1" }
+        val updatedMonster = result.newState.monsters.find { it.id == "M1" }
         assertNotNull(updatedMonster)
         assertTrue(updatedMonster!!.shield > 0)
     }
@@ -415,16 +430,15 @@ class TurnManagerTest {
                 PhaseTrigger(PhaseTriggerType.EXTRA_ACTION, value = 1f)
             ))
         )
-        val monster = makeMonster(id = "M1", baseHp = 1000, phases = phases).apply {
-            currentHp = 400
-        }
+        val monster = makeMonster(id = "M1", baseHp = 1000, phases = phases)
         val hero = makeHero(id = "H1", baseHp = 2000)
-        val state = turnManager.startBattle(listOf(hero), listOf(monster))
+        var state = turnManager.startBattle(listOf(hero), listOf(monster))
+        state = state.copy(
+            monsters = state.monsters.map { if (it.id == "M1") it.copy(hp = 400) else it }
+        )
         val result = turnManager.executeMonsterTurn(state, "M1")
-        assertTrue(result.newState.monsters.any { it.monsterId == "M1" && !it.isDead })
+        assertTrue(result.newState.monsters.any { it.id == "M1" && !it.isDefeated })
     }
-
-    // --- executeCombo tests ---
 
     @Test
     fun `executeCombo_multiTarget_appliesToAll`() {
@@ -441,10 +455,10 @@ class TurnManagerTest {
         val m2 = makeMonster(id = "M2")
         val state = turnManager.startBattle(listOf(h1, h2), listOf(m1, m2))
         val result = turnManager.executeCombo(state, combo, setOf("H1", "H2"))
-        val updatedM1 = result.newState.monsters.find { it.monsterId == "M1" }
-        val updatedM2 = result.newState.monsters.find { it.monsterId == "M2" }
-        assertTrue(updatedM1!!.currentHp < 1000)
-        assertTrue(updatedM2!!.currentHp < 1000)
+        val updatedM1 = result.newState.monsters.find { it.id == "M1" }
+        val updatedM2 = result.newState.monsters.find { it.id == "M2" }
+        assertTrue(updatedM1!!.hp < 1000)
+        assertTrue(updatedM2!!.hp < 1000)
     }
 
     @Test
@@ -461,9 +475,9 @@ class TurnManagerTest {
         val monster = makeMonster(id = "M1")
         val state = turnManager.startBattle(listOf(h1, h2), listOf(monster))
         val result = turnManager.executeCombo(state, combo, setOf("H1", "H2"))
-        val updatedH1 = result.newState.heroes.find { it.heroId == "H1" }
-        val updatedH2 = result.newState.heroes.find { it.heroId == "H2" }
-        assertTrue(updatedH1!!.ultimateGauge > 0)
-        assertTrue(updatedH2!!.ultimateGauge > 0)
+        val updatedH1 = result.newState.heroes.find { it.id == "H1" }
+        val updatedH2 = result.newState.heroes.find { it.id == "H2" }
+        assertTrue(updatedH1!!.gauge > 0)
+        assertTrue(updatedH2!!.gauge > 0)
     }
 }

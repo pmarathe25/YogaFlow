@@ -1,8 +1,8 @@
 package com.example.game.persistence
 
 import androidx.test.core.app.ApplicationProvider
-import com.example.game.model.HeroSaveData
-import com.example.game.persistence.GameSaveManager.GameSaveData
+import com.example.game.model.GameProgress
+import com.example.game.model.PartyMemberData
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -34,11 +34,11 @@ class GameSaveManagerTest {
 
     @Test
     fun `save then load returns identical data`() {
-        val original = GameSaveData(
+        val original = GameProgress(
             version = 2,
             party = listOf(
-                HeroSaveData("shanti", 3, 300, 0, 20, false, listOf("training_blade")),
-                HeroSaveData("virya", 5, 400, 50, 40, false, listOf("ember_pendant"))
+                PartyMemberData("shanti", 3, listOf("training_blade")),
+                PartyMemberData("virya", 5, listOf("ember_pendant"))
             ),
             unlockedHeroIds = setOf("shanti", "santosha", "virya"),
             sparks = 150,
@@ -60,10 +60,6 @@ class GameSaveManagerTest {
         assertEquals(original.party.size, loaded.party.size)
         assertEquals(original.party[0].heroId, loaded.party[0].heroId)
         assertEquals(original.party[0].level, loaded.party[0].level)
-        assertEquals(original.party[0].currentHp, loaded.party[0].currentHp)
-        assertEquals(original.party[0].shield, loaded.party[0].shield)
-        assertEquals(original.party[0].ultimateGauge, loaded.party[0].ultimateGauge)
-        assertEquals(original.party[0].isDead, loaded.party[0].isDead)
         assertEquals(original.party[0].equippedItemIds, loaded.party[0].equippedItemIds)
         assertEquals(original.party[1].heroId, loaded.party[1].heroId)
         assertEquals(original.unlockedHeroIds, loaded.unlockedHeroIds)
@@ -79,8 +75,8 @@ class GameSaveManagerTest {
 
     @Test
     fun `normalizeId converts PascalCase to lower snake case`() {
-        val data = GameSaveData(
-            party = listOf(HeroSaveData("HeroA", 1, 100, 0, 0, false, emptyList())),
+        val data = GameProgress(
+            party = listOf(PartyMemberData("HeroA", 1)),
             unlockedHeroIds = setOf("Shanti")
         )
         saveManager.saveGame(data)
@@ -95,8 +91,8 @@ class GameSaveManagerTest {
 
     @Test
     fun `save with PascalCase hero IDs normalizes to lower snake case on save`() {
-        val data = GameSaveData(
-            party = listOf(HeroSaveData("HeroA", 1, 100, 0, 0, false, emptyList())),
+        val data = GameProgress(
+            party = listOf(PartyMemberData("HeroA", 1)),
             unlockedHeroIds = setOf("HeroB", "HeroC"),
             defeatedMonsterIds = setOf("MonsterX")
         )
@@ -111,11 +107,11 @@ class GameSaveManagerTest {
 
     @Test
     fun `save with mixed case IDs normalizes correctly`() {
-        val data = GameSaveData(
+        val data = GameProgress(
             party = listOf(
-                HeroSaveData("Shanti", 1, 100, 0, 0, false, emptyList()),
-                HeroSaveData("VIRYA", 2, 200, 0, 0, false, emptyList()),
-                HeroSaveData("dhairya", 3, 300, 0, 0, false, emptyList())
+                PartyMemberData("Shanti", 1),
+                PartyMemberData("VIRYA", 2),
+                PartyMemberData("dhairya", 3)
             ),
             unlockedHeroIds = setOf("Maitri_Santosha"),
             defeatedMonsterIds = setOf("Bhaya_Fear", "Krodha--Anger")
@@ -133,7 +129,7 @@ class GameSaveManagerTest {
 
     @Test
     fun `empty save roundtrip preserves defaults`() {
-        val original = GameSaveData()
+        val original = GameProgress()
         saveManager.saveGame(original)
         val loaded = saveManager.loadGame()
 
@@ -149,9 +145,9 @@ class GameSaveManagerTest {
 
     @Test
     fun `resetToDefault restores fresh save state`() {
-        val original = GameSaveData(
+        val original = GameProgress(
             sparks = 999, yogaLevel = 10,
-            party = listOf(HeroSaveData("shanti", 5, 500, 0, 0, false, emptyList())),
+            party = listOf(PartyMemberData("shanti", 5)),
             totalBattlesWon = 50
         )
         saveManager.saveGame(original)
@@ -167,7 +163,7 @@ class GameSaveManagerTest {
 
     @Test
     fun `multiple save cycles preserve data integrity`() {
-        var data = GameSaveData(sparks = 100, totalBattlesWon = 5)
+        var data = GameProgress(sparks = 100, totalBattlesWon = 5)
         saveManager.saveGame(data)
 
         data = saveManager.loadGame()
@@ -186,12 +182,12 @@ class GameSaveManagerTest {
 
     @Test
     fun `party save data roundtrip preserves all fields`() {
-        val original = GameSaveData(
+        val original = GameProgress(
             party = listOf(
-                HeroSaveData("shanti", 3, 280, 15, 40, false, listOf("training_blade", "simple_beads")),
-                HeroSaveData("virya", 5, 320, 0, 100, false, listOf("fury_blade")),
-                HeroSaveData("santosha", 2, 450, 30, 10, false, emptyList()),
-                HeroSaveData("dhairya", 1, 100, 0, 0, true, listOf("guiding_lance"))
+                PartyMemberData("shanti", 3, listOf("training_blade", "simple_beads")),
+                PartyMemberData("virya", 5, listOf("fury_blade")),
+                PartyMemberData("santosha", 2),
+                PartyMemberData("dhairya", 1)
             )
         )
         saveManager.saveGame(original)
@@ -202,20 +198,15 @@ class GameSaveManagerTest {
         val shanti = loaded.party.find { it.heroId == "shanti" }
         assertNotNull(shanti)
         assertEquals(3, shanti!!.level)
-        assertEquals(280, shanti.currentHp)
-        assertEquals(15, shanti.shield)
-        assertEquals(40, shanti.ultimateGauge)
-        assertFalse(shanti.isDead)
         assertEquals(listOf("training_blade", "simple_beads"), shanti.equippedItemIds)
 
         val virya = loaded.party.find { it.heroId == "virya" }
         assertNotNull(virya)
         assertEquals(5, virya!!.level)
-        assertEquals(100, virya.ultimateGauge)
 
         val dhairya = loaded.party.find { it.heroId == "dhairya" }
         assertNotNull(dhairya)
-        assertTrue(dhairya!!.isDead)
+        assertEquals(1, dhairya!!.level)
     }
 
     @Test
@@ -229,5 +220,39 @@ class GameSaveManagerTest {
         assertEquals(2, data.version)
         assertEquals(0, data.sparks)
         assertEquals(1, data.yogaLevel)
+    }
+
+    @Test
+    fun `versioned JSON blob roundtrip preserves all fields`() {
+        val original = GameProgress(
+            version = 2,
+            party = listOf(PartyMemberData("shanti", 3, listOf("blade"))),
+            unlockedHeroIds = setOf("shanti"),
+            sparks = 200,
+            yogaLevel = 5,
+            totalBattlesWon = 20,
+            inventory = listOf("potion"),
+            defeatedMonsterIds = setOf("bhaya"),
+            totalYogaXp = 8000,
+            totalGoldSpent = 500
+        )
+        saveManager.saveGame(original)
+        val loaded = saveManager.loadGame()
+        assertEquals(original.version, loaded.version)
+        assertEquals(original.party.first().heroId, loaded.party.first().heroId)
+        assertEquals(original.unlockedHeroIds, loaded.unlockedHeroIds)
+        assertEquals(original.sparks, loaded.sparks)
+        assertEquals(original.yogaLevel, loaded.yogaLevel)
+        assertEquals(original.totalBattlesWon, loaded.totalBattlesWon)
+    }
+
+    @Test
+    fun `default save loaded from assets has expected structure`() {
+        val data = saveManager.loadGame()
+        assertEquals(2, data.version)
+        assertNotNull(data.party)
+        assertNotNull(data.unlockedHeroIds)
+        assertNotNull(data.inventory)
+        assertNotNull(data.defeatedMonsterIds)
     }
 }
