@@ -265,7 +265,7 @@ fun YogaFlowDetailsScreen(
         // Pose List Sequence Section Header
         item {
             Text(
-                text = "Flow Sequence (${flow.poses.size} Poses)",
+                text = "Flow Sequence (${flow.steps.size} Poses)",
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold
                 ),
@@ -275,7 +275,8 @@ fun YogaFlowDetailsScreen(
         }
 
         // Poses List for selected flow
-        itemsIndexed(flow.poses) { index, pose ->
+        itemsIndexed(flow.steps) { index, step ->
+            val pose = step.pose
             val isExpanded = expandedPoseIndex == index
             GlassCard(
                 modifier = Modifier

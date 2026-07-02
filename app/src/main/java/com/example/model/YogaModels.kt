@@ -7,9 +7,13 @@ data class YogaPose(
     val description: String,
     val benefits: String,
     val instructions: List<String>,
-    val voicePrompt: String,
-    val sanskritInstructions: String,
     val holdDurationSec: Int = 30
+)
+
+data class FlowStep(
+    val pose: YogaPose,
+    val englishVoicePrompt: String,
+    val sanskritVoicePrompt: String
 )
 
 data class YogaFlow(
@@ -18,5 +22,5 @@ data class YogaFlow(
     val description: String,
     val difficulty: String,
     val totalDurationMinutes: Int,
-    val poses: List<YogaPose>
+    val steps: List<FlowStep>
 )

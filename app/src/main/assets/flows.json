@@ -3,150 +3,104 @@
     {
       "id": "sun_salutation",
       "name": "Sun Salutation",
-      "description": "A standard 12-step sequence of yoga postures synchronized with breath (Surya Namaskar) to energize the body and mind.",
+      "description": "A standard 12-step sequence of yoga postures synchronized with breath (Surya Namaskar).",
       "difficulty": "Intermediate",
       "totalDurationMinutes": 6,
-      "poses": [
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9,
-        3,
-        2,
-        1
+      "steps": [
+        {
+          "poseId": 1,
+          "englishVoicePrompt": "Step 1: Prayer Pose. Stand at the front of your mat, palms together at your heart. Exhale and center yourself.",
+          "sanskritVoicePrompt": "प्रथमं सोपानम्: प्रणामासनम्। करसम्पुटं हृदयस्थाने धारयन्तु। निःश्वस्य शान्तं भवन्तु।"
+        },
+        {
+          "poseId": 2,
+          "englishVoicePrompt": "Step 2: Raised Arms Pose. Inhale deeply, sweep your arms up and arch back slightly, stretching your whole body.",
+          "sanskritVoicePrompt": "द्वितीयं सोपानम्: हस्तौत्तानासनम्। श्वासं स्वीकृत्य हस्तौ ऊर्ध्वं उत्थापयन्तु। शरीरं दीर्घतानन्तु।"
+        },
+        {
+          "poseId": 3,
+          "englishVoicePrompt": "Step 3: Standing Forward Bend. Exhale, hinge from your hips and fold forward, bringing your hands to the mat.",
+          "sanskritVoicePrompt": "तृतीयं सोपानम्: उत्तानासनम्। निःश्वस्य अधोगत्वा पार्श्वपादौ स्पृशन्तु। शिरोग्रीवं शिथिलीकुर्यात्।"
+        },
+        {
+          "poseId": 4,
+          "englishVoicePrompt": "Step 4: Lunge Pose. Inhale, step your right leg far back, drop the knee, and lift your chest, gazing forward.",
+          "sanskritVoicePrompt": "चतुर्थं सोपानम्: अश्वसञ्चालनासनम्। श्वासं स्वीकृत्य दक्षिणपादं पृष्ठे स्थापयन्तु। वक्षःप्रसास्य अग्रे पश्यन्तु।"
+        },
+        {
+          "poseId": 5,
+          "englishVoicePrompt": "Step 5: Plank Pose. Hold your breath and step your left foot back to meet the right. Keep your body in a straight line.",
+          "sanskritVoicePrompt": "पञ्चमं सोपानम्: फलकासनम्। कुम्भकं कृत्वा वामपादं पृष्ठे स्थापयन्तु। शरीरं सरलरेखा-रूपेण धारयन्तु।"
+        },
+        {
+          "poseId": 6,
+          "englishVoicePrompt": "Step 6: Eight-Limbed Pose. Exhale, lower your knees, chest, and chin to the mat, keeping your hips slightly raised.",
+          "sanskritVoicePrompt": "षष्ठं सोपानम्: अष्टाङ्गनमस्कारः। निःश्वस्य जानु-वक्षः-हनु भूमौ स्थापयन्तु। नितम्बं ईषत् उन्नतम्।"
+        },
+        {
+          "poseId": 7,
+          "englishVoicePrompt": "Step 7: Cobra Pose. Inhale, slide forward and lift your chest, keeping your elbows bent and close to your body.",
+          "sanskritVoicePrompt": "सप्तमं सोपानम्: भुजङ्गासनम्। श्वासं स्वीकृत्य वक्षः उत्थापयन्तु। कूर्परौ शरीरस्य समीपे स्थापयन्तु।"
+        },
+        {
+          "poseId": 8,
+          "englishVoicePrompt": "Step 8: Downward-Facing Dog. Exhale, tuck your toes and lift your hips high and back into an inverted V.",
+          "sanskritVoicePrompt": "अष्टमं सोपानम्: अधोमुखश्वानासनम्। निःश्वस्य नितम्बं ऊर्ध्वं उत्थापयन्तु। सर्वशरीरं पर्वताकारं धारयन्तु।"
+        },
+        {
+          "poseId": 9,
+          "englishVoicePrompt": "Step 9: Lunge Pose. Inhale, step your right foot forward between your hands and drop your left knee.",
+          "sanskritVoicePrompt": "नवमं सोपानम्: अश्वसञ्चालनासनम्। श्वासं स्वीकृत्य दक्षिणपादं अग्रे स्थापयन्तु। वामजानुं भूमौ धारयन्तु।"
+        },
+        {
+          "poseId": 3,
+          "englishVoicePrompt": "Step 10: Standing Forward Bend. Exhale, step your left foot forward and fold deeply into your legs.",
+          "sanskritVoicePrompt": "दशमं सोपानम्: उत्तानासनम्। निःश्वस्य वामपादं अग्रे स्थापयन्तु। पूर्णतया अधो नमन्तु।"
+        },
+        {
+          "poseId": 2,
+          "englishVoicePrompt": "Step 11: Raised Arms Pose. Inhale, rise all the way up, sweep your arms overhead and gently arch back.",
+          "sanskritVoicePrompt": "एकादशं सोपानम्: हस्तौत्तानासनम्। श्वासं स्वीकृत्य ऊर्ध्वं गत्वा हस्तौ प्रसारयन्तु। वक्षः उद्भासन्तु।"
+        },
+        {
+          "poseId": 1,
+          "englishVoicePrompt": "Step 12: Prayer Pose. Exhale and lower your hands back to your heart. Stand quiet and observe the energy.",
+          "sanskritVoicePrompt": "द्वादशं सोपानम्: प्रणामासनम्। निःश्वस्य हस्तौ हृदयस्थाने स्थापयन्तु। शान्तं अनुभवन्तु।"
+        }
       ]
     },
     {
       "id": "warrior_flow",
       "name": "Warrior Strength",
-      "description": "A powerful flow of standing postures to build core stability, leg strength, and focused concentration.",
+      "description": "A powerful flow of standing postures to build core stability and focus.",
       "difficulty": "Intermediate",
       "totalDurationMinutes": 3,
-      "poses": [
-        201,
-        202,
-        203,
-        204,
-        205
-      ]
-    },
-    {
-      "id": "restorative_yin",
-      "name": "Deep Restorative Yin",
-      "description": "A relaxing, low-intensity series of holds designed to release deep connective tissues and soothe the nervous system.",
-      "difficulty": "Beginner",
-      "totalDurationMinutes": 4,
-      "poses": [
-        205,
-        301,
-        302,
-        303,
-        304
-      ]
-    },
-    {
-      "id": "morning_energizer",
-      "name": "Morning Energizer",
-      "description": "Start your day with a gentle, refreshing sequence to awaken your senses, stretch your limbs, and bring vibrant focus to your morning.",
-      "difficulty": "Beginner",
-      "totalDurationMinutes": 5,
-      "poses": [
-        201,
-        2,
-        3,
-        8,
-        205
-      ]
-    },
-    {
-      "id": "bedtime_wind_down",
-      "name": "Bedtime Wind Down",
-      "description": "A slow, calming sequence of grounded holds to release the tension of the day and prepare your mind and body for a deep, restful sleep.",
-      "difficulty": "Beginner",
-      "totalDurationMinutes": 5,
-      "poses": [
-        205,
-        302,
-        303,
-        304
-      ]
-    },
-    {
-      "id": "core_balance",
-      "name": "Core & Balance Builder",
-      "description": "Focus your energy on stability and core strength with this sequence that challenges your balance and tones your core muscles.",
-      "difficulty": "Intermediate",
-      "totalDurationMinutes": 5,
-      "poses": [
-        201,
-        202,
-        203,
-        5,
-        8
-      ]
-    },
-    {
-      "id": "heart_opening",
-      "name": "Heart Opening Vinyasa",
-      "description": "An uplifting flow centering on backbends and chest expansion to open your heart, release upper body stiffness, and boost your energy.",
-      "difficulty": "Intermediate",
-      "totalDurationMinutes": 5,
-      "poses": [
-        201,
-        2,
-        301,
-        7,
-        205
-      ]
-    },
-    {
-      "id": "power_vinyasa",
-      "name": "Power Vinyasa Ascent",
-      "description": "An intense, fast-paced advanced vinyasa flow that builds stamina, muscle strength, and deep athletic concentration.",
-      "difficulty": "Advanced",
-      "totalDurationMinutes": 6,
-      "poses": [
-        5,
-        6,
-        7,
-        8,
-        202,
-        203
-      ]
-    },
-    {
-      "id": "ashtanga_core",
-      "name": "Ashtanga Core Power",
-      "description": "An advanced, core-centric sequence of strong postures requiring intense muscle activation, breath control, and persistent focus.",
-      "difficulty": "Advanced",
-      "totalDurationMinutes": 6,
-      "poses": [
-        5,
-        202,
-        203,
-        7,
-        8,
-        205
-      ]
-    },
-    {
-      "id": "balance_mastery",
-      "name": "Advanced Balance Mastery",
-      "description": "Push the boundaries of your stability and deep focus with a sequence of challenging standing balances and grounding postures.",
-      "difficulty": "Advanced",
-      "totalDurationMinutes": 7,
-      "poses": [
-        201,
-        202,
-        203,
-        204,
-        205,
-        304
+      "steps": [
+        {
+          "poseId": 201,
+          "englishVoicePrompt": "Start in Mountain Pose. Ground your feet and stand tall with focused breath.",
+          "sanskritVoicePrompt": "ताडासनं कुर्यात्। समस्थिति। पादौ भूमौ धारयन्तु।"
+        },
+        {
+          "poseId": 202,
+          "englishVoicePrompt": "Step back with your left foot into Warrior I. Reach your arms high and square your hips.",
+          "sanskritVoicePrompt": "वीरभद्रासनं प्रथमम्। वामपादं पृष्ठे स्थापयन्तु। हस्तौ ऊर्ध्वं प्रसारयन्तु।"
+        },
+        {
+          "poseId": 203,
+          "englishVoicePrompt": "Open your hips and arms out wide for Warrior II. Gaze over your front hand.",
+          "sanskritVoicePrompt": "वीरभद्रासनं द्वितीयम्। हस्तौ पार्श्वे प्रसारयन्तु। अग्रे पश्यन्तु।"
+        },
+        {
+          "poseId": 204,
+          "englishVoicePrompt": "Straighten your front leg and lean into Triangle Pose. Reach high through your top hand.",
+          "sanskritVoicePrompt": "त्रिकोणासनम्। पार्श्वभङ्गेन ऊर्ध्वं पश्यन्तु।"
+        },
+        {
+          "poseId": 205,
+          "englishVoicePrompt": "Lower down and rest in Child's Pose. Release all effort.",
+          "sanskritVoicePrompt": "बालासनम्। नितम्बौ पादपृष्ठे स्थापयन्तु। शिरो भूमौ नमन्तु।"
+        }
       ]
     }
   ]

@@ -12,8 +12,6 @@
         "Inhale, expand your chest, and relax your shoulders.",
         "Exhale and press your palms together in front of your chest."
       ],
-      "voicePrompt": "Prayer Pose, or Pranamasana. Stand tall at the front of your mat. Bring your hands together at your heart center. Exhale, grounding yourself, and set a calm intention.",
-      "sanskritInstructions": "प्रणामासनं कुर्यात्। करसम्पुटं हृदयस्थाने धारयन्तु। दीर्घं निःश्वस्य शान्तं भवन्तु।",
       "holdDurationSec": 30
     },
     {
@@ -28,8 +26,6 @@
         "Gently push your hips forward and arch back slightly.",
         "Stretches the whole body from the heels to the tips of the fingers."
       ],
-      "voicePrompt": "Raised Arms Pose, Hastauttanasana. Inhale deeply, sweep your arms up and slightly back. Reach through your fingertips, stretching your entire front body.",
-      "sanskritInstructions": "हस्तौत्तानासनं कुर्यात्। उद्गस्य हस्तौ ऊर्ध्वं प्रयच्छन्तु। सर्वशरीरं दीर्घतानन्तु।",
       "holdDurationSec": 30
     },
     {
@@ -44,8 +40,6 @@
         "Relax your head and neck downward.",
         "Softly bend knees if hamstrings are tight."
       ],
-      "voicePrompt": "Standing Forward Bend, Uttanasana. Exhale, hinge from your hips, and fold forward completely. Let your head hand heavy and touch the mat or your shins.",
-      "sanskritInstructions": "उत्तानासनं कुर्यात्। अधोगत्वा पार्श्वपादौ स्पृशन्तु। शिरोग्रीवं शिथिलीकुर्यात्।",
       "holdDurationSec": 30
     },
     {
@@ -60,8 +54,6 @@
         "Keep your left knee aligned directly over your left ankle.",
         "Lift your chest, roll shoulders back, and look forward or slightly up."
       ],
-      "voicePrompt": "Lunge Pose, Ashwa Sanchalanasana. Inhale, step your right leg far back, lowering the knee. Lift your chest and gaze forward, opening your hips.",
-      "sanskritInstructions": "अश्वसञ्चालनासनं कुर्यात्। दक्षिणपादं पृष्ठे स्थापयन्तु। वक्षःप्रसास्य अग्रे पश्यन्तु।",
       "holdDurationSec": 30
     },
     {
@@ -76,8 +68,6 @@
         "Keep your body in a straight line from head to heels.",
         "Engage your core and thighs, do not let your lower back sag."
       ],
-      "voicePrompt": "Plank Pose, Phalakasana. Step your left foot back to meet the right. Hold your breath and support your body in a solid, straight line from head to heels.",
-      "sanskritInstructions": "फलकासनं कुर्यात्। वामपादं पृष्ठे स्थापयन्तु। शरीरं सरलरेखा-रूपेण धारयन्तु।",
       "holdDurationSec": 30
     },
     {
@@ -92,8 +82,6 @@
         "Keep your hips slightly elevated off the ground.",
         "Eight points of the body should touch the floor."
       ],
-      "voicePrompt": "Eight-Limbed Pose, Ashtanga Namaskara. Exhale and lower your knees, chest, and chin to the mat. Keep your hips slightly elevated.",
-      "sanskritInstructions": "अष्टाङ्गनमस्कारं कुर्यात्। जानु-वक्षः-हनु भूमौ स्थापयन्तु। नितम्बं कोष्ठोन्नतं धारयन्तु।",
       "holdDurationSec": 30
     },
     {
@@ -108,8 +96,6 @@
         "Keep your shoulders rolled away from your ears.",
         "Gaze forward or slightly upward."
       ],
-      "voicePrompt": "Cobra Pose, Bhujangasana. Inhale, slide forward and lift your chest up. Keep your elbows bent and close to your body, opening your heart.",
-      "sanskritInstructions": "भुजङ्गासनं कुर्यात्। अग्रे सर्प-रूपेण शरीरं ऊर्ध्वं उत्थापयन्तु। वक्षःप्रसास्य हृदयं उद्भासन्तु।",
       "holdDurationSec": 30
     },
     {
@@ -124,8 +110,6 @@
         "Press your palms firmly into the mat, fingers spread wide.",
         "Try to lower your heels toward the ground, relaxing your neck."
       ],
-      "voicePrompt": "Downward-Facing Dog, Adho Mukha Svanasana. Exhale, tuck your toes, and lift your hips high and back. Press your hands into the mat, stretching your spine.",
-      "sanskritInstructions": "अधोमुखश्वानासनं कुर्यात्। नितम्बं ऊर्ध्वं प्रयच्छन्तु। सर्वशरीरं पर्वताकारं धारयन्तु।",
       "holdDurationSec": 30
     },
     {
@@ -140,8 +124,6 @@
         "Roll your shoulders back, lift your chest, and look forward.",
         "Ensure your right knee is stacked directly above your right ankle."
       ],
-      "voicePrompt": "Lunge Pose, Ashwa Sanchalanasana. Inhale, step your left leg far back, lowering the knee. Lift your chest and gaze forward, opening your hips.",
-      "sanskritInstructions": "अश्वसञ्चालनासनं कुर्यात्। दक्षिणपादं अग्रे स्थापयन्तु। अग्रे पश्यन्तु।",
       "holdDurationSec": 30
     },
     {
@@ -156,8 +138,6 @@
         "Let your arms hang naturally with palms facing forward.",
         "Inhale deeply, expanding your torso."
       ],
-      "voicePrompt": "Mountain Pose, Tadasana. Ground your feet firmly into the earth. Stand tall, relax your shoulders, and breathe with power and clarity.",
-      "sanskritInstructions": "ताडासनं कुर्यात्। समस्थिति। पादौ भूमौ धारयन्तु। स्वास्थ्य स्थितौ भवन्तु।",
       "holdDurationSec": 30
     },
     {
@@ -172,8 +152,6 @@
         "Bend your right knee to 90 degrees.",
         "Inhale, sweep your arms high with palms facing."
       ],
-      "voicePrompt": "Warrior 1. Step your left leg back and sweep your arms high. Square your hips forward, bend your front knee, and stand strong.",
-      "sanskritInstructions": "वीरभद्रासनं प्रथमं कुर्यात्। वामपादं पृष्ठे धारयन्तु, हस्तौ ऊर्ध्वं उत्थापयन्तु।",
       "holdDurationSec": 30
     },
     {
@@ -188,8 +166,6 @@
         "Keep your right knee bent at 90 degrees.",
         "Gaze steadily over your right fingertips."
       ],
-      "voicePrompt": "Warrior 2. Open your arms and hips to the side. Extend your energy through both fingertips, looking forward past your front hand.",
-      "sanskritInstructions": "वीरभद्रासनं द्वितीयं कुर्यात्। हस्तौ पार्श्वे प्रसार्यन्तु, अग्रे पश्यन्तु।",
       "holdDurationSec": 30
     },
     {
@@ -204,8 +180,6 @@
         "Tilt your torso down, bringing your right hand to your shin or floor.",
         "Extend your left arm straight up toward the sky."
       ],
-      "voicePrompt": "Triangle Pose, Trikonasana. Straighten your front leg, lean forward, and open your arms vertically. Feel the deep side stretch and spine lengthening.",
-      "sanskritInstructions": "त्रिकोणासनं कुर्यात्। पार्श्वभङ्गेन हस्त-शिखरे पश्यन्तु।",
       "holdDurationSec": 30
     },
     {
@@ -220,8 +194,6 @@
         "Lower your chest and forehead to the floor.",
         "Breathe deeply into your lower back."
       ],
-      "voicePrompt": "Child's Pose, Balasana. Sink your hips back to your heels and rest your forehead. Let go of all effort and breathe deeply.",
-      "sanskritInstructions": "बालासनं कुर्यात्। नितम्बौ पादपृष्ठे स्थापयन्तु, शिरो भूमौ नमन्तु। शान्तं भवन्तु।",
       "holdDurationSec": 30
     },
     {
@@ -236,8 +208,6 @@
         "Inhale, press into your forearms, and gently lift your chest.",
         "Relax your glutes and lower back completely."
       ],
-      "voicePrompt": "Sphinx Pose. Prop yourself onto your forearms, relaxing your lower body completely. Lift your chest gently and enjoy this mild back-bend.",
-      "sanskritInstructions": "सालम्बभुजङ्गासनं कुर्यात्। कूर्परौ भूमौ धारयन्तु, ऊर्ध्वं पश्यन्तु।",
       "holdDurationSec": 30
     },
     {
@@ -252,8 +222,6 @@
         "Allow your knees to fall open toward the sides.",
         "Gently fold forward if comfortable."
       ],
-      "voicePrompt": "Butterfly Pose, Baddha Konasana. Bring the soles of your feet together, letting your knees open wide. Fold forward slightly to release the hips.",
-      "sanskritInstructions": "बद्धकोणासनं कुर्यात्। पादतलौ परस्परं संयोजयन्तु।",
       "holdDurationSec": 30
     },
     {
@@ -268,8 +236,6 @@
         "Lower both knees to the left side while keeping shoulders flat.",
         "Extend your right arm to the side and look over your right shoulder."
       ],
-      "voicePrompt": "Reclined Spinal Twist. Lay on your back and drop your knees to the side. Open your chest flat toward the sky, breathing ease into your spine.",
-      "sanskritInstructions": "सुप्तमत्स्येन्द्रासनं कुर्यात्। पार्श्वपरिवर्तनेन ध्यानं कुर्यात्।",
       "holdDurationSec": 30
     },
     {
@@ -284,8 +250,6 @@
         "Bring arms slightly away from the body with palms up.",
         "Close your eyes and sink into complete stillness."
       ],
-      "voicePrompt": "Corpse Pose, Savasana. Lie completely flat on your back, letting your whole body surrender. Close your eyes, be absolutely still, and rest. Namaste.",
-      "sanskritInstructions": "शवासनं कुर्यात्। सर्वशरीरं शिथिलीकुर्यात्, ध्यानमयस्थितौ विश्रामन्तु। ओम्, शान्तिः, शान्तिः, शान्तिः।",
       "holdDurationSec": 30
     }
   ]

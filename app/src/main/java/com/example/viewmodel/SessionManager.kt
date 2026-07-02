@@ -41,7 +41,7 @@ class SessionManager(
     private val _flow = MutableStateFlow<YogaFlow>(
         FlowLoader.getFlowById(context, "sun_salutation") 
         ?: FlowLoader.loadFlows(context).firstOrNull() 
-        ?: YogaFlow(id="empty", name="Empty", description="", difficulty="", totalDurationMinutes=0, poses=emptyList())
+        ?: YogaFlow(id="empty", name="Empty", description="", difficulty="", totalDurationMinutes=0, steps=emptyList())
     )
     val flow: StateFlow<YogaFlow> = _flow.asStateFlow()
 
@@ -77,7 +77,7 @@ class SessionManager(
     private var wakeLock: PowerManager.WakeLock? = null
 
     val currentPose: StateFlow<YogaPose?> = combine(_flow, _currentPoseIndex) { flow, index ->
-        if (index in flow.poses.indices) flow.poses[index] else null
+        if (index in flow.steps.indices) flow.steps[index].pose else null
     }.stateIn(
         scope = scope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -101,7 +101,7 @@ class SessionManager(
     fun selectFlow(yogaFlow: YogaFlow) {
         _flow.value = yogaFlow
         _currentPoseIndex.value = 0
-        _remainingTimeSec.value = yogaFlow.poses.firstOrNull()?.holdDurationSec ?: 30
+        _remainingTimeSec.value = yogaFlow.steps.firstOrNull()?.pose?.holdDurationSec ?: 30
         _isSessionCompleted.value = false
         _isPlaying.value = false
         _isCountdownActive.value = false
@@ -133,7 +133,7 @@ class SessionManager(
         updateWakeLockState()
         startTimer()
         ambientMusicManager.play()
-        if (_remainingTimeSec.value == (_flow.value.poses.getOrNull(_currentPoseIndex.value)?.holdDurationSec ?: 30)) {
+        if (_remainingTimeSec.value == (_flow.value.steps.getOrNull(_currentPoseIndex.value)?.pose?.holdDurationSec ?: 30)) {
             triggerVoiceCueForCurrentPose()
         }
     }
@@ -165,9 +165,9 @@ class SessionManager(
 
     fun skipForward() {
         val nextIndex = _currentPoseIndex.value + 1
-        if (nextIndex < _flow.value.poses.size) {
+        if (nextIndex < _flow.value.steps.size) {
             _currentPoseIndex.value = nextIndex
-            _remainingTimeSec.value = _flow.value.poses[_currentPoseIndex.value].holdDurationSec
+            _remainingTimeSec.value = _flow.value.steps[_currentPoseIndex.value].pose.holdDurationSec
             _isSessionCompleted.value = false
             if (_isPlaying.value) {
                 triggerVoiceCueForCurrentPose()
@@ -181,7 +181,7 @@ class SessionManager(
         val prevIndex = _currentPoseIndex.value - 1
         if (prevIndex >= 0) {
             _currentPoseIndex.value = prevIndex
-            _remainingTimeSec.value = _flow.value.poses[_currentPoseIndex.value].holdDurationSec
+            _remainingTimeSec.value = _flow.value.steps[_currentPoseIndex.value].pose.holdDurationSec
             _isSessionCompleted.value = false
             if (_isPlaying.value) {
                 triggerVoiceCueForCurrentPose()
@@ -190,9 +190,9 @@ class SessionManager(
     }
 
     fun selectPoseDirectly(index: Int) {
-        if (index in _flow.value.poses.indices) {
+        if (index in _flow.value.steps.indices) {
             _currentPoseIndex.value = index
-            _remainingTimeSec.value = _flow.value.poses[index].holdDurationSec
+            _remainingTimeSec.value = _flow.value.steps[index].pose.holdDurationSec
             _isSessionCompleted.value = false
             if (_isPlaying.value) {
                 triggerVoiceCueForCurrentPose()
@@ -230,7 +230,7 @@ class SessionManager(
         audioCueManager.stop()
         ambientMusicManager.stop()
         _currentPoseIndex.value = 0
-        _remainingTimeSec.value = _flow.value.poses.firstOrNull()?.holdDurationSec ?: 30
+        _remainingTimeSec.value = _flow.value.steps.firstOrNull()?.pose?.holdDurationSec ?: 30
         _isSessionCompleted.value = false
         _isPlaying.value = false
         _isCountdownActive.value = false
@@ -245,7 +245,7 @@ class SessionManager(
         audioCueManager.stop()
         ambientMusicManager.stop()
         _currentPoseIndex.value = 0
-        _remainingTimeSec.value = _flow.value.poses.firstOrNull()?.holdDurationSec ?: 30
+        _remainingTimeSec.value = _flow.value.steps.firstOrNull()?.pose?.holdDurationSec ?: 30
         _isSessionCompleted.value = false
         timerJob?.cancel()
         timerJob = null
@@ -270,10 +270,10 @@ class SessionManager(
 
     private fun onPoseTimeComplete() {
         val nextIndex = _currentPoseIndex.value + 1
-        if (nextIndex < _flow.value.poses.size) {
+        if (nextIndex < _flow.value.steps.size) {
             playWoodTap()
             _currentPoseIndex.value = nextIndex
-            _remainingTimeSec.value = _flow.value.poses[_currentPoseIndex.value].holdDurationSec
+            _remainingTimeSec.value = _flow.value.steps[_currentPoseIndex.value].pose.holdDurationSec
             triggerVoiceCueForCurrentPose()
         } else {
             completeSession()
@@ -323,14 +323,18 @@ class SessionManager(
                 waitTime += 100
             }
             if (!_isPlaying.value && !_isCountdownActive.value) return@launch
-            val current = currentPose.value ?: return@launch
-            val stepNumber = _currentPoseIndex.value + 1
+            
+            val flow = _flow.value
+            val index = _currentPoseIndex.value
+            if (index !in flow.steps.indices) return@launch
+            
+            val step = flow.steps[index]
             val voice = _preferredVoice.value
             
             val text = if (voice == "sa") {
-                "सोपानं $stepNumber: ${current.sanskritInstructions}"
+                step.sanskritVoicePrompt
             } else {
-                "Step $stepNumber: ${current.voicePrompt}"
+                step.englishVoicePrompt
             }
             audioCueManager.speak(text, voice)
         }

@@ -30,9 +30,7 @@ object FlowLoader {
                 description = poseObj.optString("description", ""),
                 benefits = poseObj.optString("benefits", ""),
                 instructions = instructions,
-                voicePrompt = poseObj.optString("voicePrompt", ""),
-                sanskritInstructions = poseObj.optString("sanskritInstructions", ""),
-                holdDurationSec = poseObj.optInt("holdDurationSec", 30),
+                holdDurationSec = poseObj.optInt("holdDurationSec", 30)
             )
         }
 
@@ -51,12 +49,22 @@ object FlowLoader {
 
         for (i in 0 until flowsArray.length()) {
             val flowObj = flowsArray.getJSONObject(i)
-            val posesIdsArray = flowObj.getJSONArray("poses")
-            val poses = mutableListOf<YogaPose>()
+            val stepsArray = flowObj.getJSONArray("steps")
+            val steps = mutableListOf<FlowStep>()
 
-            for (j in 0 until posesIdsArray.length()) {
-                val poseId = posesIdsArray.getInt(j)
-                posesMap[poseId]?.let { poses.add(it) }
+            for (j in 0 until stepsArray.length()) {
+                val stepObj = stepsArray.getJSONObject(j)
+                val poseId = stepObj.getInt("poseId")
+                val pose = posesMap[poseId]
+                if (pose != null) {
+                    steps.add(
+                        FlowStep(
+                            pose = pose,
+                            englishVoicePrompt = stepObj.getString("englishVoicePrompt"),
+                            sanskritVoicePrompt = stepObj.getString("sanskritVoicePrompt")
+                        )
+                    )
+                }
             }
 
             flows.add(
@@ -66,7 +74,7 @@ object FlowLoader {
                     description = flowObj.optString("description", ""),
                     difficulty = flowObj.optString("difficulty", ""),
                     totalDurationMinutes = flowObj.getInt("totalDurationMinutes"),
-                    poses = poses
+                    steps = steps
                 )
             )
         }
