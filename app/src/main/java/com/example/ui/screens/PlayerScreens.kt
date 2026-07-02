@@ -75,7 +75,7 @@ fun YogaPlayerScreen(
                 )
             }
             Text(
-                text = "Pose ${currentPoseIndex + 1} of ${flow.poses.size}",
+                text = "Pose ${currentPoseIndex + 1} of ${flow.steps.size}",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary
@@ -558,12 +558,12 @@ fun CountdownStartScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                val firstPose = viewModel.flow.collectAsState().value.poses.firstOrNull()
+                val firstPoseStep = viewModel.flow.collectAsState().value.steps.firstOrNull()
                 Text(
                     text = if (preferredVoice == "sa") {
-                        "प्रथमं आसनं सिद्धं भवतु: ${firstPose?.sanskritName ?: ""}"
+                        "प्रथमं आसनं सिद्धं भवतु: ${firstPoseStep?.pose?.sanskritName ?: ""}"
                     } else {
-                        "Prepare for your first pose: ${firstPose?.englishName ?: ""}"
+                        "Prepare for your first pose: ${firstPoseStep?.pose?.englishName ?: ""}"
                     },
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),

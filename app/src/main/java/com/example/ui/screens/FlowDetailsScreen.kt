@@ -220,7 +220,7 @@ fun YogaFlowDetailsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        FlowStatBadge(icon = Icons.Default.Info, label = "${flow.poses.size} Poses")
+                        FlowStatBadge(icon = Icons.Default.Info, label = "${flow.steps.size} Poses")
                         FlowStatBadge(icon = Icons.Default.Info, label = "${flow.totalDurationMinutes} Min")
                         FlowStatBadge(icon = Icons.Default.Info, label = flow.difficulty)
                     }

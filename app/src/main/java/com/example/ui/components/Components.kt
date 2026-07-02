@@ -453,7 +453,7 @@ fun FlowCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FlowLibraryBadge(label = "${flowItem.poses.size} Poses")
+                        FlowLibraryBadge(label = "${flowItem.steps.size} Poses")
                         FlowLibraryBadge(label = "${flowItem.totalDurationMinutes} Min")
                     }
                     
