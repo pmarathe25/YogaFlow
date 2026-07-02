@@ -8,38 +8,51 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.game.viewmodel.GameViewModel
-import com.example.game.ui.components.MonsterRoadSelection
+
+enum class HubView { DASHBOARD, PATH_OF_ZEN }
 
 @Composable
 fun HubScreen(
-    viewModel: GameViewModel,
-    onExitHub: () -> Unit
+    onNavigateToBattle: (String) -> Unit,
+    onNavigateToShop: () -> Unit,
+    onNavigateToParty: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToTrophies: () -> Unit,
+    model: GameViewModel
 ) {
-    val saveData by viewModel.saveData.collectAsState()
-    val error by viewModel.error.collectAsState()
+    val saveData by model.saveData.collectAsState()
+    val error by model.error.collectAsState()
 
-    LaunchedEffect(Unit) { viewModel.refreshSync() }
+    var currentHubView by remember { mutableStateOf(HubView.DASHBOARD) }
+
+    LaunchedEffect(Unit) { model.refreshSync() }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Monster selection Road Overlay (Always shown now as Hub is just the road)
-        MonsterRoadSelection(
-            defeatedMonsterIds = saveData.defeatedMonsterIds,
-            onSelectMonster = { monsterId ->
-                viewModel.startBattle(monsterId)
-            },
-            onDismiss = onExitHub
-        )
+        when (currentHubView) {
+            HubView.DASHBOARD -> YourJourneyDashboard(
+                onNavigateToPath = { currentHubView = HubView.PATH_OF_ZEN },
+                onNavigateToShop = onNavigateToShop,
+                onNavigateToParty = onNavigateToParty,
+                onNavigateToSettings = onNavigateToSettings,
+                onNavigateToTrophies = onNavigateToTrophies,
+                model = model
+            )
+            HubView.PATH_OF_ZEN -> MonsterRoadSelection(
+                defeatedMonsterIds = saveData.defeatedMonsterIds,
+                onSelectMonster = onNavigateToBattle,
+                onDismiss = { currentHubView = HubView.DASHBOARD }
+            )
+        }
 
-        // Error snackbar
         error?.let { msg ->
             Snackbar(
                 modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
                 action = {
-                    TextButton(onClick = { viewModel.clearError() }) {
+                    TextButton(onClick = { model.clearError() }) {
                         Text("OK")
                     }
                 }

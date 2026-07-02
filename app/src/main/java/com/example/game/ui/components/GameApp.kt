@@ -32,8 +32,12 @@ fun GameApp(
     ) { screen ->
         when (screen) {
             GameScreen.HUB -> HubScreen(
-                viewModel = viewModel,
-                onExitHub = onExitHub
+                model = viewModel,
+                onNavigateToBattle = { monsterId -> viewModel.startBattle(monsterId) },
+                onNavigateToShop = { viewModel.navigateTo(GameScreen.SHOP) },
+                onNavigateToParty = { viewModel.navigateTo(GameScreen.PARTY) },
+                onNavigateToSettings = { viewModel.navigateTo(GameScreen.SETTINGS) },
+                onNavigateToTrophies = { viewModel.navigateTo(GameScreen.TROPHIES) }
             )
             GameScreen.BATTLE -> BattleScreen(viewModel = viewModel)
             GameScreen.PARTY -> PartyScreen(viewModel = viewModel)
@@ -42,8 +46,12 @@ fun GameApp(
             GameScreen.SHOP -> ShopScreen(viewModel = viewModel)
             GameScreen.BATTLE_RESULT -> BattleResultScreen(viewModel = viewModel)
             GameScreen.SETTINGS -> HubScreen(
-                viewModel = viewModel,
-                onExitHub = onExitHub
+                model = viewModel,
+                onNavigateToBattle = { monsterId -> viewModel.startBattle(monsterId) },
+                onNavigateToShop = { viewModel.navigateTo(GameScreen.SHOP) },
+                onNavigateToParty = { viewModel.navigateTo(GameScreen.PARTY) },
+                onNavigateToSettings = { viewModel.navigateTo(GameScreen.SETTINGS) },
+                onNavigateToTrophies = { viewModel.navigateTo(GameScreen.TROPHIES) }
             )
         }
     }

@@ -1,5 +1,6 @@
 package com.example.game.ui.components
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -60,6 +61,30 @@ fun BattleScreen(viewModel: GameViewModel) {
     var showFullLog by remember { mutableStateOf(false) }
     var currentTurnActorName by remember { mutableStateOf<String?>(null) }
     var showTurnBanner by remember { mutableStateOf(false) }
+
+    var showExitDialog by remember { mutableStateOf(false) }
+
+    BackHandler(enabled = state.phase == PLAYER_TURN || state.phase == ENEMY_TURN) {
+        showExitDialog = true
+    }
+
+    if (showExitDialog) {
+        AlertDialog(
+            onDismissRequest = { showExitDialog = false },
+            title = { Text("Exit Battle?") },
+            text = { Text("Are you sure you want to forfeit the current battle?") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.navigateBack(); showExitDialog = false }) {
+                    Text("Forfeit")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExitDialog = false }) {
+                    Text("Continue Fighting")
+                }
+            }
+        )
+    }
 
     // ─── Targeting Logic ───────────────────────────────────────────
     val selectedTargets = remember { mutableStateListOf<String>() }
