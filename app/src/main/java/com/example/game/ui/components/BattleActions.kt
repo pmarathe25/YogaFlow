@@ -503,6 +503,8 @@ fun SkillCard(
 ) {
     val isOnCooldown = cooldownRemaining > 0
     val canUse = if (isUltimate) ultReady else !isOnCooldown
+    val showCooldown = baseCooldown > 1
+    val displayText = if (isOnCooldown) "$cooldownRemaining" else "$baseCooldown"
 
     val bgColor = when {
         isOnCooldown -> Color(0xFFE0E0E0)
@@ -546,6 +548,7 @@ fun SkillCard(
                     shape = RoundedCornerShape(12.dp)
                 )
         ) {
+            Box(modifier = Modifier.fillMaxSize()) {
             // Sparkling effect for ready ultimate
             if (isUltimate && ultReady) {
                 val sparkTransition = rememberInfiniteTransition()
@@ -574,26 +577,6 @@ fun SkillCard(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(getSkillIcon(skill), fontSize = 32.sp, modifier = Modifier.alpha(if (isOnCooldown) 0.5f else 1f))
-
-                    if (baseCooldown > 0 || isOnCooldown) {
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .background(
-                                    if (isOnCooldown) Color.Red.copy(alpha = 0.8f)
-                                    else Color.Black.copy(alpha = 0.5f),
-                                    RoundedCornerShape(4.dp)
-                                )
-                                .padding(horizontal = 4.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = if (isOnCooldown) "$cooldownRemaining" else "CD:$baseCooldown",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-                    }
                 }
                 
                 Text(
@@ -659,6 +642,30 @@ fun SkillCard(
                         .padding(2.dp)
                         .border(3.dp, Color(0xFFFFD700), RoundedCornerShape(14.dp))
                 )
+            }
+
+            // Cooldown badge (top-left, on the card itself, not on icon)
+            if (showCooldown) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .size(24.dp)
+                        .background(
+                            if (isOnCooldown) Color(0xFFFFCDD2)
+                            else Color.Black.copy(alpha = 0.1f),
+                            CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = displayText,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isOnCooldown) Color(0xFFE53935)
+                                else Color.DarkGray
+                    )
+                }
+            }
             }
         }
     }
