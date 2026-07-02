@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,7 +17,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
@@ -30,27 +28,29 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.window.Dialog
 import com.example.game.model.*
 import com.example.game.model.BattlePhase.*
 import com.example.game.viewmodel.GameViewModel
+import com.example.game.persistence.DataLoader
 import kotlinx.coroutines.delay
 import kotlin.math.*
 
 @Composable
-fun BattleScreen(viewModel: GameViewModel) {
+fun BattleScene(viewModel: GameViewModel) {
     val battleState by viewModel.battleState.collectAsState()
     val state = battleState ?: return
     val battleLog by viewModel.battleLog.collectAsState()
 
     val infiniteTransition = rememberInfiniteTransition()
     val parallaxOffset by infiniteTransition.animateFloat(
-        initialValue = 0f, targetValue = 2f * kotlin.math.PI.toFloat(),
+        initialValue = 0f, targetValue = 2f * PI.toFloat(),
         animationSpec = infiniteRepeatable(animation = tween(20000, easing = LinearEasing))
     )
 
     val bossPulse by infiniteTransition.animateFloat(
-        initialValue = 0f, targetValue = 2f * kotlin.math.PI.toFloat(),
+        initialValue = 0f, targetValue = 2f * PI.toFloat(),
         animationSpec = infiniteRepeatable(animation = tween(3000, easing = FastOutSlowInEasing))
     )
 
@@ -60,7 +60,6 @@ fun BattleScreen(viewModel: GameViewModel) {
 
     // ─── Battle UI States ──────────────────────────────────────────
     var showFullLog by remember { mutableStateOf(false) }
-
     var showExitDialog by remember { mutableStateOf(false) }
 
     BackHandler(enabled = state.phase == PLAYER_TURN || state.phase == ENEMY_TURN) {
@@ -143,8 +142,8 @@ fun BattleScreen(viewModel: GameViewModel) {
         when (event) {
             is BattleEvent.SkillUsed -> {
                 val isAttack = event.skill.damageComponents.isNotEmpty() || event.skill.baseDamage > 0
-                val flashColor = if (event.skill.healScaling != null) Color(0xFF66BB6A) 
-                                else if (isAttack) Color.Red 
+                val flashColor = if (event.skill.healScaling != null) Color(0xFF66BB6A)
+                                else if (isAttack) Color.Red
                                 else Color(0xFF42A5F5)
 
                 if (isAttack) {
@@ -187,8 +186,26 @@ fun BattleScreen(viewModel: GameViewModel) {
     var monsterPos by remember { mutableStateOf(Offset.Zero) }
     var heroPositions by remember { mutableStateOf<Map<String, Offset>>(emptyMap()) }
 
+    // Current actor for action tray
+    val currentHero = state.aliveHeroes.find { it.id == state.currentActorId }
+    val availableCombos = remember(state.heroes) {
+        if (currentHero == null) emptyList()
+        else {
+            val aliveHeroNames = state.heroes
+                .filter { it.hp > 0 && !it.isDefeated }
+                .map { it.name }
+                .toSet()
+            DataLoader.combos.filter { combo ->
+                currentHero.name in combo.requiredHeroes &&
+                combo.requiredHeroes.all { name -> name in aliveHeroNames }
+            }
+        }
+    }
+
     Box(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).shakeOffset(shakeHandle)
+        modifier = Modifier.fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .shakeOffset(shakeHandle)
     ) {
         BattleBackground(
             parallaxOffset = sin(parallaxOffset),
@@ -199,12 +216,12 @@ fun BattleScreen(viewModel: GameViewModel) {
         )
 
         Box(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.fillMaxSize().padding(bottom = 400.dp)) {
-                TurnIndicator(
+            Column(modifier = Modifier.fillMaxSize().padding(bottom = 220.dp)) {
+                // Turn indicator banner
+                TurnBanner(
                     actorName = state.turnOrder.find { it.id == state.currentActorId }?.name,
-                    actorElement = state.turnOrder.find { it.id == state.currentActorId }?.element,
                     visible = state.phase != BattlePhase.INTRO && state.currentActorId != null,
-                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp)
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
 
                 // Header
@@ -222,7 +239,7 @@ fun BattleScreen(viewModel: GameViewModel) {
                     }
                 }
 
-                // Monster Area
+                // Monster Zone (upper 55%)
                 Box(
                     modifier = Modifier.fillMaxWidth().weight(0.55f).onGloballyPositioned { coords ->
                         val pos = coords.positionInRoot()
@@ -231,13 +248,18 @@ fun BattleScreen(viewModel: GameViewModel) {
                     contentAlignment = Alignment.Center
                 ) {
                     if (monster != null && !monster.isDefeated) {
+                        val canTarget = state.pendingSkill?.let {
+                            it.targetType == TargetType.SINGLE_ENEMY || it.targetType == TargetType.ALL_ENEMIES || it.targetType == TargetType.ALL
+                        } ?: false
                         val isTargeted = selectedTargets.contains(monster.id)
-                        val canTarget = state.pendingSkill?.let { it.targetType == TargetType.SINGLE_ENEMY || it.targetType == TargetType.ALL_ENEMIES || it.targetType == TargetType.ALL } ?: false
-                        
+
                         val monsterClickable = if (isTargeting && canTarget) {
                             Modifier.clickable {
-                                if (selectedTargets.contains(monster.id)) selectedTargets.remove(monster.id)
-                                else selectedTargets.add(monster.id)
+                                if (isTargeting) {
+                                    val skill = state.pendingSkill ?: return@clickable
+                                    viewModel.executeSkill(currentHero?.id ?: return@clickable, skill, listOf(monster.id))
+                                    selectedTargets.clear()
+                                }
                             }
                         } else Modifier
 
@@ -246,27 +268,37 @@ fun BattleScreen(viewModel: GameViewModel) {
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.scale(monsterAppearScale)) {
-                                MonsterHUD(monster = monster, statuses = state.getStatusesForTarget(monster.id), modifier = Modifier.padding(bottom = 8.dp))
-                                MonsterSprite(
-                                    monsterName = monster.id,
+                                MonsterHUD(
+                                    monster = monster,
+                                    statuses = state.getStatusesForTarget(monster.id),
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                )
+                                CombatantSprite(
+                                    isMonster = true,
+                                    name = monster.id,
                                     elementColor = monsterColor,
+                                    isActive = !monster.isDefeated,
                                     isBoss = isBoss,
                                     isFlashing = monsterFlashAlpha > 0f,
                                     flashColor = monsterFlashColor,
                                     flashAlpha = monsterFlashAlpha,
                                     bossPulse = sin(bossPulse),
                                     animState = monsterAnimState.value,
-                                    modifier = Modifier.fillMaxWidth().weight(1f).scale(1.5f).graphicsLayer {
-                                        if (isTargeted) { scaleX = 1.1f; scaleY = 1.1f }
+                                    isTargeted = isTargeted,
+                                    isLowHp = monster.hpPercent < 0.3f && !monster.isDefeated,
+                                    element = monster.element,
+                                    modifier = Modifier.fillMaxWidth().weight(1f).graphicsLayer {
+                                        scaleX = 1.5f
+                                        scaleY = 1.5f
+                                        if (isTargeted) { scaleX = 1.65f; scaleY = 1.65f }
                                     }
                                 )
                             }
-                            if (isTargeting) TargetCircle(color = Color.Red, isSelected = isTargeted)
                         }
                     }
                 }
 
-                // Hero Area
+                // Hero Zone (lower 45%)
                 Box(
                     modifier = Modifier.fillMaxWidth().weight(0.45f).onGloballyPositioned { coords ->
                         val basePos = coords.positionInRoot()
@@ -278,12 +310,14 @@ fun BattleScreen(viewModel: GameViewModel) {
                     },
                     contentAlignment = Alignment.BottomCenter
                 ) {
-                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
                         state.aliveHeroes.forEach { hero ->
                             val isTurn = state.currentActorId == hero.id
                             val animState = heroAnimStates[hero.id] ?: SpriteAnimState()
                             val heroFlash = heroFlashAlphas[hero.id] ?: 0f
-                            val isTargeted = selectedTargets.contains(hero.id)
                             val canTarget = state.pendingSkill?.let { skill ->
                                 when (skill.targetType) {
                                     TargetType.SINGLE_ALLY -> hero.id != state.currentActorId
@@ -292,13 +326,18 @@ fun BattleScreen(viewModel: GameViewModel) {
                                     else -> false
                                 }
                             } ?: false
-                            val heroEntry by animateFloatAsState(targetValue = if (heroVisibilities[hero.id] == true) 0f else 150f, animationSpec = spring(0.7f, 150f))
+                            val isTargeted = selectedTargets.contains(hero.id)
+                            val heroEntry by animateFloatAsState(
+                                targetValue = if (heroVisibilities[hero.id] == true) 0f else 150f,
+                                animationSpec = spring(0.7f, 150f)
+                            )
                             val density = LocalDensity.current
-                            
+
                             val heroClickable = if (isTargeting && canTarget) {
                                 Modifier.clickable {
-                                    if (selectedTargets.contains(hero.id)) selectedTargets.remove(hero.id)
-                                    else selectedTargets.add(hero.id)
+                                    val skill = state.pendingSkill ?: return@clickable
+                                    viewModel.executeSkill(currentHero?.id ?: return@clickable, skill, listOf(hero.id))
+                                    selectedTargets.clear()
                                 }
                             } else Modifier
 
@@ -308,21 +347,30 @@ fun BattleScreen(viewModel: GameViewModel) {
                                     modifier = Modifier.graphicsLayer { translationY = with(density) { heroEntry.dp.toPx() } }
                                         .then(heroClickable)
                                 ) {
-                                    HeroHUD(hero = hero, statuses = state.getStatusesForTarget(hero.id), isCurrentTurn = isTurn, modifier = Modifier.padding(bottom = 4.dp))
+                                    HeroHUD(
+                                        hero = hero,
+                                        statuses = state.getStatusesForTarget(hero.id),
+                                        isCurrentTurn = isTurn,
+                                        modifier = Modifier.padding(bottom = 4.dp)
+                                    )
                                     Box(contentAlignment = Alignment.Center) {
-                                        HeroSprite(
-                                            heroName = hero.id,
+                                        CombatantSprite(
+                                            isMonster = false,
+                                            name = hero.id,
                                             elementColor = elementToColor(hero.element),
                                             isActive = !hero.isDefeated,
                                             isFlashing = heroFlash > 0f,
                                             flashColor = heroFlashColors[hero.id] ?: Color.Red,
                                             flashAlpha = heroFlash,
                                             animState = animState,
+                                            isTargeted = isTargeted,
+                                            isLowHp = hero.hpPercent < 0.3f && !hero.isDefeated,
+                                            isCurrentTurn = isTurn,
+                                            element = hero.element,
                                             modifier = Modifier.size(120.dp).graphicsLayer {
                                                 if (isTargeted) { scaleX = 1.15f; scaleY = 1.15f }
                                             }
                                         )
-                                        if (isTargeting) TargetCircle(color = Color.Green, isSelected = isTargeted)
                                     }
                                 }
                             }
@@ -331,31 +379,31 @@ fun BattleScreen(viewModel: GameViewModel) {
                 }
             }
 
-            // Action Panel
-            val currentHero = state.aliveHeroes.find { it.id == state.currentActorId }
+            // Action Tray at bottom
             if (currentHero != null && state.phase == PLAYER_TURN) {
                 key(state.currentActorId) {
-                    ActionPanel(
+                    ActionTray(
                         currentHero = currentHero,
-                        heroes = state.heroes,
-                        monsters = state.monsters,
                         skillCooldowns = state.skillCooldowns[currentHero.id] ?: emptyMap(),
-                        onSkill = { skill, targets -> 
-                            viewModel.executeSkill(currentHero.id, skill, targets.ifEmpty { null })
+                        availableCombos = availableCombos,
+                        isTargeting = isTargeting,
+                        onSkill = { skill ->
+                            viewModel.executeSkill(currentHero.id, skill)
                             selectedTargets.clear()
                         },
-                        onUltimate = { viewModel.executeUltimate(currentHero.id) },
-                        onComboById = { comboId -> viewModel.executeComboById(comboId) },
-                        isTargeting = isTargeting,
-                        selectedTargets = selectedTargets.toList(),
-                        onCancelTargeting = { viewModel.cancelAction(); selectedTargets.clear() },
-                        viewModel = viewModel,
+                        onComboById = { comboId ->
+                            viewModel.executeComboById(comboId)
+                        },
+                        onCancelTargeting = {
+                            viewModel.cancelAction()
+                            selectedTargets.clear()
+                        },
                         modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().zIndex(1f)
                     )
                 }
             }
 
-            // Full-screen dismiss overlay when a card is selected
+            // Full-screen dismiss overlay when targeting is not active but card is selected
             val selectedCardId by viewModel.selectedCardId.collectAsState()
             if (selectedCardId != null && !isTargeting) {
                 Box(
@@ -367,8 +415,16 @@ fun BattleScreen(viewModel: GameViewModel) {
             }
         }
 
-        BattleEffectOverlay(events = state.eventLog, heroPositions = heroPositions, monsterPosition = monsterPos, pool = pool, modifier = Modifier.fillMaxSize())
-        
+        // Battle Effects Layer
+        BattleEffectsLayer(
+            events = state.eventLog,
+            heroPositions = heroPositions,
+            monsterPosition = monsterPos,
+            pool = pool,
+            shakeHandle = shakeHandle,
+            modifier = Modifier.fillMaxSize()
+        )
+
         // Battle Start Text Overlay
         AnimatedVisibility(
             visible = battleTextVisible,
@@ -401,8 +457,10 @@ fun BattleScreen(viewModel: GameViewModel) {
             )
         }
 
+        // Black overlay for intro
         Box(modifier = Modifier.fillMaxSize().alpha(blackAlpha).background(Color.Black))
 
+        // Battle Log Dialog
         if (showFullLog) {
             BattleLogDialog(log = battleLog, onDismiss = { showFullLog = false })
         }
@@ -412,9 +470,17 @@ fun BattleScreen(viewModel: GameViewModel) {
 @Composable
 fun BattleLogDialog(log: List<String>, onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
-        Surface(modifier = Modifier.fillMaxWidth().heightIn(max = 500.dp), shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surface) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().heightIn(max = 500.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface
+        ) {
             Column(modifier = Modifier.padding(24.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text("Battle Log", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = "Close") }
                 }
@@ -448,7 +514,7 @@ fun TurnOrderList(state: BattleState) {
         items(state.turnOrder) { actor ->
             val isActive = actor.id == state.currentActorId
             val color = elementToColor(actor.element)
-            
+
             Text(
                 text = actor.name.uppercase(),
                 color = if (isActive) color else Color.White.copy(alpha = 0.6f),
@@ -460,52 +526,4 @@ fun TurnOrderList(state: BattleState) {
             )
         }
     }
-}
-
-@Composable
-fun TurnIndicator(
-    actorName: String?,
-    actorElement: Element?,
-    visible: Boolean,
-    modifier: Modifier = Modifier
-) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn() + slideInVertically { -it },
-        exit = fadeOut() + slideOutVertically { -it }
-    ) {
-        Surface(
-            modifier = modifier,
-            shape = RoundedCornerShape(12.dp),
-            color = if (actorElement != null) elementToColor(actorElement).copy(alpha = 0.7f)
-                    else Color.Black.copy(alpha = 0.6f)
-        ) {
-            Text(
-                text = "${actorName ?: "Unknown"}'s Turn",
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-        }
-    }
-}
-
-@Composable
-fun TargetCircle(color: Color, isSelected: Boolean) {
-    val infiniteTransition = rememberInfiniteTransition()
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 0.8f, targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(tween(800), RepeatMode.Reverse)
-    )
-    
-    Box(
-        modifier = Modifier
-            .size(80.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .border(if (isSelected) 4.dp else 2.dp, if (isSelected) color else color.copy(alpha = 0.5f), CircleShape)
-    )
 }

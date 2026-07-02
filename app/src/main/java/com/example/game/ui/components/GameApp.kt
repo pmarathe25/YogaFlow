@@ -39,7 +39,7 @@ fun GameApp(
                 onNavigateToBattle = { monsterId -> viewModel.startBattle(monsterId) },
                 onExitHub = onExitHub
             )
-            GameScreen.BATTLE -> BattleScreen(viewModel = viewModel)
+            GameScreen.BATTLE -> BattleScene(viewModel = viewModel)
             GameScreen.PARTY -> PartyScreen(viewModel = viewModel)
             GameScreen.EQUIPMENT -> PartyScreen(viewModel = viewModel)
             GameScreen.TROPHIES -> TrophyScreen(viewModel = viewModel)

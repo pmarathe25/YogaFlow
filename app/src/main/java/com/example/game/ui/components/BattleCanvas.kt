@@ -1,8 +1,5 @@
 package com.example.game.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -275,64 +272,17 @@ fun HeroSprite(
     flashAlpha: Float = 0f,
     animState: SpriteAnimState = SpriteAnimState()
 ) {
-    val smoothOffsetX by animateFloatAsState(
-        targetValue = animState.offsetX,
-        animationSpec = spring(dampingRatio = 0.55f, stiffness = 400f)
+    CombatantSprite(
+        modifier = modifier,
+        isMonster = false,
+        name = heroName,
+        elementColor = elementColor,
+        isActive = isActive,
+        isFlashing = isFlashing,
+        flashColor = flashColor,
+        flashAlpha = flashAlpha,
+        animState = animState
     )
-    val smoothOffsetY by animateFloatAsState(
-        targetValue = animState.offsetY,
-        animationSpec = spring(dampingRatio = 0.55f, stiffness = 400f)
-    )
-    val smoothScale by animateFloatAsState(
-        targetValue = animState.scale,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)
-    )
-    val smoothAlpha by animateFloatAsState(
-        targetValue = animState.alpha,
-        animationSpec = tween(400)
-    )
-    val smoothFlashAlpha by animateFloatAsState(
-        targetValue = if (isFlashing) flashAlpha else 0f,
-        animationSpec = tween(200)
-    )
-
-    val tint = if (!isActive) elementColor.copy(alpha = 0.4f) else elementColor
-
-    Canvas(modifier = modifier) {
-        val cx = size.width / 2f + smoothOffsetX
-        val cy = size.height * 0.6f + smoothOffsetY
-        val phase = heroName.hashCode() * 0.1f
-        val idleScalePulse = if (animState.state == SpriteState.IDLE) {
-            1f + sin(animState.stateTime * 1.2f + phase) * 0.02f
-        } else 1f
-        val s = size.minDimension * 0.2f * smoothScale * idleScalePulse
-
-        val idleBob = if (animState.state == SpriteState.IDLE) {
-            sin(animState.stateTime * 1.5f + phase) * 4f
-        } else 0f
-
-        val drawCx = cx
-        val drawCy = cy + idleBob
-
-        // Glow aura
-        if (isActive) {
-            drawCircle(
-                color = elementColor.copy(alpha = 0.12f + 0.05f * sin(animState.stateTime * 1.2f)),
-                radius = s * 1.6f,
-                center = Offset(drawCx, drawCy)
-            )
-        }
-
-        drawSilhouette(drawCx, drawCy, s, heroName, tint.copy(alpha = smoothAlpha))
-
-        if (smoothFlashAlpha > 0f) {
-            drawCircle(
-                color = flashColor.copy(alpha = smoothFlashAlpha * 0.5f),
-                radius = s * 1.2f,
-                center = Offset(drawCx, drawCy)
-            )
-        }
-    }
 }
 
 // ─── Animated Monster Sprite ───────────────────────────────────────────
@@ -349,73 +299,24 @@ fun MonsterSprite(
     bossPulse: Float = 0f,
     animState: SpriteAnimState = SpriteAnimState()
 ) {
-    val smoothOffsetX by animateFloatAsState(
-        targetValue = animState.offsetX,
-        animationSpec = spring(dampingRatio = 0.55f, stiffness = 400f)
+    CombatantSprite(
+        modifier = modifier,
+        isMonster = true,
+        name = monsterName,
+        elementColor = elementColor,
+        isActive = true,
+        isBoss = isBoss,
+        isFlashing = isFlashing,
+        flashColor = flashColor,
+        flashAlpha = flashAlpha,
+        bossPulse = bossPulse,
+        animState = animState
     )
-    val smoothOffsetY by animateFloatAsState(
-        targetValue = animState.offsetY,
-        animationSpec = spring(dampingRatio = 0.55f, stiffness = 400f)
-    )
-    val smoothScale by animateFloatAsState(
-        targetValue = animState.scale,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)
-    )
-    val smoothAlpha by animateFloatAsState(
-        targetValue = animState.alpha,
-        animationSpec = tween(400)
-    )
-    val smoothFlashAlpha by animateFloatAsState(
-        targetValue = if (isFlashing) flashAlpha else 0f,
-        animationSpec = tween(200)
-    )
-
-    Canvas(modifier = modifier) {
-        val cx = size.width / 2f + smoothOffsetX
-        val cy = size.height * 0.42f + smoothOffsetY
-        val phase = monsterName.hashCode() * 0.1f
-        val idleScalePulse = if (animState.state == SpriteState.IDLE) {
-            1f + sin(animState.stateTime * 1.2f + phase) * 0.02f
-        } else 1f
-        val s = size.minDimension * 0.3f * (if (isBoss) 1.3f else 1f) * smoothScale * idleScalePulse
-
-        val idleBob = if (animState.state == SpriteState.IDLE) {
-            sin(animState.stateTime * 1.5f + phase) * 3f
-        } else 0f
-
-        val drawCx = cx
-        val drawCy = cy + idleBob
-
-        // Boss aura
-        if (isBoss && bossPulse > 0f) {
-            val auraRadius = s * (1.5f + 0.3f * sin(bossPulse * PI.toFloat()))
-            drawCircle(
-                color = elementColor.copy(alpha = 0.15f),
-                radius = auraRadius,
-                center = Offset(drawCx, drawCy)
-            )
-            drawCircle(
-                color = Color(0xFFFF4444).copy(alpha = 0.08f + 0.05f * sin(bossPulse * 2f)),
-                radius = auraRadius * 1.4f,
-                center = Offset(drawCx, drawCy)
-            )
-        }
-
-        drawMonsterShape(drawCx, drawCy, s, monsterName, elementColor.copy(alpha = smoothAlpha))
-
-        if (smoothFlashAlpha > 0f) {
-            drawCircle(
-                color = flashColor.copy(alpha = smoothFlashAlpha * 0.5f),
-                radius = s * 1.1f,
-                center = Offset(drawCx, drawCy)
-            )
-        }
-    }
 }
 
 // ─── Silhouette Drawers (unchanged from original) ──────────────────────
 
-private fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, name: String, tint: Color) {
+internal fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, name: String, tint: Color) {
     val path = Path()
 
     when (name) {
@@ -597,7 +498,7 @@ private fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, name: Strin
     }
 }
 
-private fun DrawScope.drawMonsterShape(cx: Float, cy: Float, s: Float, name: String, tint: Color) {
+internal fun DrawScope.drawMonsterShape(cx: Float, cy: Float, s: Float, name: String, tint: Color) {
     val path = Path()
 
     when {
