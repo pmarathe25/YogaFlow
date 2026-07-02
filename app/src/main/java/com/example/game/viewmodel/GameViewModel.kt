@@ -57,6 +57,17 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _isProcessingTurn = MutableStateFlow(false)
     val isProcessingTurn: StateFlow<Boolean> = _isProcessingTurn.asStateFlow()
 
+    private val _selectedCardId = MutableStateFlow<String?>(null)
+    val selectedCardId: StateFlow<String?> = _selectedCardId.asStateFlow()
+
+    fun selectCard(cardId: String?) {
+        _selectedCardId.value = cardId
+    }
+
+    fun dismissSelectedCard() {
+        _selectedCardId.value = null
+    }
+
     init {
         loadGame()
         viewModelScope.launch { syncWithMainApp() }

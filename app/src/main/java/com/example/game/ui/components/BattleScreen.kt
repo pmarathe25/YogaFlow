@@ -332,9 +332,21 @@ fun BattleScreen(viewModel: GameViewModel) {
                         isTargeting = isTargeting,
                         selectedTargets = selectedTargets.toList(),
                         onCancelTargeting = { viewModel.cancelAction(); selectedTargets.clear() },
+                        viewModel = viewModel,
                         modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
                     )
                 }
+            }
+
+            // Full-screen dismiss overlay when a card is selected
+            val selectedCardId by viewModel.selectedCardId.collectAsState()
+            if (selectedCardId != null && !isTargeting) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.3f))
+                        .clickable { viewModel.dismissSelectedCard() }
+                )
             }
         }
 

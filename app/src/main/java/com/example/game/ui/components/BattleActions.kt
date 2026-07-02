@@ -38,6 +38,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.example.game.model.*
 import com.example.game.persistence.DataLoader
+import com.example.game.viewmodel.GameViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.*
 
 @Composable
@@ -52,10 +55,33 @@ fun ActionPanel(
     isTargeting: Boolean,
     selectedTargets: List<String>,
     onCancelTargeting: () -> Unit,
+    viewModel: GameViewModel,
     modifier: Modifier = Modifier
 ) {
-    var selectedCardId by remember { mutableStateOf<String?>(null) }
+    val selectedCardId by viewModel.selectedCardId.collectAsState()
     
+    data class AnimOrigin(val tx: Float, val ty: Float, val rot: Float)
+    var animOrigin by remember { mutableStateOf<AnimOrigin?>(null) }
+    var isAnimatingIn by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    var scrollOffset by remember { mutableStateOf(0f) }
+
+    val animTarget = if (isAnimatingIn) 1f else 0f
+    val entryProgress by animateFloatAsState(
+        targetValue = animTarget,
+        animationSpec = tween(300, easing = FastOutSlowInEasing)
+    )
+
+    fun dismissCard() {
+        if (selectedCardId != null) {
+            isAnimatingIn = false
+            scope.launch {
+                delay(300)
+                viewModel.dismissSelectedCard()
+            }
+        }
+    }
+
     // Available combos for current hero
     val availableCombos = remember(heroes) {
         val aliveHeroNames = heroes
@@ -67,7 +93,31 @@ fun ActionPanel(
             combo.requiredHeroes.all { name -> name in aliveHeroNames }
         }
     }
-    
+
+    LaunchedEffect(selectedCardId) {
+        if (selectedCardId != null) {
+            val allCards: List<Any> = buildList {
+                currentHero.skills.forEach { add(it) }
+                if (currentHero.ultimateGauge >= 100) add(currentHero.ultimate)
+                availableCombos.forEach { add(it) }
+            }
+            val index = allCards.indexOfFirst {
+                (it is Skill && it.id == selectedCardId) ||
+                (it is ComboSkill && it.id == selectedCardId)
+            }
+            if (index >= 0) {
+                val centerIndex = (allCards.size - 1) / 2f
+                val relativeIndex = index - centerIndex + (scrollOffset / 150f)
+                animOrigin = AnimOrigin(
+                    tx = relativeIndex * 85f,
+                    ty = (relativeIndex * relativeIndex * 10f),
+                    rot = relativeIndex * 12f
+                )
+            }
+            isAnimatingIn = true
+        }
+    }
+
     // Animation for laying the card down
     var isUsingSkill by remember { mutableStateOf(false) }
     val useAnimProgress = animateFloatAsState(
@@ -80,7 +130,7 @@ fun ActionPanel(
                 if (skill != null) {
                     onSkill(skill, emptyList()) // VM will handle if targeting is needed
                     if (skill.targetType != TargetType.SINGLE_ALLY && skill.targetType != TargetType.SELF && skill.targetType != TargetType.SINGLE_ENEMY) {
-                        selectedCardId = null
+                        viewModel.dismissSelectedCard()
                         isUsingSkill = false
                     }
                 }
@@ -94,7 +144,7 @@ fun ActionPanel(
             val skill = (currentHero.skills + currentHero.ultimate).find { it.id == selectedCardId }
             if (skill != null) {
                 onSkill(skill, selectedTargets)
-                selectedCardId = null
+                viewModel.dismissSelectedCard()
                 isUsingSkill = false
             }
         }
@@ -103,7 +153,7 @@ fun ActionPanel(
     // Clear selection if targeting was canceled from VM
     LaunchedEffect(isTargeting) {
         if (!isTargeting && isUsingSkill) {
-            selectedCardId = null
+            viewModel.dismissSelectedCard()
             isUsingSkill = false
         }
     }
@@ -149,7 +199,10 @@ fun ActionPanel(
                 skillCooldowns = skillCooldowns,
                 availableCombos = availableCombos,
                 selectedCardId = selectedCardId,
-                onCardSelect = { selectedCardId = if (selectedCardId == it) null else it },
+                scrollOffset = scrollOffset,
+                onScrollOffsetChange = { scrollOffset = it },
+                onDismiss = { dismissCard() },
+                onCardSelect = { if (selectedCardId == it) dismissCard() else viewModel.selectCard(it) },
                 onUse = { skill ->
                     isUsingSkill = true
                 },
@@ -170,7 +223,7 @@ fun ActionPanel(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(Color.Black.copy(alpha = 0.4f))
-                            .clickable { selectedCardId = null }
+                            .clickable { dismissCard() }
                     )
                 }
                 
@@ -185,18 +238,17 @@ fun ActionPanel(
                         baseCooldown = skill.cooldown,
                         cooldownRemaining = cooldown,
                         isSelected = true,
-                        onClick = { if (!isUsingSkill) selectedCardId = null },
+                        onClick = { if (!isUsingSkill) dismissCard() },
                         onUse = {
                             if (skill.ultimateGain == 0 && currentHero.ultimateGauge < 100) return@SkillCard
                             isUsingSkill = true
                         },
                         modifier = Modifier
                             .graphicsLayer {
-                                rotationZ = 0f // Upright
+                                val origin = animOrigin ?: AnimOrigin(0f, 0f, 0f)
+                                rotationZ = 0f
                                 if (isUsingSkill) {
-                                    // "Laying on table" animation
-                                    // Move from center to a bit lower and tilt flat
-                                    val targetTy = 180.dp.toPx() // Lower onto the table
+                                    val targetTy = 180.dp.toPx()
                                     val targetRotationX = 45f
                                     val targetScale = 0.8f
                                     
@@ -205,8 +257,12 @@ fun ActionPanel(
                                     scaleX = lerp(1.2f, targetScale, useAnimProgress.value)
                                     scaleY = lerp(1.2f, targetScale, useAnimProgress.value)
                                 } else {
-                                    scaleX = 1.2f
-                                    scaleY = 1.2f
+                                    val yBias = 60.dp.toPx()
+                                    translationX = lerp(origin.tx.dp.toPx(), 0f, entryProgress)
+                                    translationY = lerp(origin.ty.dp.toPx() + yBias, 0f, entryProgress)
+                                    rotationZ = lerp(origin.rot, 0f, entryProgress)
+                                    scaleX = lerp(1f, 1.2f, entryProgress)
+                                    scaleY = lerp(1f, 1.2f, entryProgress)
                                 }
                             }
                             .zIndex(20f)
@@ -230,7 +286,7 @@ fun ActionPanel(
                     TextButton(onClick = { 
                         onCancelTargeting()
                         isUsingSkill = false
-                        selectedCardId = null
+                        viewModel.dismissSelectedCard()
                     }) {
                         Text("CANCEL", color = Color.Red, fontWeight = FontWeight.ExtraBold)
                     }
@@ -253,7 +309,10 @@ fun HandOfCards(
     selectedCardId: String?,
     onCardSelect: (String) -> Unit,
     onUse: (Skill) -> Unit,
-    onComboSelect: (String) -> Unit
+    onComboSelect: (String) -> Unit,
+    onDismiss: () -> Unit,
+    scrollOffset: Float,
+    onScrollOffsetChange: (Float) -> Unit
 ) {
     val allCards: List<Any> = buildList {
         currentHero.skills.forEach { add(it) }
@@ -262,9 +321,8 @@ fun HandOfCards(
     }
     val cardCount = allCards.size
 
-    var scrollOffset by remember { mutableStateOf(0f) }
     val draggableState = rememberDraggableState { delta ->
-        scrollOffset += delta
+        onScrollOffsetChange(scrollOffset + delta)
     }
 
     Box(
@@ -305,7 +363,9 @@ fun HandOfCards(
                                 translationX = tx.dp.toPx()
                                 translationY = ty.dp.toPx()
                                 rotationZ = rotation
-                                alpha = if (selectedCardId != null && !isSelected) 0.3f else 1f
+                                alpha = if (isSelected && selectedCardId != null) 0f
+                                        else if (selectedCardId != null && !isSelected) 0.3f
+                                        else 1f
                                 scaleX = if (selectedCardId != null && !isSelected) 0.8f else 1f
                                 scaleY = if (selectedCardId != null && !isSelected) 0.8f else 1f
                             }
@@ -318,7 +378,7 @@ fun HandOfCards(
                         combo = item,
                         isSelected = isSelected,
                         onClick = {
-                            selectedCardId?.let { onCardSelect(it) }
+                            onDismiss()
                             onComboSelect(item.id)
                         },
                         modifier = Modifier
@@ -326,7 +386,9 @@ fun HandOfCards(
                                 translationX = tx.dp.toPx()
                                 translationY = ty.dp.toPx() - 20f
                                 rotationZ = rotation
-                                alpha = if (selectedCardId != null && !isSelected) 0.3f else 1f
+                                alpha = if (isSelected && selectedCardId != null) 0f
+                                        else if (selectedCardId != null && !isSelected) 0.3f
+                                        else 1f
                                 scaleX = if (selectedCardId != null && !isSelected) 0.8f else 1f
                                 scaleY = if (selectedCardId != null && !isSelected) 0.8f else 1f
                             }
