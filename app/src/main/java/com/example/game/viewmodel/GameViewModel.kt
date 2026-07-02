@@ -213,7 +213,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         if (state.phase != PLAYER_TURN || _isProcessingTurn.value) return
         val hero = state.heroes.find { it.id == heroId && !it.isDefeated } ?: return
 
-        val targets = customTargets ?: BattleEngine.resolveTargets(skill, heroId, state)
+        val targets = customTargets ?: turnManager.resolveTargets(skill, heroId, state)
 
         if (customTargets == null) {
             val autoTarget = when (skill.targetType) {

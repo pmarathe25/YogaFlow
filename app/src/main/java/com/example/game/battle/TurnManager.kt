@@ -56,6 +56,9 @@ class TurnManager(rng: RandomProvider = DefaultRandomProvider) {
         state: BattleState,
         monsterId: String
     ): TurnResult = reducer.reduce(state, BattleCommand.MonsterAct(monsterId))
+
+    fun resolveTargets(skill: Skill, casterId: String, state: BattleState): List<String> =
+        reducer.resolveTargets(skill, casterId, state)
 }
 
 private fun TurnResult.toAdvanceResult(): AdvanceTurnResult =

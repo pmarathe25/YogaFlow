@@ -4,6 +4,7 @@ import com.example.game.model.*
 import org.junit.Assert.*
 import org.junit.Test
 
+// TODO: Rewrite in Plan 18 to use BattleReducer directly
 class BattleEngineTest {
 
     private val dummySkill = Skill(
