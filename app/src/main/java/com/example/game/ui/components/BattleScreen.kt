@@ -93,6 +93,7 @@ fun BattleScreen(viewModel: GameViewModel) {
     // ─── Battle Start Animation ────────────────────────────────────
     var blackVisible by remember { mutableStateOf(true) }
     var monsterVisible by remember { mutableStateOf(false) }
+    var monsterNameVisible by remember { mutableStateOf(false) }
     var battleTextVisible by remember { mutableStateOf(false) }
     val heroVisibilities = remember { mutableStateMapOf<String, Boolean>() }
 
@@ -110,6 +111,11 @@ fun BattleScreen(viewModel: GameViewModel) {
         blackVisible = false
         delay(300)
         monsterVisible = true
+        delay(500)
+        monsterNameVisible = true
+        delay(1000)
+        monsterNameVisible = false
+        delay(200)
         state.aliveHeroes.forEachIndexed { _, hero ->
             delay(100)
             heroVisibilities[hero.heroId] = true
@@ -118,10 +124,12 @@ fun BattleScreen(viewModel: GameViewModel) {
         battleTextVisible = true
         delay(1500)
         battleTextVisible = false
+        viewModel.onIntroComplete()
     }
 
     // Turn Banner Logic
     LaunchedEffect(state.currentActorId) {
+        if (state.phase == BattlePhase.INTRO) return@LaunchedEffect
         val actor = state.turnOrder.find { it.id == state.currentActorId }
         if (actor != null) {
             currentTurnActorName = actor.name
@@ -375,6 +383,22 @@ fun BattleScreen(viewModel: GameViewModel) {
                 fontSize = 48.sp,
                 fontWeight = FontWeight.Black,
                 style = MaterialTheme.typography.displayLarge
+            )
+        }
+
+        // Monster Name Banner
+        AnimatedVisibility(
+            visible = monsterNameVisible,
+            enter = scaleIn(initialScale = 0.5f) + fadeIn(),
+            exit = scaleOut(targetScale = 1.5f) + fadeOut(),
+            modifier = Modifier.align(Alignment.TopCenter).padding(top = 80.dp)
+        ) {
+            Text(
+                text = monster?.englishName?.uppercase() ?: "???",
+                color = monsterColor,
+                fontSize = 36.sp,
+                fontWeight = FontWeight.Black,
+                style = MaterialTheme.typography.headlineLarge
             )
         }
 

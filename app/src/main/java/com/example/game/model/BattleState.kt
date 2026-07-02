@@ -5,7 +5,7 @@ import com.example.game.model.Element
 import com.example.game.model.ActionSpeed
 
 enum class BattlePhase {
-    START_OF_BATTLE,
+    INTRO, START_OF_BATTLE,
     PLAYER_TURN,
     ENEMY_TURN,
     VICTORY,

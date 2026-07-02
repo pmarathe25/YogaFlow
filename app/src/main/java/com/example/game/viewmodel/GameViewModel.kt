@@ -166,13 +166,32 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _currentMonster.value = monster
         val monsterInstance = monster.createInstance()
         val initialState = turnManager.startBattle(_party.value, listOf(monsterInstance))
-        _battleState.value = initialState
+        val firstActor = initialState.turnOrder.firstOrNull()
+        val introState = if (firstActor != null) {
+            initialState.copy(phase = BattlePhase.INTRO, currentActorId = firstActor.id)
+        } else {
+            initialState
+        }
+        _battleState.value = introState
         _battleLog.value = emptyList()
         _currentScreen.value = GameScreen.BATTLE
         addBattleLog("Battle begins! ${monster.englishName} appears!")
+    }
 
-        if (initialState.phase == ENEMY_TURN) {
-            scheduleMonsterTurn(initialState.currentActorId)
+    fun onIntroComplete() {
+        val state = _battleState.value ?: return
+        val firstActor = state.turnOrder.firstOrNull() ?: return
+        val newState = if (firstActor.isHero) {
+            state.copy(phase = PLAYER_TURN, currentActorId = firstActor.id)
+        } else {
+            state.copy(phase = ENEMY_TURN, currentActorId = firstActor.id)
+        }
+        _battleState.value = newState
+        if (!firstActor.isHero) {
+            viewModelScope.launch {
+                delay(1200)
+                executeMonsterTurnLoop(firstActor.id)
+            }
         }
     }
 

@@ -69,24 +69,41 @@ fun rememberSpriteAnimations(
         when (event) {
             is BattleEvent.SkillUsed -> {
                 val isAttack = event.skill.damageComponents.isNotEmpty() || event.skill.baseDamage > 0
-                heroAnimStates[event.heroId] = SpriteAnimState(
-                    state = SpriteState.ATTACKING, stateTime = 0f, offsetX = if (isAttack) 40f else 0f, offsetY = if (!isAttack) -20f else 0f
-                )
-                delay(200)
-                heroAnimStates[event.heroId] = SpriteAnimState(state = SpriteState.IDLE, stateTime = 0f)
-                
                 if (isAttack) {
-                    monsterAnimState.value = SpriteAnimState(state = SpriteState.HIT, stateTime = 0f, offsetX = -20f)
-                    delay(150)
+                    heroAnimStates[event.heroId] = SpriteAnimState(
+                        state = SpriteState.ATTACKING, stateTime = 0f,
+                        offsetX = 80f, offsetY = -10f
+                    )
+                    delay(300)
+                    heroAnimStates[event.heroId] = SpriteAnimState(state = SpriteState.IDLE, stateTime = 0f)
+                    
+                    monsterAnimState.value = SpriteAnimState(
+                        state = SpriteState.HIT, stateTime = 0f,
+                        offsetX = -25f, offsetY = 5f
+                    )
+                    delay(200)
                     monsterAnimState.value = SpriteAnimState(state = SpriteState.IDLE, stateTime = 0f)
+                } else {
+                    heroAnimStates[event.heroId] = SpriteAnimState(
+                        state = SpriteState.ATTACKING, stateTime = 0f,
+                        offsetX = 0f, offsetY = -30f
+                    )
+                    delay(300)
+                    heroAnimStates[event.heroId] = SpriteAnimState(state = SpriteState.IDLE, stateTime = 0f)
                 }
             }
             is BattleEvent.MonsterTurn -> {
-                monsterAnimState.value = SpriteAnimState(state = SpriteState.ATTACKING, stateTime = 0f, offsetY = 30f)
-                delay(200)
+                monsterAnimState.value = SpriteAnimState(
+                    state = SpriteState.ATTACKING, stateTime = 0f,
+                    offsetX = -80f, offsetY = 10f
+                )
+                delay(300)
                 monsterAnimState.value = SpriteAnimState(state = SpriteState.IDLE, stateTime = 0f)
                 event.targets.forEach { targetHeroId ->
-                    heroAnimStates[targetHeroId] = SpriteAnimState(state = SpriteState.HIT, stateTime = 0f, offsetY = 15f)
+                    heroAnimStates[targetHeroId] = SpriteAnimState(
+                        state = SpriteState.HIT, stateTime = 0f,
+                        offsetX = -15f, offsetY = 10f
+                    )
                 }
                 delay(200)
                 event.targets.forEach { targetHeroId ->
