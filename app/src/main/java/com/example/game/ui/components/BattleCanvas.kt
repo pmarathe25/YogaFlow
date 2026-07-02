@@ -40,7 +40,8 @@ fun BattleBackground(
     parallaxOffset: Float = 0f,
     bossFight: Boolean = false,
     monsterElement: Element = Element.NEUTRAL,
-    elementTint: Color = Color.Transparent
+    elementTint: Color = Color.Transparent,
+    biomeIndex: Int = 0
 ) {
     val skyBase = if (bossFight) Color(0xFF2A0055) else Color(0xFF1B263B) // BRIGHTER
     val groundBase = if (bossFight) Color(0xFF3D2B5E) else Color(0xFF243447) // BRIGHTER
@@ -67,6 +68,7 @@ fun BattleBackground(
         // Element-specific effects
         when (monsterElement) {
             Element.FIRE -> {
+                // Ember glow
                 drawRect(
                     Brush.verticalGradient(
                         0f to Color(0xFFFF6B35).copy(alpha = 0.25f),
@@ -74,14 +76,41 @@ fun BattleBackground(
                     ),
                     size = Size(w, h * 0.5f)
                 )
+                // Lava glow floor cracks
+                for (i in 0..6) {
+                    val cx = w * (0.1f + i * 0.15f) + sin(parallaxOffset + i * 1.3f) * 20f
+                    val cy = h * 0.62f + 12f * sin(i * 2.1f + parallaxOffset * 0.5f)
+                    drawCircle(Color(0xFFFF4500).copy(alpha = 0.2f + 0.1f * sin(parallaxOffset * 2f + i)), 8f + 4f * sin(parallaxOffset + i), Offset(cx, cy))
+                }
+                // Ember particles floating up
+                val emberAlpha = 0.3f + 0.2f * sin(parallaxOffset * 1.5f)
+                for (i in 0..8) {
+                    val ex = (w * 0.05f + i * w * 0.11f + parallaxOffset * 15f * (1f + i * 0.2f)) % w
+                    val ey = h * 0.6f - (i * 20f + parallaxOffset * 30f) % (h * 0.5f)
+                    drawCircle(Color(0xFFFF9800).copy(alpha = emberAlpha * 0.5f), 2f + sin(parallaxOffset + i) * 1f, Offset(ex, ey))
+                }
             }
             Element.WATER -> {
-                for (i in 0..3) {
+                // Rain effect
+                val rainAlpha = 0.2f + 0.1f * sin(parallaxOffset)
+                for (i in 0..12) {
+                    val rx = (w * 0.08f * i + parallaxOffset * 40f * (1f + i * 0.15f)) % w
+                    val ry = (i * 37f + parallaxOffset * 50f) % h
+                    drawLine(Color(0xFF42A5F5).copy(alpha = rainAlpha * (0.5f + i * 0.04f)),
+                        Offset(rx, ry), Offset(rx - 6f, ry + 18f), 2f)
+                }
+                // Rippling water bands
+                for (i in 0..4) {
                     val by = h * (0.15f + i * 0.12f) + sin(parallaxOffset + i * 2f) * 15f
                     drawRect(
                         Color(0xFF42A5F5).copy(alpha = 0.1f),
                         topLeft = Offset(0f, by),
                         size = Size(w, 6f)
+                    )
+                    drawRect(
+                        Color(0xFFB3E5FC).copy(alpha = 0.05f),
+                        topLeft = Offset(0f, by + 10f + 5f * sin(parallaxOffset * 1.5f + i)),
+                        size = Size(w, 3f)
                     )
                 }
             }
@@ -93,6 +122,23 @@ fun BattleBackground(
                     ),
                     size = Size(w, h * 0.5f)
                 )
+                // Rocky terrain details
+                for (i in 0..5) {
+                    val rx = w * (0.1f + i * 0.18f) + sin(parallaxOffset * 0.3f + i) * 12f
+                    val ry = h * 0.6f + 8f * sin(i * 1.7f)
+                    drawCircle(Color(0xFF6D4C41).copy(alpha = 0.2f), 6f + i * 2f, Offset(rx, ry))
+                    drawCircle(Color(0xFFA1887F).copy(alpha = 0.1f), 3f + i * 1f, Offset(rx + 5f, ry - 4f))
+                }
+                // Vine pillars
+                for (i in 0..3) {
+                    val vx = w * (0.15f + i * 0.28f)
+                    for (j in 0..4) {
+                        val theta = parallaxOffset * 0.5f + i + j * 0.3f
+                        val vxo = 5f * sin(theta)
+                        val vyo = j * 18f
+                        drawCircle(Color(0xFF4CAF50).copy(alpha = 0.15f), 4f, Offset(vx + vxo, h * 0.6f - vyo))
+                    }
+                }
             }
             Element.AIR -> {
                 val wispAlpha = 0.1f + 0.05f * sin(parallaxOffset * 0.5f)
@@ -105,9 +151,38 @@ fun BattleBackground(
                         size = Size(80f + i * 20f, 3f)
                     )
                 }
+                // Wind swirl particles
+                val swirlAlpha = 0.15f + 0.1f * sin(parallaxOffset * 0.7f)
+                for (i in 0..5) {
+                    val angle = parallaxOffset * 0.4f + i * 1.05f
+                    val sx = w * 0.5f + w * 0.35f * cos(angle)
+                    val sy = h * 0.3f + h * 0.2f * sin(angle * 0.7f)
+                    drawCircle(Color.White.copy(alpha = swirlAlpha), 3f + 2f * sin(angle), Offset(sx, sy))
+                }
+                // Cloud platform silhouettes
+                for (i in 0..2) {
+                    val cx = (w * 0.2f + i * w * 0.35f + parallaxOffset * 20f * (i + 1)) % (w + 100f) - 50f
+                    val cy = h * 0.48f + i * 15f + 10f * sin(parallaxOffset + i)
+                    drawCircle(Color.White.copy(alpha = 0.08f), 30f + i * 10f, Offset(cx, cy))
+                    drawCircle(Color.White.copy(alpha = 0.05f), 20f + i * 8f, Offset(cx + 25f, cy - 5f))
+                }
             }
             Element.DARK, Element.SHADOW -> {
                 drawRect(Color(0xFF4A148C).copy(alpha = 0.12f))
+                // Purple mist
+                for (i in 0..4) {
+                    val mx = (w * 0.1f + i * w * 0.2f + parallaxOffset * 10f * (i + 1)) % (w + 100f) - 50f
+                    val my = h * 0.5f + i * 20f + 15f * sin(parallaxOffset * 0.5f + i * 1.2f)
+                    drawCircle(Color(0xFF7B1FA2).copy(alpha = 0.08f + 0.04f * sin(parallaxOffset + i)), 30f + i * 8f, Offset(mx, my))
+                }
+                // Floating void orbs
+                for (i in 0..4) {
+                    val ox = (w * 0.1f + i * w * 0.22f + parallaxOffset * 8f * (i + 1)) % w
+                    val oy = h * 0.2f + 30f * sin(parallaxOffset * 0.6f + i * 1.5f)
+                    val orbAlpha = 0.25f + 0.15f * sin(parallaxOffset * 1.5f + i * 0.8f)
+                    drawCircle(Color(0xFFCE93D8).copy(alpha = orbAlpha), 4f + 2f * sin(parallaxOffset + i), Offset(ox, oy))
+                    drawCircle(Color(0xFFE1BEE7).copy(alpha = orbAlpha * 0.5f), 6f + 3f * sin(parallaxOffset + i), Offset(ox, oy), style = Stroke(width = 1f))
+                }
             }
             Element.LIGHT -> {
                 drawRect(
@@ -117,10 +192,51 @@ fun BattleBackground(
                         radius = w * 0.8f
                     )
                 )
+                // Radiant beams from above
+                for (i in 0..4) {
+                    val beamAngle = parallaxOffset * 0.3f + i * 0.8f
+                    val bx = w * 0.5f + w * 0.4f * sin(beamAngle)
+                    val bw = 20f + 10f * sin(beamAngle)
+                    val beamAlpha = 0.06f + 0.04f * sin(beamAngle * 1.5f)
+                    drawRect(
+                        Color(0xFFFFF176).copy(alpha = beamAlpha),
+                        topLeft = Offset(bx - bw / 2f, 0f),
+                        size = Size(bw, h * 0.6f)
+                    )
+                }
+                // Golden fog
+                for (i in 0..3) {
+                    val fogX = (parallaxOffset * 15f * (i + 1) + w * 0.1f * i) % (w + 100f) - 50f
+                    val fogY = h * 0.55f + i * 12f
+                    drawCircle(Color(0xFFFFF176).copy(alpha = 0.04f + 0.02f * sin(parallaxOffset + i)), 40f + i * 12f, Offset(fogX, fogY))
+                }
             }
             Element.ELECTRIC -> {
+                // Lightning bolts
                 if (sin(parallaxOffset * 21f) > 0.88f) {
                     drawRect(Color.White.copy(alpha = 0.25f))
+                    for (i in 0..2) {
+                        val lx = w * (0.2f + i * 0.3f)
+                        val path = Path().apply {
+                            moveTo(lx, 0f)
+                            var px = lx
+                            var py = 0f
+                            val seed = i * 7
+                            repeat(6) {
+                                px += 15f * sin(parallaxOffset * 5f + seed + it * 3f)
+                                py += (h * 0.1f)
+                                lineTo(px, py)
+                            }
+                        }
+                        drawPath(path, Color(0xFFFFEB3B).copy(alpha = 0.4f), style = Stroke(width = 3f))
+                    }
+                }
+                // Ambient electric crackle
+                val crackleAlpha = 0.1f + 0.05f * sin(parallaxOffset * 13f)
+                for (i in 0..3) {
+                    val ex = (w * 0.1f + i * w * 0.28f) % w
+                    val ey = h * 0.3f + 20f * sin(parallaxOffset * 2f + i * 2f)
+                    drawLine(Color(0xFFFFEB3B).copy(alpha = crackleAlpha), Offset(ex, ey), Offset(ex + 10f * sin(parallaxOffset * 5f + i), ey - 15f), 2f)
                 }
             }
             else -> {}

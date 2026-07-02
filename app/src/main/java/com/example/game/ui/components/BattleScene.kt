@@ -212,6 +212,7 @@ fun BattleScene(viewModel: GameViewModel) {
             bossFight = isBoss,
             monsterElement = monster?.element ?: Element.NEUTRAL,
             elementTint = monsterColor,
+            biomeIndex = state.turnsTaken % 4,
             modifier = Modifier.fillMaxSize()
         )
 

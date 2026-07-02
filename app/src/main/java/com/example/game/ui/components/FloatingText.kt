@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+enum class FloatingTextType { DAMAGE, HEAL, SHIELD_BREAK, SHIELD, OTHER }
+
 data class FloatingTextEntry(
     val id: Long,
     val text: String,
@@ -25,7 +27,8 @@ data class FloatingTextEntry(
     val startX: Float,
     val startY: Float,
     val startTime: Long = 0L,
-    val durationMs: Long = 800
+    val durationMs: Long = 800,
+    val type: FloatingTextType = FloatingTextType.DAMAGE
 )
 
 @Composable
@@ -63,14 +66,32 @@ private fun FloatingTextItem(
         targetValue = (1f - progress).coerceIn(0f, 1f),
         animationSpec = tween(16)
     )
-    val floatY = -progress * 40f
-    val popScale = (1.3f - progress * 0.3f).coerceIn(1f, 1.3f)
+    val floatY = -progress * (if (entry.type == FloatingTextType.HEAL) 30f else 40f)
+    val popScale = (1.4f - progress * 0.4f).coerceIn(1f, 1.4f)
+
+    val displayText = when (entry.type) {
+        FloatingTextType.HEAL -> "+${entry.text}"
+        FloatingTextType.SHIELD_BREAK -> "✕${entry.text}"
+        else -> entry.text
+    }
 
     Text(
-        text = entry.text,
+        text = displayText,
         color = entry.color.copy(alpha = alpha),
         fontSize = 18.sp,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.Black,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .offset { IntOffset(entry.startX.toInt() + 1, (entry.startY + floatY).toInt() + 1) }
+            .alpha(alpha)
+            .scale(popScale)
+    )
+    // Shadow text underneath
+    Text(
+        text = displayText,
+        color = Color.Black.copy(alpha = 0.4f * alpha),
+        fontSize = 18.sp,
+        fontWeight = FontWeight.Black,
         textAlign = TextAlign.Center,
         modifier = Modifier
             .offset { IntOffset(entry.startX.toInt(), (entry.startY + floatY).toInt()) }

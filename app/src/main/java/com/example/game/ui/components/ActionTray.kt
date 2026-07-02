@@ -20,6 +20,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -143,6 +144,15 @@ private fun ActionSkillCard(
     onClick: () -> Unit
 ) {
     val isOnCooldown = cooldownRemaining > 0
+    val elementColor = elementToColor(
+        skill.damageComponents.firstOrNull()?.element ?: element
+    )
+
+    val infiniteTransition = rememberInfiniteTransition()
+    val shimmerAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f, targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(tween(1500), RepeatMode.Reverse)
+    )
 
     Card(
         modifier = Modifier
@@ -151,58 +161,118 @@ private fun ActionSkillCard(
             .alpha(if (isOnCooldown) 0.6f else 1f)
             .clickable(enabled = !isOnCooldown) { onClick() },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = when {
-                isOnCooldown -> Color(0xFFE0E0E0)
-                skill.healScaling != null -> Color(0xFFF1F8E9)
-                skill.damageComponents.isNotEmpty() -> Color(0xFFFFF1F0)
-                else -> Color(0xFFE1F5FE)
-            }
-        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            // Element icon
-            Box(modifier = Modifier.size(40.dp)) {
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val iconColor = elementToColor(
-                        skill.damageComponents.firstOrNull()?.element ?: element
-                    )
-                    drawElementIcon(
-                        element = skill.damageComponents.firstOrNull()?.element ?: element,
-                        color = if (isOnCooldown) iconColor.copy(alpha = 0.4f) else iconColor,
-                        cx = size.width / 2f,
-                        cy = size.height / 2f,
-                        size = size.minDimension * 0.7f
-                    )
-                }
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Glossy gradient background
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val gradientBrush = Brush.verticalGradient(
+                    colors = if (isOnCooldown) {
+                        listOf(Color(0xFFE0E0E0), Color(0xFFBDBDBD))
+                    } else {
+                        listOf(
+                            Color.White,
+                            Color.White.copy(alpha = 0.7f),
+                            elementColor.copy(alpha = 0.05f),
+                            elementColor.copy(alpha = 0.12f)
+                        )
+                    }
+                )
+                drawRect(gradientBrush)
             }
 
-            // Skill name
-            Text(
-                text = skill.name,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.ExtraBold,
-                textAlign = TextAlign.Center,
-                color = if (isOnCooldown) Color.Gray else Color.Black,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+            // Element-colored accent border
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .border(
+                        width = 2.dp,
+                        color = if (isOnCooldown) Color.Gray.copy(alpha = 0.3f) else elementColor.copy(alpha = shimmerAlpha),
+                        shape = RoundedCornerShape(12.dp)
+                    )
             )
 
-            // Cooldown indicator
-            if (baseCooldown > 1) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Element icon
+                Box(modifier = Modifier.size(40.dp)) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        drawElementIcon(
+                            element = skill.damageComponents.firstOrNull()?.element ?: element,
+                            color = if (isOnCooldown) elementColor.copy(alpha = 0.4f) else elementColor,
+                            cx = size.width / 2f,
+                            cy = size.height / 2f,
+                            size = size.minDimension * 0.7f
+                        )
+                    }
+                }
+
+                // Skill name
                 Text(
-                    text = if (isOnCooldown) "$cooldownRemaining" else "$baseCooldown",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isOnCooldown) Color(0xFFE53935) else Color.DarkGray
+                    text = skill.name,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign = TextAlign.Center,
+                    color = if (isOnCooldown) Color.Gray else Color.Black,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
-            } else {
-                Spacer(Modifier.height(14.dp))
+
+                // Cooldown indicator with radial overlay
+                if (baseCooldown > 1) {
+                    Box(modifier = Modifier.size(26.dp), contentAlignment = Alignment.Center) {
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            val sweepAngle = (cooldownRemaining.toFloat() / baseCooldown) * 360f
+                            // Clock ticks
+                            for (j in 0..11) {
+                                val ta = j * 30f - 90f
+                                val tr = size.minDimension * 0.35f
+                                val tickLen = if (j % 3 == 0) 4f else 2f
+                                val rad = ta * kotlin.math.PI.toFloat() / 180f
+                                drawLine(
+                                    color = elementColor.copy(alpha = 0.3f),
+                                    start = Offset(
+                                        size.width / 2f + tr * kotlin.math.cos(rad),
+                                        size.height / 2f + tr * kotlin.math.sin(rad)
+                                    ),
+                                    end = Offset(
+                                        size.width / 2f + (tr + tickLen) * kotlin.math.cos(rad),
+                                        size.height / 2f + (tr + tickLen) * kotlin.math.sin(rad)
+                                    ),
+                                    strokeWidth = 1f
+                                )
+                            }
+                            // Cooldown arc overlay
+                            if (isOnCooldown) {
+                                drawArc(
+                                    color = Color(0xFFE53935).copy(alpha = 0.2f),
+                                    startAngle = -90f,
+                                    sweepAngle = -sweepAngle,
+                                    useCenter = true,
+                                    style = Fill
+                                )
+                                drawArc(
+                                    color = Color(0xFFE53935).copy(alpha = 0.5f),
+                                    startAngle = -90f,
+                                    sweepAngle = -sweepAngle,
+                                    useCenter = false,
+                                    style = Stroke(width = 2f)
+                                )
+                            }
+                        }
+                        Text(
+                            text = if (isOnCooldown) "$cooldownRemaining" else " ",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isOnCooldown) Color(0xFFE53935) else Color.Transparent
+                        )
+                    }
+                } else {
+                    Spacer(Modifier.height(26.dp))
+                }
             }
         }
     }
@@ -222,7 +292,7 @@ private fun ActionUltimateCard(
         animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Reverse)
     )
 
-    val borderColor = if (isReady) Color(0xFFFFD700) else Color.Gray
+    val elementColor = elementToColor(element)
 
     Card(
         modifier = Modifier
@@ -231,14 +301,23 @@ private fun ActionUltimateCard(
             .alpha(if (isReady) 1f else 0.6f)
             .clickable(enabled = isReady) { onClick() },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isReady) Color(0xFFFFF9C4) else Color(0xFFEEEEEE)
-        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Box(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Glossy gradient background
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val gradientBrush = Brush.verticalGradient(
+                    colors = if (isReady) {
+                        listOf(Color(0xFFFFF9C4), Color(0xFFFFF176), elementColor.copy(alpha = 0.1f))
+                    } else {
+                        listOf(Color(0xFFEEEEEE), Color(0xFFE0E0E0))
+                    }
+                )
+                drawRect(gradientBrush)
+            }
+
             Column(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().padding(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
@@ -252,7 +331,6 @@ private fun ActionUltimateCard(
                             cy = size.height / 2f,
                             size = size.minDimension * 0.7f
                         )
-                        // Star accent for ultimate
                         drawCircle(
                             color = Color.White.copy(alpha = if (isReady) 0.6f else 0.2f),
                             radius = size.minDimension * 0.3f,
@@ -272,21 +350,36 @@ private fun ActionUltimateCard(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                // Gauge indicator
-                Text(
-                    text = "$gauge/100",
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isReady) Color(0xFFFFD700) else Color.Gray
-                )
+                // Gauge mini progress bar
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(modifier = Modifier.fillMaxWidth(0.85f).height(6.dp)) {
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            drawRoundRect(Color.Black.copy(alpha = 0.15f))
+                            val barWidth = size.width * (gauge.toFloat() / 100f)
+                            if (barWidth > 0f) {
+                                drawRoundRect(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(Color(0xFFFFF176), Color(0xFFFFD700), Color(0xFFFF8F00))
+                                    ),
+                                    size = Size(barWidth, size.height)
+                                )
+                            }
+                        }
+                    }
+                    Text(
+                        text = "$gauge/100",
+                        fontSize = 7.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isReady) Color(0xFFFFD700) else Color.Gray
+                    )
+                }
             }
 
             // Golden glow border when ready
             if (isReady) {
-                val pulseScale by infiniteTransition.animateFloat(
-                    initialValue = 1f, targetValue = 1.04f,
-                    animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse)
-                )
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -305,7 +398,11 @@ private fun ActionComboCard(
     val infiniteTransition = rememberInfiniteTransition()
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.4f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Reverse)
+        animationSpec = infiniteRepeatable(tween(800), RepeatMode.Reverse)
+    )
+    val shimmerOffset by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(2000), RepeatMode.Reverse)
     )
 
     Card(
@@ -314,49 +411,79 @@ private fun ActionComboCard(
             .height(160.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF4A148C).copy(alpha = 0.3f)
-        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            // Combo icon
-            Canvas(modifier = Modifier.size(40.dp)) {
-                val c = Color(0xFFCE93D8)
-                val cx = size.width / 2f
-                val cy = size.height / 2f
-                val r = size.minDimension * 0.3f
-                // Purple star burst
-                for (i in 0..7) {
-                    val angle = i * kotlin.math.PI.toFloat() / 4f
-                    val ex = cx + r * kotlin.math.cos(angle)
-                    val ey = cy + r * kotlin.math.sin(angle)
-                    drawLine(c, Offset(cx, cy), Offset(ex, ey), strokeWidth = 3f)
-                }
-                drawCircle(c, r * 0.4f, Offset(cx, cy))
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Glossy gradient background
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val gradientBrush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF6A1B9A).copy(alpha = 0.2f),
+                        Color(0xFF4A148C).copy(alpha = 0.3f),
+                        Color(0xFF6A1B9A).copy(alpha = 0.15f)
+                    )
+                )
+                drawRect(gradientBrush)
             }
 
-            Text(
-                text = combo.name,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.ExtraBold,
-                textAlign = TextAlign.Center,
-                color = Color(0xFFCE93D8),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+            // Purple shimmer border
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .border(
+                        width = 2.dp,
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFFCE93D8).copy(alpha = glowAlpha),
+                                Color(0xFF9C27B0).copy(alpha = shimmerOffset * 0.5f + 0.3f),
+                                Color(0xFFCE93D8).copy(alpha = glowAlpha),
+                                Color(0xFFE1BEE7).copy(alpha = (1f - shimmerOffset) * 0.5f + 0.3f)
+                            ),
+                            start = Offset(0f, shimmerOffset * 200f),
+                            end = Offset(200f * (1f - shimmerOffset), 200f)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
             )
 
-            Text(
-                text = combo.requiredHeroes.joinToString(" + "),
-                fontSize = 8.sp,
-                color = Color(0xFFCE93D8).copy(alpha = 0.6f),
-                textAlign = TextAlign.Center,
-                maxLines = 1
-            )
+            Column(
+                modifier = Modifier.fillMaxSize().padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Combo icon
+                Canvas(modifier = Modifier.size(40.dp)) {
+                    val c = Color(0xFFCE93D8)
+                    val cx = size.width / 2f
+                    val cy = size.height / 2f
+                    val r = size.minDimension * 0.3f
+                    for (i in 0..7) {
+                        val angle = i * kotlin.math.PI.toFloat() / 4f
+                        val ex = cx + r * kotlin.math.cos(angle)
+                        val ey = cy + r * kotlin.math.sin(angle)
+                        drawLine(c, Offset(cx, cy), Offset(ex, ey), strokeWidth = 3f)
+                    }
+                    drawCircle(c, r * 0.4f, Offset(cx, cy))
+                }
+
+                Text(
+                    text = combo.name,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign = TextAlign.Center,
+                    color = Color(0xFFCE93D8),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Text(
+                    text = combo.requiredHeroes.joinToString(" + "),
+                    fontSize = 8.sp,
+                    color = Color(0xFFCE93D8).copy(alpha = 0.6f),
+                    textAlign = TextAlign.Center,
+                    maxLines = 1
+                )
+            }
         }
     }
 }

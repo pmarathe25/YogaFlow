@@ -23,7 +23,10 @@ data class Particle(
     var maxLifetime: Int,
     var gravity: Float = 0f,
     var drag: Float = 0.98f,
-    var blendMode: BlendMode = BlendMode.SrcOver
+    var blendMode: BlendMode = BlendMode.SrcOver,
+    var trailLength: Int = 0,
+    var prevX: Float = 0f,
+    var prevY: Float = 0f
 ) {
     val isDead: Boolean get() = lifetime <= 0 || alpha <= 0f
 }
@@ -69,6 +72,32 @@ class ParticlePool(capacity: Int) {
             p.gravity = config.gravity
             p.drag = 0.98f
             p.blendMode = config.blendMode
+            p.trailLength = 0
+            activeCount++
+        }
+    }
+
+    fun emitBurst(config: EmitterConfig, position: Offset, count: Int) {
+        val angleRad = config.spreadAngle * kotlin.math.PI.toFloat() / 180f
+        for (i in 0 until count) {
+            val p = getDeadOrNull() ?: return
+            val angle = Random.nextFloat() * angleRad - angleRad / 2f
+            val speed = Random.nextFloat() * config.force * 1.5f + 3f
+            p.x = position.x
+            p.y = position.y
+            p.vx = cos(angle) * speed
+            p.vy = sin(angle) * speed
+            p.color = config.colors.random()
+            p.alpha = 1f
+            p.size = Random.nextFloat() * (config.sizeRange.endInclusive - config.sizeRange.start) + config.sizeRange.start
+            p.maxLifetime = (config.lifetimeRange.last * 0.7f).toInt().coerceAtLeast(config.lifetimeRange.first)
+            p.lifetime = p.maxLifetime
+            p.gravity = config.gravity
+            p.drag = 0.96f
+            p.blendMode = config.blendMode
+            p.trailLength = if (config.force > 10f) 5 else 0
+            p.prevX = position.x
+            p.prevY = position.y
             activeCount++
         }
     }
@@ -77,6 +106,10 @@ class ParticlePool(capacity: Int) {
         var i = 0
         while (i < activeCount) {
             val p = particles[i]
+            if (p.trailLength > 0) {
+                p.prevX = p.x
+                p.prevY = p.y
+            }
             p.vx *= p.drag
             p.vy += p.gravity
             p.x += p.vx * 0.016f
@@ -95,6 +128,17 @@ class ParticlePool(capacity: Int) {
     fun draw(drawScope: DrawScope) {
         for (i in 0 until activeCount) {
             val p = particles[i]
+            // Draw trail
+            if (p.trailLength > 0) {
+                val trailAlpha = p.alpha * 0.3f
+                drawScope.drawLine(
+                    color = p.color.copy(alpha = trailAlpha),
+                    start = Offset(p.prevX, p.prevY),
+                    end = Offset(p.x, p.y),
+                    strokeWidth = p.size * 0.6f,
+                    blendMode = p.blendMode
+                )
+            }
             drawScope.drawCircle(
                 color = p.color.copy(alpha = p.alpha),
                 radius = p.size,

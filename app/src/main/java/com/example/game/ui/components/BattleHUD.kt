@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.game.model.*
@@ -178,28 +179,38 @@ fun FloatingHUD(
 
 @Composable
 fun StatusIcon(type: StatusEffectType, iconSize: Int = 12) {
-    val (icon, color) = when (type) {
-        StatusEffectType.ATK_UP -> "⚔️" to Color(0xFFEF5350)
-        StatusEffectType.ATK_DOWN -> "⚔️" to Color.Gray
-        StatusEffectType.SPD_UP -> "👟" to Color(0xFF66BB6A)
-        StatusEffectType.SPD_DOWN -> "👟" to Color.Gray
-        StatusEffectType.BURN -> "🔥" to Color(0xFFFFA500)
-        StatusEffectType.STUN -> "💫" to Color.Yellow
-        StatusEffectType.TAUNT -> "🎯" to Color.Red
-        StatusEffectType.CONFUSE -> "🌀" to Color.LightGray
-        StatusEffectType.DAMAGE_REDUCTION -> "🛡️" to Color.Blue
-        StatusEffectType.DEF_DOWN -> "🛡️" to Color.Gray
-        StatusEffectType.SHIELD -> "🛡️" to Color.Cyan
+    val (label, color) = when (type) {
+        StatusEffectType.ATK_UP -> "ATK↑" to Color(0xFFEF5350)
+        StatusEffectType.ATK_DOWN -> "ATK↓" to Color.Gray
+        StatusEffectType.SPD_UP -> "SPD↑" to Color(0xFF66BB6A)
+        StatusEffectType.SPD_DOWN -> "SPD↓" to Color.Gray
+        StatusEffectType.BURN -> "BRN" to Color(0xFFFFA500)
+        StatusEffectType.STUN -> "STN" to Color.Yellow
+        StatusEffectType.TAUNT -> "TNT" to Color.Red
+        StatusEffectType.CONFUSE -> "CNF" to Color.LightGray
+        StatusEffectType.DAMAGE_REDUCTION -> "DRD" to Color.Blue
+        StatusEffectType.DEF_DOWN -> "DEF↓" to Color.Gray
+        StatusEffectType.SHIELD -> "SHD" to Color.Cyan
     }
 
-    Surface(
-        shape = RoundedCornerShape(2.dp),
-        color = color.copy(alpha = 0.2f),
-        modifier = Modifier.size(iconSize.dp)
+    Box(
+        modifier = Modifier.size(iconSize.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(text = icon, fontSize = (iconSize - 2).sp)
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val cx = size.width / 2f
+            val cy = size.height / 2f
+            val r = size.minDimension / 2f - 1f
+            drawCircle(color = color.copy(alpha = 0.25f), radius = r, center = Offset(cx, cy))
+            drawCircle(color = color.copy(alpha = 0.5f), radius = r, center = Offset(cx, cy), style = Stroke(width = 1.5f))
         }
+        Text(
+            text = label,
+            color = color,
+            fontSize = (iconSize - 4).sp,
+            fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
