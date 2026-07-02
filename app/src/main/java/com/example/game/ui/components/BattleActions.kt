@@ -64,10 +64,7 @@ fun ActionPanel(
             .toSet()
         DataLoader.combos.filter { combo ->
             currentHero.name in combo.requiredHeroes &&
-            combo.requiredHeroes.all { name -> name in aliveHeroNames } &&
-            combo.requiredHeroes.mapNotNull { name ->
-                heroes.find { it.name == name }
-            }.all { it.ultimateGauge >= 100 }
+            combo.requiredHeroes.all { name -> name in aliveHeroNames }
         }
     }
     
@@ -260,9 +257,7 @@ fun HandOfCards(
 ) {
     val allCards: List<Any> = buildList {
         currentHero.skills.forEach { add(it) }
-        if (currentHero.ultimateGauge >= 100) {
-            add(currentHero.ultimate)
-        }
+        add(currentHero.ultimate)
         availableCombos.forEach { add(it) }
     }
     val cardCount = allCards.size

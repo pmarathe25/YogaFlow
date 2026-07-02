@@ -210,6 +210,7 @@ class TurnManager(private val rng: RandomProvider = DefaultRandomProvider) {
             state.heroes.find { it.heroId == id && !it.isDead }
         }
         if (participants.size != combo.requiredHeroes.size) return TurnResult(newState = state)
+        if (participants.any { it.ultimateGauge < 100 }) return TurnResult(newState = state)
 
         val casterId = participants.first().heroId
         val partnerIds = participants.drop(1).map { it.heroId }
