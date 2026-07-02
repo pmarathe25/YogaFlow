@@ -22,8 +22,8 @@ class TurnManager(rng: RandomProvider = DefaultRandomProvider) {
     private val reducer = BattleReducer(rng)
 
     fun startBattle(
-        heroes: List<HeroInstance>,
-        monsters: List<MonsterInstance>
+        heroes: List<CombatantState>,
+        monsters: List<CombatantState>
     ): BattleState = reducer.startBattle(heroes, monsters)
 
     fun advanceTurn(state: BattleState): AdvanceTurnResult =

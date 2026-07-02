@@ -1,6 +1,5 @@
 package com.example.game.ui.components
 
-import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -45,9 +44,9 @@ import kotlin.math.*
 
 @Composable
 fun ActionPanel(
-    currentHero: HeroInstance,
-    heroes: List<HeroInstance>,
-    monsters: List<MonsterInstance>,
+    currentHero: CombatantState,
+    heroes: List<CombatantState>,
+    monsters: List<CombatantState>,
     skillCooldowns: Map<String, Int>,
     onSkill: (Skill, List<String>) -> Unit,
     onUltimate: () -> Unit,
@@ -85,7 +84,7 @@ fun ActionPanel(
     // Available combos for current hero
     val availableCombos = remember(heroes) {
         val aliveHeroNames = heroes
-            .filter { it.currentHp > 0 && !it.isDead }
+            .filter { it.hp > 0 && !it.isDefeated }
             .map { it.name }
             .toSet()
         DataLoader.combos.filter { combo ->
@@ -98,7 +97,7 @@ fun ActionPanel(
         if (selectedCardId != null) {
             val allCards: List<Any> = buildList {
                 currentHero.skills.forEach { add(it) }
-                if (currentHero.ultimateGauge >= 100) add(currentHero.ultimate)
+                if (currentHero.gauge >= 100 && currentHero.ultimate != null) add(currentHero.ultimate!!)
                 availableCombos.forEach { add(it) }
             }
             val index = allCards.indexOfFirst {
@@ -126,7 +125,7 @@ fun ActionPanel(
         finishedListener = {
             if (it == 1f) {
                 // Animation finished, execute skill or wait for target
-                val skill = (currentHero.skills + currentHero.ultimate).find { it.id == selectedCardId }
+                val skill = (currentHero.skills + listOfNotNull(currentHero.ultimate)).find { it.id == selectedCardId }
                 if (skill != null) {
                     onSkill(skill, emptyList())
                     viewModel.dismissSelectedCard()
@@ -139,7 +138,7 @@ fun ActionPanel(
     // Execute skill if targeting is complete
     LaunchedEffect(selectedTargets.size) {
         if (selectedTargets.isNotEmpty() && selectedCardId != null && isUsingSkill) {
-            val skill = (currentHero.skills + currentHero.ultimate).find { it.id == selectedCardId }
+            val skill = (currentHero.skills + listOfNotNull(currentHero.ultimate)).find { it.id == selectedCardId }
             if (skill != null) {
                 onSkill(skill, selectedTargets)
                 viewModel.dismissSelectedCard()
@@ -212,9 +211,9 @@ fun ActionPanel(
 
         // 2. Skill Card Overlay (Selected or Using)
         if (selectedCardId != null) {
-            val skill = (currentHero.skills + currentHero.ultimate).find { it.id == selectedCardId }
+            val skill = (currentHero.skills + listOfNotNull(currentHero.ultimate)).find { it.id == selectedCardId }
             if (skill != null) {
-                val cooldown = skillCooldowns[skill.id] ?: 0 // ADDED
+                val cooldown = skillCooldowns[skill.id] ?: 0
                 // Background Dim (only if not yet "laid down")
                 if (!isUsingSkill) {
                     Box(
@@ -232,13 +231,13 @@ fun ActionPanel(
                     SkillCard(
                         skill = skill,
                         isUltimate = skill.ultimateGain == 0,
-                        ultReady = currentHero.ultimateGauge >= 100,
+                        ultReady = currentHero.gauge >= 100,
                         baseCooldown = skill.cooldown,
                         cooldownRemaining = cooldown,
                         isSelected = true,
                         onClick = { if (!isUsingSkill) dismissCard() },
                         onUse = {
-                            if (skill.ultimateGain == 0 && currentHero.ultimateGauge < 100) return@SkillCard
+                            if (skill.ultimateGain == 0 && currentHero.gauge < 100) return@SkillCard
                             isUsingSkill = true
                         },
                         modifier = Modifier
@@ -300,7 +299,7 @@ private fun lerp(start: Float, stop: Float, fraction: Float): Float =
 
 @Composable
 fun HandOfCards(
-    currentHero: HeroInstance,
+    currentHero: CombatantState,
     skillCooldowns: Map<String, Int>,
     availableCombos: List<ComboSkill>,
     selectedCardId: String?,
@@ -313,7 +312,7 @@ fun HandOfCards(
 ) {
     val allCards: List<Any> = buildList {
         currentHero.skills.forEach { add(it) }
-        add(currentHero.ultimate)
+        if (currentHero.ultimate != null) add(currentHero.ultimate!!)
         availableCombos.forEach { add(it) }
     }
     val cardCount = allCards.size
@@ -342,7 +341,7 @@ fun HandOfCards(
             when (item) {
                 is Skill -> {
                     val isUlt = item.ultimateGain == 0
-                    val ultReady = currentHero.ultimateGauge >= 100
+                    val ultReady = currentHero.gauge >= 100
                     val cooldown = skillCooldowns[item.id] ?: 0
                     val isSelected = selectedCardId == item.id
 
@@ -682,5 +681,4 @@ fun getSkillIcon(skill: Skill): String {
         else -> "\u2694\uFE0F"
     }
 }
-
 

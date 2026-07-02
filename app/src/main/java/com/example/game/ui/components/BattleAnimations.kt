@@ -125,9 +125,9 @@ fun rememberSpriteAnimations(
             delay(16)
             val dt = 0.016f
             state.heroes.forEach { hero ->
-                val s = heroAnimStates[hero.heroId] ?: SpriteAnimState()
+                val s = heroAnimStates[hero.id] ?: SpriteAnimState()
                 if (s.state == SpriteState.IDLE) {
-                    heroAnimStates[hero.heroId] = s.copy(stateTime = s.stateTime + dt)
+                    heroAnimStates[hero.id] = s.copy(stateTime = s.stateTime + dt)
                 }
             }
             if (monsterAnimState.value.state == SpriteState.IDLE) {

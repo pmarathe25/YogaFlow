@@ -117,7 +117,7 @@ fun BattleScreen(viewModel: GameViewModel) {
         delay(200)
         state.aliveHeroes.forEachIndexed { _, hero ->
             delay(100)
-            heroVisibilities[hero.heroId] = true
+            heroVisibilities[hero.id] = true
         }
         delay(50)
         battleTextVisible = true
@@ -230,14 +230,14 @@ fun BattleScreen(viewModel: GameViewModel) {
                     },
                     contentAlignment = Alignment.Center
                 ) {
-                    if (monster != null && !monster.isDead) {
-                        val isTargeted = selectedTargets.contains(monster.monsterId)
+                    if (monster != null && !monster.isDefeated) {
+                        val isTargeted = selectedTargets.contains(monster.id)
                         val canTarget = state.pendingSkill?.let { it.targetType == TargetType.SINGLE_ENEMY || it.targetType == TargetType.ALL_ENEMIES || it.targetType == TargetType.ALL } ?: false
                         
                         val monsterClickable = if (isTargeting && canTarget) {
                             Modifier.clickable {
-                                if (selectedTargets.contains(monster.monsterId)) selectedTargets.remove(monster.monsterId)
-                                else selectedTargets.add(monster.monsterId)
+                                if (selectedTargets.contains(monster.id)) selectedTargets.remove(monster.id)
+                                else selectedTargets.add(monster.id)
                             }
                         } else Modifier
 
@@ -246,9 +246,9 @@ fun BattleScreen(viewModel: GameViewModel) {
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.scale(monsterAppearScale)) {
-                                MonsterHUD(monster = monster, statuses = state.getStatusesForTarget(monster.monsterId), modifier = Modifier.padding(bottom = 8.dp))
+                                MonsterHUD(monster = monster, statuses = state.getStatusesForTarget(monster.id), modifier = Modifier.padding(bottom = 8.dp))
                                 MonsterSprite(
-                                    monsterName = monster.monsterId,
+                                    monsterName = monster.id,
                                     elementColor = monsterColor,
                                     isBoss = isBoss,
                                     isFlashing = monsterFlashAlpha > 0f,
@@ -273,32 +273,32 @@ fun BattleScreen(viewModel: GameViewModel) {
                         val hCount = state.aliveHeroes.size.coerceAtLeast(1)
                         heroPositions = state.aliveHeroes.mapIndexed { idx, hero ->
                             val hw = coords.size.width / hCount
-                            hero.heroId to Offset(basePos.x + hw * idx + hw / 2f, basePos.y + coords.size.height * 0.5f)
+                            hero.id to Offset(basePos.x + hw * idx + hw / 2f, basePos.y + coords.size.height * 0.5f)
                         }.toMap()
                     },
                     contentAlignment = Alignment.BottomCenter
                 ) {
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
                         state.aliveHeroes.forEach { hero ->
-                            val isTurn = state.currentActorId == hero.heroId
-                            val animState = heroAnimStates[hero.heroId] ?: SpriteAnimState()
-                            val heroFlash = heroFlashAlphas[hero.heroId] ?: 0f
-                            val isTargeted = selectedTargets.contains(hero.heroId)
+                            val isTurn = state.currentActorId == hero.id
+                            val animState = heroAnimStates[hero.id] ?: SpriteAnimState()
+                            val heroFlash = heroFlashAlphas[hero.id] ?: 0f
+                            val isTargeted = selectedTargets.contains(hero.id)
                             val canTarget = state.pendingSkill?.let { skill ->
                                 when (skill.targetType) {
-                                    TargetType.SINGLE_ALLY -> hero.heroId != state.currentActorId
+                                    TargetType.SINGLE_ALLY -> hero.id != state.currentActorId
                                     TargetType.ALL_ALLIES, TargetType.ALL -> true
-                                    TargetType.SELF -> hero.heroId == state.currentActorId
+                                    TargetType.SELF -> hero.id == state.currentActorId
                                     else -> false
                                 }
                             } ?: false
-                            val heroEntry by animateFloatAsState(targetValue = if (heroVisibilities[hero.heroId] == true) 0f else 150f, animationSpec = spring(0.7f, 150f))
+                            val heroEntry by animateFloatAsState(targetValue = if (heroVisibilities[hero.id] == true) 0f else 150f, animationSpec = spring(0.7f, 150f))
                             val density = LocalDensity.current
                             
                             val heroClickable = if (isTargeting && canTarget) {
                                 Modifier.clickable {
-                                    if (selectedTargets.contains(hero.heroId)) selectedTargets.remove(hero.heroId)
-                                    else selectedTargets.add(hero.heroId)
+                                    if (selectedTargets.contains(hero.id)) selectedTargets.remove(hero.id)
+                                    else selectedTargets.add(hero.id)
                                 }
                             } else Modifier
 
@@ -308,14 +308,14 @@ fun BattleScreen(viewModel: GameViewModel) {
                                     modifier = Modifier.graphicsLayer { translationY = with(density) { heroEntry.dp.toPx() } }
                                         .then(heroClickable)
                                 ) {
-                                    HeroHUD(hero = hero, statuses = state.getStatusesForTarget(hero.heroId), isCurrentTurn = isTurn, modifier = Modifier.padding(bottom = 4.dp))
+                                    HeroHUD(hero = hero, statuses = state.getStatusesForTarget(hero.id), isCurrentTurn = isTurn, modifier = Modifier.padding(bottom = 4.dp))
                                     Box(contentAlignment = Alignment.Center) {
                                         HeroSprite(
-                                            heroName = hero.heroId,
+                                            heroName = hero.id,
                                             elementColor = elementToColor(hero.element),
-                                            isActive = !hero.isDead,
+                                            isActive = !hero.isDefeated,
                                             isFlashing = heroFlash > 0f,
-                                            flashColor = heroFlashColors[hero.heroId] ?: Color.Red,
+                                            flashColor = heroFlashColors[hero.id] ?: Color.Red,
                                             flashAlpha = heroFlash,
                                             animState = animState,
                                             modifier = Modifier.size(120.dp).graphicsLayer {
@@ -332,19 +332,19 @@ fun BattleScreen(viewModel: GameViewModel) {
             }
 
             // Action Panel
-            val currentHero = state.aliveHeroes.find { it.heroId == state.currentActorId }
+            val currentHero = state.aliveHeroes.find { it.id == state.currentActorId }
             if (currentHero != null && state.phase == PLAYER_TURN) {
                 key(state.currentActorId) {
                     ActionPanel(
                         currentHero = currentHero,
                         heroes = state.heroes,
                         monsters = state.monsters,
-                        skillCooldowns = state.skillCooldowns[currentHero.heroId] ?: emptyMap(),
+                        skillCooldowns = state.skillCooldowns[currentHero.id] ?: emptyMap(),
                         onSkill = { skill, targets -> 
-                            viewModel.executeSkill(currentHero.heroId, skill, targets.ifEmpty { null })
+                            viewModel.executeSkill(currentHero.id, skill, targets.ifEmpty { null })
                             selectedTargets.clear()
                         },
-                        onUltimate = { viewModel.executeUltimate(currentHero.heroId) },
+                        onUltimate = { viewModel.executeUltimate(currentHero.id) },
                         onComboById = { comboId -> viewModel.executeComboById(comboId) },
                         isTargeting = isTargeting,
                         selectedTargets = selectedTargets.toList(),

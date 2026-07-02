@@ -21,22 +21,6 @@ enum class CombatSide {
     HERO, MONSTER
 }
 
-data class GameProgress(
-    val version: Int = 2,
-    val party: List<HeroSaveData> = emptyList(),
-    val unlockedHeroIds: Set<String> = emptySet(),
-    val defeatedEncounterIds: Set<String> = emptySet(),
-    val inventory: List<String> = emptyList(),
-    val sparks: Int = 0,
-    val yogaLevel: Int = 1,
-    val totalYogaXp: Int = 0,
-    val totalGoldSpent: Int = 0,
-    val lastSyncedMainSparks: Int = 0,
-    val totalBattlesWon: Int = 0,
-    val earnedTrophyIds: Set<String> = emptySet(),
-    val lastPlayedTimestamp: Long = 0L
-)
-
 data class CombatantState(
     val id: String,
     val side: CombatSide,
@@ -50,8 +34,23 @@ data class CombatantState(
     val gauge: Int = 0,
     val cooldowns: Map<String, Int> = emptyMap(),
     val statuses: List<BattleStatus> = emptyList(),
-    val isDefeated: Boolean = false
-)
+    val isDefeated: Boolean = false,
+    val level: Int = 1,
+    val skills: List<Skill> = emptyList(),
+    val ultimate: Skill? = null,
+    val englishName: String? = null,
+    val specialAttack: Skill? = null,
+    val isBoss: Boolean = false,
+    val phases: List<MonsterPhase> = emptyList(),
+    val activePhase: Int = -1,
+    val aiBehavior: AIBehavior? = null,
+    val extraActionsThisRound: Int = 0,
+    val turnsSinceLastSpecial: Int = 0
+) {
+    val isAlive: Boolean get() = !isDefeated
+    val isDead: Boolean get() = isDefeated
+    val hpPercent: Float get() = if (maxHp > 0) hp.toFloat() / maxHp else 0f
+}
 
 data class ActionOutcome(
     val action: TurnAction,
@@ -127,8 +126,8 @@ sealed class BattleEvent {
 }
 
 data class BattleState(
-    val heroes: List<HeroInstance>,
-    val monsters: List<MonsterInstance>,
+    val heroes: List<CombatantState>,
+    val monsters: List<CombatantState>,
     val turnOrder: List<BattleActor> = emptyList(),
     val currentTurnIndex: Int = 0,
     val currentActorId: String = "",
@@ -143,8 +142,8 @@ data class BattleState(
     val showTargetSelection: Boolean = false,
     val skillCooldowns: Map<String, Map<String, Int>> = emptyMap()
 ) {
-    val aliveHeroes: List<HeroInstance> get() = heroes.filter { !it.isDead }
-    val aliveMonsters: List<MonsterInstance> get() = monsters.filter { !it.isDead }
+    val aliveHeroes: List<CombatantState> get() = heroes.filter { !it.isDefeated }
+    val aliveMonsters: List<CombatantState> get() = monsters.filter { !it.isDefeated }
     val isBattleOver: Boolean get() = phase == BattlePhase.VICTORY || phase == BattlePhase.DEFEAT
 
     fun getActor(id: String): BattleActor? = turnOrder.find { it.id == id }
@@ -166,12 +165,12 @@ data class BattleState(
         return copy(round = round + 1, statusEffects = newStatusEffects)
     }
 
-    fun withUpdatedHero(heroId: String, update: (HeroInstance) -> HeroInstance): BattleState {
-        return copy(heroes = heroes.map { if (it.heroId == heroId) update(it) else it })
+    fun withUpdatedHero(heroId: String, update: (CombatantState) -> CombatantState): BattleState {
+        return copy(heroes = heroes.map { if (it.id == heroId) update(it) else it })
     }
 
-    fun withUpdatedMonster(monsterId: String, update: (MonsterInstance) -> MonsterInstance): BattleState {
-        return copy(monsters = monsters.map { if (it.monsterId == monsterId) update(it) else it })
+    fun withUpdatedMonster(monsterId: String, update: (CombatantState) -> CombatantState): BattleState {
+        return copy(monsters = monsters.map { if (it.id == monsterId) update(it) else it })
     }
 }
 
@@ -181,38 +180,4 @@ data class BattleActor(
     val speed: Int,
     val isHero: Boolean,
     val element: Element = Element.NEUTRAL
-)
-
-data class BattleSaveData(
-    val heroData: List<HeroSaveData>,
-    val monsterData: List<MonsterSaveData>,
-    val turnOrderIds: List<String>,
-    val currentTurnIndex: Int,
-    val round: Int,
-    val turnsTaken: Int,
-    val statusData: Map<String, List<StatusSaveData>>
-)
-
-data class HeroSaveData(
-    val heroId: String,
-    val level: Int,
-    val currentHp: Int,
-    val shield: Int,
-    val ultimateGauge: Int,
-    val isDead: Boolean,
-    val equippedItemIds: List<String>
-)
-
-data class MonsterSaveData(
-    val monsterId: String,
-    val currentHp: Int,
-    val shield: Int,
-    val activePhase: Int,
-    val isDead: Boolean
-)
-
-data class StatusSaveData(
-    val type: StatusEffectType,
-    val remainingTurns: Int,
-    val value: Float
 )

@@ -27,39 +27,20 @@ enum class HeroRole {
     HEALER, TANK, DPS, BUFFER, MAGE
 }
 
-data class HeroInstance(
-    val heroId: String,
-    val name: String,
-    var level: Int,
-    val maxHp: Int,
-    var currentHp: Int,
-    val atk: Int,
-    val spd: Int,
-    val element: Element,
-    val skills: List<Skill>,
-    val ultimate: Skill,
-    var shield: Int = 0,
-    var ultimateGauge: Int = 0,
-    val equippedItems: MutableList<String> = mutableListOf(),
-    var isDead: Boolean = false
-) {
-    val hpPercent: Float get() = if (maxHp > 0) currentHp.toFloat() / maxHp else 0f
-}
-
-fun Hero.createInstance(level: Int, equippedItems: List<String> = emptyList()): HeroInstance {
-    val mult = 1f + (level - 1) * 0.15f
+fun Hero.toCombatantState(partyMember: PartyMemberData): CombatantState {
+    val mult = 1f + (partyMember.level - 1) * 0.15f
     val hp = (baseHp * mult).toInt()
-    return HeroInstance(
-        heroId = id,
+    return CombatantState(
+        id = id,
+        side = CombatSide.HERO,
         name = name.split(" ").first(),
-        level = level,
-        maxHp = hp,
-        currentHp = hp,
-        atk = (baseAtk * mult).toInt(),
-        spd = (baseSpd * mult).toInt(),
         element = element,
+        maxHp = hp,
+        hp = hp,
+        attack = (baseAtk * mult).toInt(),
+        speed = (baseSpd * mult).toInt(),
+        level = partyMember.level,
         skills = skills,
-        ultimate = ultimate,
-        equippedItems = equippedItems.toMutableList()
+        ultimate = ultimate
     )
 }

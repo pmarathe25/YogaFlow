@@ -51,41 +51,20 @@ enum class TargetStrategy {
     RANDOM, LOWEST_HP, HIGHEST_HP, MOST_BUFFS, RANDOM_HERO
 }
 
-data class MonsterInstance(
-    val monsterId: String,
-    val name: String,
-    val englishName: String,
-    val element: Element,
-    val maxHp: Int,
-    var currentHp: Int,
-    val atk: Int,
-    val spd: Int,
-    val specialAttack: Skill,
-    val aiBehavior: AIBehavior,
-    val phases: List<MonsterPhase>,
-    var shield: Int = 0,
-    var activePhase: Int = -1,
-    var isBoss: Boolean = false,
-    var isDead: Boolean = false,
-    var turnsSinceLastSpecial: Int = 0,
-    var extraActionsThisRound: Int = 0
-) {
-    val hpPercent: Float get() = if (maxHp > 0) currentHp.toFloat() / maxHp else 0f
-}
-
-fun Monster.createInstance(): MonsterInstance {
-    return MonsterInstance(
-        monsterId = id,
-        name = name,
-        englishName = englishName,
-        element = element,
-        maxHp = baseHp,
-        currentHp = baseHp,
-        atk = baseAtk,
-        spd = baseSpd,
-        specialAttack = specialAttack,
-        aiBehavior = aiBehavior,
-        phases = phases,
-        isBoss = isBoss
-    )
-}
+fun Monster.toCombatantState(): CombatantState = CombatantState(
+    id = id,
+    side = CombatSide.MONSTER,
+    name = name,
+    element = element,
+    maxHp = baseHp,
+    hp = baseHp,
+    attack = baseAtk,
+    speed = baseSpd,
+    level = 1,
+    englishName = englishName,
+    specialAttack = specialAttack,
+    aiBehavior = aiBehavior,
+    phases = phases,
+    isBoss = isBoss,
+    activePhase = -1
+)

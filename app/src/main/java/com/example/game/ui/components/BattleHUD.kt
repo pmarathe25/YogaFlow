@@ -219,11 +219,11 @@ fun elementToColor(element: Element): Color {
 }
 
 @Composable
-fun HeroHUD(hero: HeroInstance, statuses: List<BattleStatus>, isCurrentTurn: Boolean, modifier: Modifier = Modifier) {
-    FloatingHUD(hero.name, hero.currentHp, hero.maxHp, modifier, hero.shield, hero.ultimateGauge, hero.element, statuses, isCurrentTurn, width = 60)
+fun HeroHUD(hero: CombatantState, statuses: List<BattleStatus>, isCurrentTurn: Boolean, modifier: Modifier = Modifier) {
+    FloatingHUD(hero.name, hero.hp, hero.maxHp, modifier, hero.shield, hero.gauge, hero.element, statuses, isCurrentTurn, width = 60)
 }
 
 @Composable
-fun MonsterHUD(monster: MonsterInstance, statuses: List<BattleStatus>, modifier: Modifier = Modifier) {
-    FloatingHUD(monster.name, monster.currentHp, monster.maxHp, modifier, monster.shield, null, monster.element, statuses, false, width = 100, hpBarColor = Color.Red)
+fun MonsterHUD(monster: CombatantState, statuses: List<BattleStatus>, modifier: Modifier = Modifier) {
+    FloatingHUD(monster.name, monster.hp, monster.maxHp, modifier, monster.shield, null, monster.element, statuses, false, width = 100, hpBarColor = Color.Red)
 }

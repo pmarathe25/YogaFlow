@@ -57,7 +57,7 @@ fun PartyScreen(viewModel: GameViewModel) {
             
             Spacer(Modifier.height(8.dp))
             Text(
-                "Yoga Level: ${saveData.yogaLevel} | Gold: ${(saveData.totalYogaXp / 10) - saveData.totalGoldSpent} 🪙",
+                "Yoga Level: ${saveData.yogaLevel} | Gold: ${(saveData.totalYogaXp / 10) - saveData.totalGoldSpent} \uD83E\uDE99",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 modifier = Modifier.padding(start = 12.dp)
@@ -66,12 +66,12 @@ fun PartyScreen(viewModel: GameViewModel) {
 
             LazyColumn(modifier = Modifier.weight(1f)) {
                 items(allHeroes) { heroDef ->
-                    val instance = party.find { it.heroId == heroDef.id }
+                    val partyMember = party.find { it.heroId == heroDef.id }
                     val isUnlocked = heroDef.unlockYogaLevel <= saveData.yogaLevel
                     
                     HeroListItem(
                         hero = heroDef,
-                        instance = instance,
+                        partyMember = partyMember,
                         isUnlocked = isUnlocked,
                         onClick = { if (isUnlocked) detailHeroId = heroDef.id }
                     )
@@ -82,11 +82,11 @@ fun PartyScreen(viewModel: GameViewModel) {
         // Hero Details Modal
         detailHeroId?.let { id ->
             val heroDef = allHeroes.find { it.id == id }
-            val instance = party.find { it.heroId == id }
-            if (heroDef != null && instance != null) {
+            val partyMember = party.find { it.heroId == id }
+            if (heroDef != null && partyMember != null) {
                 HeroDetailsDialog(
                     hero = heroDef,
-                    instance = instance,
+                    partyMember = partyMember,
                     saveData = saveData,
                     viewModel = viewModel,
                     onDismiss = { detailHeroId = null }
@@ -96,8 +96,19 @@ fun PartyScreen(viewModel: GameViewModel) {
     }
 }
 
+private data class HeroStats(val maxHp: Int, val atk: Int, val spd: Int)
+
+private fun computeHeroStats(hero: Hero, level: Int): HeroStats {
+    val mult = 1f + (level - 1) * 0.15f
+    return HeroStats(
+        maxHp = (hero.baseHp * mult).toInt(),
+        atk = (hero.baseAtk * mult).toInt(),
+        spd = (hero.baseSpd * mult).toInt()
+    )
+}
+
 @Composable
-private fun HeroListItem(hero: Hero, instance: HeroInstance?, isUnlocked: Boolean, onClick: () -> Unit) {
+private fun HeroListItem(hero: Hero, partyMember: PartyMemberData?, isUnlocked: Boolean, onClick: () -> Unit) {
     val heroColor = if (isUnlocked) elementToColor(hero.element) else Color.Gray
 
     GlassCard(
@@ -133,10 +144,11 @@ private fun HeroListItem(hero: Hero, instance: HeroInstance?, isUnlocked: Boolea
                     color = heroColor,
                     fontWeight = FontWeight.Bold
                 )
-                if (isUnlocked && instance != null) {
+                if (isUnlocked && partyMember != null) {
+                    val stats = computeHeroStats(hero, partyMember.level)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Lv.${instance.level}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-                        Text("HP ${instance.maxHp}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        Text("Lv.${partyMember.level}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        Text("HP ${stats.maxHp}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                     }
                 } else {
                     Text("Unlocks at Yoga Lv.${hero.unlockYogaLevel}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
@@ -153,8 +165,8 @@ private fun HeroListItem(hero: Hero, instance: HeroInstance?, isUnlocked: Boolea
 @Composable
 fun HeroDetailsDialog(
     hero: Hero,
-    instance: HeroInstance,
-    saveData: com.example.game.persistence.GameSaveManager.GameSaveData,
+    partyMember: PartyMemberData,
+    saveData: GameProgress,
     viewModel: GameViewModel,
     onDismiss: () -> Unit
 ) {
@@ -162,6 +174,7 @@ fun HeroDetailsDialog(
     val gold = (saveData.totalYogaXp / 10) - saveData.totalGoldSpent
     val levelUpCost = viewModel.getHeroLevelUpCost(hero.id)
     val canLevelUp = gold >= levelUpCost
+    val stats = computeHeroStats(hero, partyMember.level)
 
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -181,7 +194,7 @@ fun HeroDetailsDialog(
                     Spacer(Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(hero.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
-                        Text("Level ${instance.level} ${hero.role.name}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        Text("Level ${partyMember.level} ${hero.role.name}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                     }
                     IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = "Close") }
                 }
@@ -198,9 +211,9 @@ fun HeroDetailsDialog(
                 
                 // Stats Row
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    DetailStat("HP", instance.maxHp.toString(), Icons.Default.Favorite, Color.Red)
-                    DetailStat("ATK", instance.atk.toString(), Icons.Default.Bolt, Color(0xFFFFA500))
-                    DetailStat("SPD", instance.spd.toString(), Icons.Default.Speed, Color.Cyan)
+                    DetailStat("HP", stats.maxHp.toString(), Icons.Default.Favorite, Color.Red)
+                    DetailStat("ATK", stats.atk.toString(), Icons.Default.Bolt, Color(0xFFFFA500))
+                    DetailStat("SPD", stats.spd.toString(), Icons.Default.Speed, Color.Cyan)
                 }
 
                 Spacer(Modifier.height(20.dp))
@@ -213,7 +226,7 @@ fun HeroDetailsDialog(
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = heroColor)
                 ) {
-                    Text("Level Up (${levelUpCost} 🪙)", fontWeight = FontWeight.Bold)
+                    Text("Level Up (${levelUpCost} \uD83E\uDE99)", fontWeight = FontWeight.Bold)
                 }
                 
                 Spacer(Modifier.height(24.dp))

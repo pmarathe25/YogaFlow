@@ -15,20 +15,19 @@ sealed class BattleCommand {
 
 class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
     fun startBattle(
-        heroes: List<HeroInstance>,
-        monsters: List<MonsterInstance>
+        heroes: List<CombatantState>,
+        monsters: List<CombatantState>
     ): BattleState {
         val readyHeroes = heroes.map {
             it.copy(
-                currentHp = it.maxHp,
+                hp = it.maxHp,
                 shield = 0,
-                ultimateGauge = 0,
-                equippedItems = it.equippedItems.toMutableList(),
-                isDead = false
+                gauge = 0,
+                isDefeated = false
             )
         }
         val readyMonsters = monsters.map {
-            it.copy(currentHp = it.maxHp, shield = 0, activePhase = -1, isDead = false, turnsSinceLastSpecial = 0, extraActionsThisRound = 0)
+            it.copy(hp = it.maxHp, shield = 0, activePhase = -1, isDefeated = false, turnsSinceLastSpecial = 0, extraActionsThisRound = 0)
         }
         val queue = BattleEngine.calculateTurnOrder(readyHeroes, readyMonsters, rng)
         val first = queue.firstOrNull()
@@ -119,7 +118,7 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
         targetIds: List<String>
     ): TurnResult {
         if (state.phase != PLAYER_TURN || state.currentActorId != heroId) return TurnResult(state)
-        val hero = state.heroes.firstOrNull { it.heroId == heroId && !it.isDead } ?: return TurnResult(state)
+        val hero = state.heroes.firstOrNull { it.id == heroId && !it.isDefeated } ?: return TurnResult(state)
         val cooldown = state.skillCooldowns[heroId]?.get(skill.id) ?: 0
         if (cooldown > 0 || targetIds.isEmpty()) return TurnResult(state)
 
@@ -127,7 +126,7 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
         val (applied, applyEvents, updatedOutcome) = BattleEngine.applyOutcome(state, outcomeResult.outcome)
         val withGauge = applied.copy(
             heroes = applied.heroes.map { h ->
-                if (h.heroId == heroId) h.copy(ultimateGauge = (h.ultimateGauge + skill.ultimateGain).coerceAtMost(100)) else h
+                if (h.id == heroId) h.copy(gauge = (h.gauge + skill.ultimateGain).coerceAtMost(100)) else h
             }
         )
         val withCooldown = if (skill.cooldown > 0) {
@@ -149,19 +148,19 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
 
     private fun useUltimate(state: BattleState, heroId: String): TurnResult {
         if (state.phase != PLAYER_TURN || state.currentActorId != heroId) return TurnResult(state)
-        val hero = state.heroes.firstOrNull { it.heroId == heroId && !it.isDead } ?: return TurnResult(state)
-        if (hero.ultimateGauge < 100) return TurnResult(state)
-        val targets = BattleEngine.resolveTargets(hero.ultimate, heroId, state)
+        val hero = state.heroes.firstOrNull { it.id == heroId && !it.isDefeated } ?: return TurnResult(state)
+        if (hero.gauge < 100) return TurnResult(state)
+        val targets = BattleEngine.resolveTargets(hero.ultimate!!, heroId, state)
         if (targets.isEmpty()) return TurnResult(state)
 
-        val outcomeResult = BattleEngine.computeSkillOutcome(hero, hero.ultimate, state, targets, rng)
+        val outcomeResult = BattleEngine.computeSkillOutcome(hero, hero.ultimate!!, state, targets, rng)
         val (applied, applyEvents, updatedOutcome) = BattleEngine.applyOutcome(state, outcomeResult.outcome)
         val next = applied.copy(
-            heroes = applied.heroes.map { h -> if (h.heroId == heroId) h.copy(ultimateGauge = 0) else h },
-            eventLog = applied.eventLog + applyEvents + BattleEvent.SkillUsed(heroId, hero.ultimate, targets, listOf(updatedOutcome))
+            heroes = applied.heroes.map { h -> if (h.id == heroId) h.copy(gauge = 0) else h },
+            eventLog = applied.eventLog + applyEvents + BattleEvent.SkillUsed(heroId, hero.ultimate!!, targets, listOf(updatedOutcome))
         ).withComboAvailability()
-        val events = applyEvents + BattleEvent.SkillUsed(heroId, hero.ultimate, targets, listOf(updatedOutcome))
-        val logs = listOf("${hero.name} unleashes ${hero.ultimate.name}.")
+        val events = applyEvents + BattleEvent.SkillUsed(heroId, hero.ultimate!!, targets, listOf(updatedOutcome))
+        val logs = listOf("${hero.name} unleashes ${hero.ultimate!!.name}.")
         return terminalResult(next, events, logs) ?: TurnResult(next, logs, events)
     }
 
@@ -172,16 +171,16 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
     ): TurnResult {
         if (state.phase != PLAYER_TURN) return TurnResult(state)
         if (!participantIds.containsAll(combo.requiredHeroes)) return TurnResult(state)
-        val participants = participantIds.mapNotNull { id -> state.heroes.firstOrNull { it.heroId == id && !it.isDead } }
+        val participants = participantIds.mapNotNull { id -> state.heroes.firstOrNull { it.id == id && !it.isDefeated } }
         if (participants.size != combo.requiredHeroes.size) return TurnResult(state)
 
-        val casterId = state.currentActorId.takeIf { it in participantIds } ?: participants.first().heroId
+        val casterId = state.currentActorId.takeIf { it in participantIds } ?: participants.first().id
         val partnerIds = combo.requiredHeroes.filter { it != casterId }
         val outcomeResult = BattleEngine.computeComboOutcome(combo, casterId, partnerIds, state)
         val (applied, applyEvents, updatedOutcome) = BattleEngine.applyOutcome(state, outcomeResult.outcome)
         val withGauge = applied.copy(
             heroes = applied.heroes.map { h ->
-                if (h.heroId in participantIds) h.copy(ultimateGauge = (h.ultimateGauge + 18).coerceAtMost(100)) else h
+                if (h.id in participantIds) h.copy(gauge = (h.gauge + 18).coerceAtMost(100)) else h
             }
         )
         val event = BattleEvent.ComboUsed(participantIds, combo, updatedOutcome.targets, updatedOutcome)
@@ -194,10 +193,10 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
         if (state.phase != PLAYER_TURN || state.currentActorId != heroId) return TurnResult(state)
         val next = state.copy(
             heroes = state.heroes.map { h ->
-                if (h.heroId == heroId && !h.isDead) {
+                if (h.id == heroId && !h.isDefeated) {
                     h.copy(
                         shield = h.shield + (h.maxHp * 0.2f).toInt().coerceAtLeast(1),
-                        ultimateGauge = (h.ultimateGauge + 10).coerceAtMost(100)
+                        gauge = (h.gauge + 10).coerceAtMost(100)
                     )
                 } else h
             }
@@ -217,31 +216,31 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
         while (actionsRemaining > 0 && actionsTaken < maxActions) {
             actionsRemaining--
             actionsTaken++
-            val monster = state.monsters.firstOrNull { it.monsterId == monsterId && !it.isDead } ?: break
+            val monster = state.monsters.firstOrNull { it.id == monsterId && !it.isDefeated } ?: break
             val (preMonster, preEvents) = BattleEngine.checkPhaseTriggers(monster)
             state = state.withUpdatedMonster(monsterId) { preMonster }
             events += preEvents
             logs += preEvents.filterIsInstance<BattleEvent.PhaseTriggered>().map { "${preMonster.name} shifts the arena." }
 
-            val activeMonster = state.monsters.firstOrNull { it.monsterId == monsterId && !it.isDead } ?: break
-            val useSpecial = rng.nextFloat() < activeMonster.aiBehavior.specialChance || activeMonster.turnsSinceLastSpecial >= 3
-            val skill = if (useSpecial) activeMonster.specialAttack else Skill(
+            val activeMonster = state.monsters.firstOrNull { it.id == monsterId && !it.isDefeated } ?: break
+            val useSpecial = rng.nextFloat() < (activeMonster.aiBehavior?.specialChance ?: 0.3f) || activeMonster.turnsSinceLastSpecial >= 3
+            val skill = if (useSpecial && activeMonster.specialAttack != null) activeMonster.specialAttack else Skill(
                 id = "${monsterId}_attack",
                 name = "Strike",
                 description = "A direct attack.",
                 targetType = TargetType.SINGLE_ENEMY,
                 damageComponents = listOf(DamageComponent(DamageType.PHYSICAL)),
-                baseDamage = activeMonster.atk,
+                baseDamage = activeMonster.attack,
                 ultimateGain = 0
             )
             state = state.withUpdatedMonster(monsterId) {
                 it.copy(turnsSinceLastSpecial = if (useSpecial) 0 else it.turnsSinceLastSpecial + 1)
             }
 
-            val target = BattleEngine.chooseMonsterTarget(state.aliveHeroes, activeMonster.aiBehavior.targetStrategy, state, rng)
+            val target = BattleEngine.chooseMonsterTarget(state.aliveHeroes, activeMonster.aiBehavior?.targetStrategy ?: TargetStrategy.RANDOM, state, rng)
             if (target.isBlank()) break
             val targets = when (skill.targetType) {
-                TargetType.ALL, TargetType.ALL_ENEMIES -> state.aliveHeroes.map { it.heroId }
+                TargetType.ALL, TargetType.ALL_ENEMIES -> state.aliveHeroes.map { it.id }
                 else -> listOf(target)
             }
             val outcomeResult = BattleEngine.computeMonsterOutcome(state, activeMonster, skill, targets, rng)
@@ -251,7 +250,7 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
             events += applyEvents + turnEvent
             logs += "${activeMonster.name} uses ${skill.name}."
 
-            val postMonster = state.monsters.firstOrNull { it.monsterId == monsterId && !it.isDead }
+            val postMonster = state.monsters.firstOrNull { it.id == monsterId && !it.isDefeated }
             if (postMonster != null) {
                 val (triggeredMonster, postEvents) = BattleEngine.checkPhaseTriggers(postMonster)
                 val queued = triggeredMonster.extraActionsThisRound.coerceAtMost(maxActions - actionsTaken)
@@ -326,17 +325,17 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
     }
 
     private fun BattleState.isActorAlive(id: String): Boolean =
-        heroes.any { it.heroId == id && !it.isDead } || monsters.any { it.monsterId == id && !it.isDead }
+        heroes.any { it.id == id && !it.isDefeated } || monsters.any { it.id == id && !it.isDefeated }
 
     private fun BattleState.actorName(id: String): String =
-        heroes.firstOrNull { it.heroId == id }?.name ?: monsters.firstOrNull { it.monsterId == id }?.name ?: id
+        heroes.firstOrNull { it.id == id }?.name ?: monsters.firstOrNull { it.id == id }?.name ?: id
 
     private fun TurnResult.prepend(events: List<BattleEvent>, logs: List<String>): TurnResult =
         copy(events = events + this.events, logMessages = logs + this.logMessages)
 }
 
 fun BattleState.withComboAvailability(): BattleState {
-    val aliveHeroIds = aliveHeroes.map { it.heroId }.toSet()
+    val aliveHeroIds = aliveHeroes.map { it.id }.toSet()
     val combos = runCatching { com.example.game.persistence.DataLoader.combos }.getOrDefault(emptyList())
     return copy(isComboAvailable = combos.any { combo ->
         aliveHeroIds.containsAll(combo.requiredHeroes)

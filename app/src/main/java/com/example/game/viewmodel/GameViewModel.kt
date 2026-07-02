@@ -12,9 +12,6 @@ import com.example.game.model.BattlePhase.*
 import com.example.game.model.TurnAction.*
 import com.example.game.persistence.DataLoader
 import com.example.game.persistence.GameSaveManager
-import com.example.game.persistence.GameSaveManager.GameSaveData
-import com.example.model.LevelDefinitions
-import com.example.model.XpCalculator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,11 +36,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _battleState = MutableStateFlow<BattleState?>(null)
     val battleState: StateFlow<BattleState?> = _battleState.asStateFlow()
 
-    private val _saveData = MutableStateFlow(GameSaveData())
-    val saveData: StateFlow<GameSaveData> = _saveData.asStateFlow()
+    private val _saveData = MutableStateFlow(GameProgress())
+    val saveData: StateFlow<GameProgress> = _saveData.asStateFlow()
 
-    private val _party = MutableStateFlow<List<HeroInstance>>(emptyList())
-    val party: StateFlow<List<HeroInstance>> = _party.asStateFlow()
+    private val _party = MutableStateFlow<List<PartyMemberData>>(emptyList())
+    val party: StateFlow<List<PartyMemberData>> = _party.asStateFlow()
 
     private val _currentMonster = MutableStateFlow<Monster?>(null)
     val currentMonster: StateFlow<Monster?> = _currentMonster.asStateFlow()
@@ -90,10 +87,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
         var xpSum = 0
         sessions.forEach { session ->
-            xpSum += XpCalculator.calculateSessionXp(session.durationMinutes, session.flowId)
+            xpSum += com.example.model.XpCalculator.calculateSessionXp(session.durationMinutes, session.flowId)
         }
         xpSum += mainSparks * 150
-        val computedLevel = LevelDefinitions.getLevelForXp(xpSum).level
+        val computedLevel = com.example.model.LevelDefinitions.getLevelForXp(xpSum).level
 
         val data = _saveData.value
         var updated = data
@@ -137,15 +134,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         saveManager.saveGame(_saveData.value)
     }
 
-    private fun restoreParty(data: GameSaveData) {
+    private fun restoreParty(data: GameProgress) {
         val unlocked = DataLoader.heroes.filter { it.unlockYogaLevel <= data.yogaLevel }
         val newParty = unlocked.map { heroDef ->
-            val savedHero = data.party.find { it.heroId == heroDef.id }
-            if (savedHero != null) {
-                heroDef.createInstance(savedHero.level, savedHero.equippedItemIds)
-            } else {
-                heroDef.createInstance(1, emptyList())
-            }
+            data.party.find { it.heroId == heroDef.id } ?: PartyMemberData(heroId = heroDef.id)
         }
         _party.value = newParty
     }
@@ -160,25 +152,20 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun startBattle(monsterId: String) {
         val monster = DataLoader.getMonster(monsterId)
-        if (_party.value.isEmpty()) {
+        val partyMembers = _party.value
+        if (partyMembers.isEmpty()) {
             _error.value = "No heroes in party!"
             return
         }
         _currentMonster.value = monster
-        val monsterInstance = monster.createInstance()
 
-        _party.value.forEach { hero ->
-            hero.currentHp = hero.maxHp
-            hero.shield = 0
-            hero.ultimateGauge = 0
-            hero.isDead = false
+        val battleHeroes = partyMembers.mapNotNull { pm ->
+            val heroDef = DataLoader.heroes.find { it.id == pm.heroId } ?: return@mapNotNull null
+            heroDef.toCombatantState(pm)
         }
+        val monsterCombatant = monster.toCombatantState()
 
-        val battleHeroes = _party.value.map { hero ->
-            hero.copy(equippedItems = hero.equippedItems.toMutableList())
-        }.toMutableList()
-
-        val initialState = turnManager.startBattle(battleHeroes, listOf(monsterInstance))
+        val initialState = turnManager.startBattle(battleHeroes, listOf(monsterCombatant))
         val firstActor = initialState.turnOrder.firstOrNull()
         val introState = if (firstActor != null) {
             initialState.copy(phase = BattlePhase.INTRO, currentActorId = firstActor.id)
@@ -209,7 +196,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun updateComboAvailability(state: BattleState): BattleState {
-        val aliveHeroIds = state.aliveHeroes.map { it.heroId }.toSet()
+        val aliveHeroIds = state.aliveHeroes.map { it.id }.toSet()
         val isAvailable = DataLoader.combos.any { combo ->
             aliveHeroIds.containsAll(combo.requiredHeroes)
         }
@@ -224,15 +211,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun executeSkill(heroId: String, skill: Skill, customTargets: List<String>? = null) {
         val state = _battleState.value ?: return
         if (state.phase != PLAYER_TURN || _isProcessingTurn.value) return
-        val hero = state.heroes.find { it.heroId == heroId && !it.isDead } ?: return
+        val hero = state.heroes.find { it.id == heroId && !it.isDefeated } ?: return
 
         val targets = customTargets ?: BattleEngine.resolveTargets(skill, heroId, state)
 
         if (customTargets == null) {
             val autoTarget = when (skill.targetType) {
-                SINGLE_ENEMY -> state.aliveMonsters.firstOrNull()?.monsterId
-                SINGLE_ALLY -> if (state.aliveHeroes.size == 1) hero.heroId else null
-                SELF -> hero.heroId
+                SINGLE_ENEMY -> state.aliveMonsters.firstOrNull()?.id
+                SINGLE_ALLY -> if (state.aliveHeroes.size == 1) hero.id else null
+                SELF -> hero.id
                 ALL_ALLIES, ALL_ENEMIES, ALL -> "ALL"
                 else -> null
             }
@@ -267,8 +254,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun executeUltimate(heroId: String) {
         val state = _battleState.value ?: return
         if (state.phase != PLAYER_TURN || _isProcessingTurn.value) return
-        val hero = state.heroes.find { it.heroId == heroId && !it.isDead } ?: return
-        if (hero.ultimateGauge < 100) return
+        val hero = state.heroes.find { it.id == heroId && !it.isDefeated } ?: return
+        if (hero.gauge < 100) return
 
         viewModelScope.launch {
             _isProcessingTurn.value = true
@@ -287,7 +274,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val state = _battleState.value ?: return
         if (state.phase != PLAYER_TURN || _isProcessingTurn.value) return
         val combo = DataLoader.findCombo(participantIds.toList()) ?: return
-        val participants = participantIds.mapNotNull { id -> state.heroes.find { it.heroId == id && !it.isDead } }
+        val participants = participantIds.mapNotNull { id -> state.heroes.find { it.id == id && !it.isDefeated } }
         if (participants.size != combo.requiredHeroes.size) return
 
         viewModelScope.launch {
@@ -306,7 +293,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun executeComboById(comboId: String) {
         val combo = DataLoader.getCombo(comboId)
         val participantIds = combo.requiredHeroes.mapNotNull { name ->
-            _battleState.value?.heroes?.find { it.name == name && !it.isDead }?.heroId
+            _battleState.value?.heroes?.find { it.name == name && !it.isDefeated }?.id
         }.toSet()
         if (participantIds.size != combo.requiredHeroes.size) return
         executeCombo(participantIds)
@@ -325,12 +312,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         if (result.defeat) {
-            _party.value.forEach { hero ->
-                hero.currentHp = hero.maxHp
-                hero.shield = 0
-                hero.ultimateGauge = 0
-                hero.isDead = false
-            }
             delay(1000)
             _currentScreen.value = GameScreen.BATTLE_RESULT
             return
@@ -357,7 +338,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
         delay(1500)
 
-        val monster = result.newState.monsters.find { it.monsterId == monsterId }
+        val monster = result.newState.monsters.find { it.id == monsterId }
         while (monster != null && monster.extraActionsThisRound > 0 && !result.newState.isBattleOver) {
             state = _battleState.value ?: return
             result = turnManager.executeMonsterTurn(state, monsterId)
@@ -373,13 +354,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val monster = _currentMonster.value ?: return
         val data = _saveData.value
 
-        _party.value.forEach { hero ->
-            hero.currentHp = hero.maxHp
-            hero.shield = 0
-            hero.ultimateGauge = 0
-            hero.isDead = false
-        }
-
         _saveData.value = data.copy(
             totalBattlesWon = data.totalBattlesWon + 1,
             defeatedMonsterIds = data.defeatedMonsterIds + monster.id,
@@ -389,7 +363,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun resetAllProgress() {
-        val app = getApplication<Application>()
         saveManager.resetToDefault()
         _party.value = emptyList()
         _battleState.value = null
@@ -415,36 +388,48 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun equipItem(heroId: String, itemId: String): Boolean {
-        val hero = _party.value.find { it.heroId == heroId } ?: return false
+        val partyMember = _party.value.find { it.heroId == heroId } ?: return false
         val item = DataLoader.getEquipment(itemId)
         if (itemId !in _saveData.value.inventory) return false
 
-        hero.equippedItems.removeAll { existingId ->
+        val updatedItems = partyMember.equippedItemIds.toMutableList()
+        updatedItems.removeAll { existingId ->
             DataLoader.equipment.find { it.id == existingId }?.slot == item.slot
         }
+        updatedItems.add(itemId)
 
-        hero.equippedItems.add(itemId)
+        val newParty = _party.value.map {
+            if (it.heroId == heroId) it.copy(equippedItemIds = updatedItems) else it
+        }
+        _party.value = newParty
         _saveData.value = _saveData.value.copy(
             inventory = _saveData.value.inventory - itemId,
-            party = _party.value.map { it.toSaveData() }
+            party = newParty
         )
         saveGame()
         return true
     }
 
     fun unequipItem(heroId: String, itemId: String) {
-        val hero = _party.value.find { it.heroId == heroId } ?: return
-        hero.equippedItems.remove(itemId)
+        val partyMember = _party.value.find { it.heroId == heroId } ?: return
+
+        val updatedItems = partyMember.equippedItemIds.toMutableList()
+        updatedItems.remove(itemId)
+
+        val newParty = _party.value.map {
+            if (it.heroId == heroId) it.copy(equippedItemIds = updatedItems) else it
+        }
+        _party.value = newParty
         _saveData.value = _saveData.value.copy(
             inventory = _saveData.value.inventory + itemId,
-            party = _party.value.map { it.toSaveData() }
+            party = newParty
         )
         saveGame()
     }
 
     fun getEquippedItems(heroId: String): List<Equipment> {
-        val hero = _party.value.find { it.heroId == heroId } ?: return emptyList()
-        return hero.equippedItems.mapNotNull { DataLoader.getEquipment(it) }
+        val partyMember = _party.value.find { it.heroId == heroId } ?: return emptyList()
+        return partyMember.equippedItemIds.mapNotNull { DataLoader.getEquipment(it) }
     }
 
     // --- Economy ---
@@ -469,14 +454,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
         if (availableGold >= cost) {
             val nextLevel = hero.level + 1
-            val def = DataLoader.getHero(heroId)
-            val newInstance = def.createInstance(nextLevel, hero.equippedItems)
+            val newParty = _party.value.map { if (it.heroId == heroId) it.copy(level = nextLevel) else it }
 
-            _party.value = _party.value.map { if (it.heroId == heroId) newInstance else it }
-
+            _party.value = newParty
             _saveData.value = data.copy(
                 totalGoldSpent = data.totalGoldSpent + cost,
-                party = _party.value.map { it.toSaveData() }
+                party = newParty
             )
             saveGame()
             return true
@@ -506,9 +489,3 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearError() { _error.value = null }
 }
-
-private fun HeroInstance.toSaveData() = HeroSaveData(
-    heroId = heroId, level = level, currentHp = currentHp,
-    shield = shield, ultimateGauge = ultimateGauge,
-    isDead = isDead, equippedItemIds = equippedItems.toList()
-)

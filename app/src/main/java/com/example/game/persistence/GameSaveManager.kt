@@ -2,7 +2,8 @@ package com.example.game.persistence
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.example.game.model.HeroSaveData
+import com.example.game.model.GameProgress
+import com.example.game.model.PartyMemberData
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -27,32 +28,10 @@ class GameSaveManager(private val context: Context) {
         const val KEY_DEFEATED_MONSTER_IDS = "defeated_monster_ids"
     }
 
-    data class GameSaveData(
-        val version: Int = 2,
-        val party: List<HeroSaveData> = emptyList(),
-        val unlockedHeroIds: Set<String> = emptySet(),
-        val sparks: Int = 0,
-        val yogaLevel: Int = 1,
-        val earnedTrophyIds: Set<String> = emptySet(),
-        val totalBattlesWon: Int = 0,
-        val consumables: Map<String, Int> = emptyMap(),
-        val inventory: List<String> = emptyList(),
-        val equippedSkins: Map<String, String> = emptyMap(),
-        val unlockedSkinIds: Set<String> = emptySet(),
-        val totalPlayTimeMs: Long = 0L,
-        val highestComboHits: Int = 0,
-        val fastestBattleTurns: Int = Int.MAX_VALUE,
-        val lastPlayedTimestamp: Long = 0L,
-        val lastSyncedMainSparks: Int = 0,
-        val totalYogaXp: Int = 0,
-        val totalGoldSpent: Int = 0,
-        val defeatedMonsterIds: Set<String> = emptySet()
-    )
-
-    fun loadGame(): GameSaveData {
+    fun loadGame(): GameProgress {
         val blob = prefs.getString(KEY_PROGRESS_BLOB, null)
         if (!blob.isNullOrBlank()) {
-            return runCatching { gson.fromJson(blob, GameSaveData::class.java).normalized() }
+            return runCatching { gson.fromJson(blob, GameProgress::class.java).normalized() }
                 .getOrElse { loadDefaultSave() }
         }
 
@@ -65,7 +44,7 @@ class GameSaveManager(private val context: Context) {
         return loadDefaultSave()
     }
 
-    fun saveGame(data: GameSaveData) {
+    fun saveGame(data: GameProgress) {
         val normalized = data.normalized()
         prefs.edit()
             .clear()
@@ -81,19 +60,19 @@ class GameSaveManager(private val context: Context) {
         prefs.edit().clear().apply()
     }
 
-    private fun loadDefaultSave(): GameSaveData {
+    private fun loadDefaultSave(): GameProgress {
         return try {
             val json = context.assets.open("game/default_save.json")
                 .bufferedReader().use { it.readText() }
-            gson.fromJson(json, GameSaveData::class.java).normalized()
+            gson.fromJson(json, GameProgress::class.java).normalized()
         } catch (e: Exception) {
-            GameSaveData()
+            GameProgress()
         }
     }
 
-    private fun loadLegacySave(): GameSaveData {
-        return GameSaveData(
-            party = readJsonList(KEY_PARTY, emptyList<HeroSaveData>()),
+    private fun loadLegacySave(): GameProgress {
+        return GameProgress(
+            party = readJsonList(KEY_PARTY, emptyList<PartyMemberData>()),
             unlockedHeroIds = readJsonStringSet(KEY_UNLOCKED_HERO_IDS),
             sparks = prefs.getInt(KEY_SPARKS, 0),
             yogaLevel = prefs.getInt(KEY_YOGA_LEVEL, 1),
@@ -120,17 +99,15 @@ class GameSaveManager(private val context: Context) {
     private fun readJsonStringSet(key: String): Set<String> =
         readJsonList(key, emptyList<String>()).toSet()
 
-    private fun GameSaveData.normalized(): GameSaveData =
+    private fun GameProgress.normalized(): GameProgress =
         copy(
             version = 2,
             party = party.map {
-                it.copy(heroId = normalizeId(it.heroId), equippedItemIds = it.equippedItemIds.map(::normalizeKnownHeroBoundId))
+                it.copy(heroId = normalizeId(it.heroId), equippedItemIds = it.equippedItemIds.map(::normalizeId))
             },
             unlockedHeroIds = unlockedHeroIds.map(::normalizeId).toSet(),
             defeatedMonsterIds = defeatedMonsterIds.map(::normalizeId).toSet()
         )
-
-    private fun normalizeKnownHeroBoundId(id: String): String = id
 
     private fun normalizeId(id: String): String =
         id.trim()
