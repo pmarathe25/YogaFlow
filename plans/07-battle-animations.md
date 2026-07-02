@@ -1,5 +1,12 @@
 # Plan: Battle Animation Improvements
 
+> **⚠️ Battle Refactor Impact (Plan 00):** This plan is significantly affected because it references multiple ViewModel methods that move to `TurnManager`:
+> - `GameViewModel.startBattle()` becomes a thin call to `turnManager.startBattle()` + scheduling. The INTRO phase logic and `onIntroComplete()` should be entirely in the ViewModel (it orchestrates timing), not in TurnManager.
+> - `executeMonsterTurn(state, firstActor)` in `onIntroComplete()` becomes `turnManager.executeMonsterTurn(state, firstActor.id)`.
+> - The `BattlePhase.INTRO` addition to the enum is unaffected — it's still in `model/BattleState.kt`.
+> - The `delay()` calls remain in the ViewModel; `TurnManager` is pure and has no delays.
+> - All animation code (`BattleAnimations.kt`, `BattleCanvas.kt`, `BattleScreen.kt`) is pure UI and unaffected.
+
 ## Issue Addressed
 - **Issue 8**: Monster intro animation is missing (immediately starts monster's turn). Attack animations are incorrect — the attacker should move toward the target, not randomly. Movement should be further (attacker gets very close to target before attacking).
 

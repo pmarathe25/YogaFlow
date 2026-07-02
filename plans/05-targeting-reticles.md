@@ -1,5 +1,7 @@
 # Plan: Only Show Targeting Reticles on Valid Targets
 
+> **⚠️ Battle Refactor Impact (Plan 00):** This plan references `GameViewModel.executeSkill()` lines 54-73 where auto-target resolution and `pendingSkill` assignment lives. After the refactor, this logic moves into `TurnManager.executeSkill()`. The `pendingSkill` field remains on `BattleState` (unchanged). The `BattleScreen.kt` targeting code is unaffected — it reads `state.pendingSkill` and `state.currentActorId` from `BattleState` which still has the same fields.
+
 ## Issue Addressed
 - **Issue 5**: Skills which don't allow targeting enemies should not show targeting reticles on enemies.
 

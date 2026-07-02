@@ -270,7 +270,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             applyOutcome(state, outcome)
             emitBattleState(state)
             
-            delay(1000) // Wait for action animation
+            delay(1000)
             advanceTurn(state)
             _isProcessingTurn.value = false
         }
@@ -350,48 +350,72 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         executeCombo(participantIds)
     }
 
-    private fun advanceTurn(state: BattleState, skipCount: Int = 1) {
-        viewModelScope.launch {
-            state.turnsTaken++
+    private suspend fun advanceTurn(state: BattleState, skipCount: Int = 1) {
+        state.turnsTaken++
 
-            val oldIndex = state.currentTurnIndex
-            state.currentTurnIndex = (state.currentTurnIndex + skipCount) % state.turnOrder.size
-            val wrapped = state.currentTurnIndex < oldIndex ||
-                    (state.currentTurnIndex == 0 && (oldIndex + skipCount) >= state.turnOrder.size)
+        val oldIndex = state.currentTurnIndex
+        state.currentTurnIndex = (state.currentTurnIndex + skipCount) % state.turnOrder.size
+        val wrapped = state.currentTurnIndex < oldIndex ||
+                (state.currentTurnIndex == 0 && (oldIndex + skipCount) >= state.turnOrder.size)
 
-            if (wrapped) {
-                state.advanceRound()
-                state.monsters.forEach { it.extraActionsThisRound = 0 }
-                val newOrder = BattleEngine.calculateTurnOrder(state.heroes, state.monsters)
-                state.turnOrder.clear()
-                state.turnOrder.addAll(newOrder)
-            }
-
-            val nextActor = state.turnOrder[state.currentTurnIndex]
-            state.currentActorId = nextActor.id
-            updateComboAvailability(state)
-
-            // Cooldowns
-            val actorCds = state.skillCooldowns[nextActor.id]
-            if (actorCds != null) {
-                val updatedCds = actorCds.toMutableMap()
-                updatedCds.forEach { (skillId, turns) ->
-                    if (turns > 0) updatedCds[skillId] = turns - 1
-                }
-                state.skillCooldowns[nextActor.id] = updatedCds
-            }
-
-            emitBattleState(state)
-            delay(1200)
-
-            if (nextActor.isHero) {
-                state.phase = PLAYER_TURN
-            } else {
-                state.phase = ENEMY_TURN
-                executeMonsterTurn(state, nextActor)
-            }
-            emitBattleState(state)
+        if (wrapped) {
+            state.advanceRound()
+            state.monsters.forEach { it.extraActionsThisRound = 0 }
+            val newOrder = BattleEngine.calculateTurnOrder(state.heroes, state.monsters)
+            state.turnOrder.clear()
+            state.turnOrder.addAll(newOrder)
         }
+
+        if (state.aliveMonsters.isEmpty()) {
+            state.phase = VICTORY
+            state.addEvent(BattleEvent.Victory(state.turnsTaken))
+            addBattleLog("Victory!")
+            emitBattleState(state)
+            delay(1000)
+            _currentScreen.value = GameScreen.BATTLE_RESULT
+            onBattleWon()
+            return
+        }
+        if (state.aliveHeroes.isEmpty()) {
+            state.phase = DEFEAT
+            state.addEvent(BattleEvent.Defeat(state.round))
+            addBattleLog("Defeat...")
+            _party.value.forEach { hero ->
+                hero.currentHp = hero.maxHp
+                hero.shield = 0
+                hero.ultimateGauge = 0
+                hero.isDead = false
+            }
+            emitBattleState(state)
+            delay(1000)
+            _currentScreen.value = GameScreen.BATTLE_RESULT
+            return
+        }
+
+        val nextActor = state.turnOrder[state.currentTurnIndex]
+        state.currentActorId = nextActor.id
+        updateComboAvailability(state)
+
+        // Cooldowns
+        val actorCds = state.skillCooldowns[nextActor.id]
+        if (actorCds != null) {
+            val updatedCds = actorCds.toMutableMap()
+            updatedCds.forEach { (skillId, turns) ->
+                if (turns > 0) updatedCds[skillId] = turns - 1
+            }
+            state.skillCooldowns[nextActor.id] = updatedCds
+        }
+
+        emitBattleState(state)
+        delay(1200)
+
+        if (nextActor.isHero) {
+            state.phase = PLAYER_TURN
+        } else {
+            state.phase = ENEMY_TURN
+            executeMonsterTurn(state, nextActor)
+        }
+        emitBattleState(state)
     }
 
     private fun executeMonsterTurn(state: BattleState, actor: BattleActor) {

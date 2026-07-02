@@ -1,5 +1,11 @@
 # Plan: Make Combo and Ultimate Skill Cards Always Visible
 
+> **⚠️ Battle Refactor Impact (Plan 00):** This plan references `GameViewModel.updateComboAvailability()` and `GameViewModel.executeCombo()`. After the refactor:
+> - `updateComboAvailability()` logic moves into `TurnManager.startBattle()` and `TurnManager.advanceTurn()` — the ViewModel no longer owns it. The `isComboAvailable` field remains on `BattleState`.
+> - `executeCombo()` moves to `TurnManager.executeCombo()` — the gauge check (`participants.any { it.ultimateGauge < 100 }`) belongs there, not in the ViewModel.
+> - `executeComboById()` becomes a ViewModel convenience method that calls `turnManager.executeCombo()`.
+> - The card visibility logic in `ActionPanel` is unaffected — it reads `heroes` from `BattleState` directly.
+
 ## Issues Addressed
 - **Issue 1**: Combo skills are missing — the skill card should be visible if all required heroes are present.
 - **Issue 9**: Ultimate skills are missing — the card should always be visible, grayed out when not usable.

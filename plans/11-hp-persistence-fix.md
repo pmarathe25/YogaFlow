@@ -1,5 +1,7 @@
 # Plan: Fix Hero HP Persisting Across Battles
 
+> **⚠️ Battle Refactor Impact (Plan 00):** This plan modifies `GameViewModel.startBattle()` to deep-copy heroes. After the refactor, `startBattle()` in the ViewModel will call `turnManager.startBattle(battleHeroes, monsters)`. The deep-copy still happens in the ViewModel *before* passing to TurnManager. The `onBattleWon()` and defeat handler changes are pure ViewMethod methods that survive the refactor untouched.
+
 ## Issue Addressed
 - **Issue 13**: Hero HP persists across battles — if a hero loses HP in one battle, they start with that same amount in the next battle. Stats (HP, attack, shields, etc.) should only be valid for the duration of the battle.
 

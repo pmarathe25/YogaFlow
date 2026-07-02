@@ -1,5 +1,7 @@
 # Plan: Purple Damage Numbers for Shield Damage
 
+> **⚠️ Battle Refactor Impact (Plan 00):** This plan modifies `BattleEngine.applyOutcome()` to track `shieldDamage` per target. After the refactor, `applyOutcome` changes from `(state, outcome) -> state` to `(state, outcome) -> Pair<BattleState, List<BattleEvent>>` (returns new state instead of mutating). The `shieldDamage` tracking logic should still be computed the same way — the only difference is that the updated `TargetResult` objects go into the returned outcome rather than being mutated in place. The `BattleEffects.kt` and `BattleScreen.kt` flash color changes are pure UI and unaffected.
+
 ## Issue Addressed
 - **Issue 10**: Damage done to shields should use purple numbers/animations to distinguish from damage done to health (red numbers/animations).
 
