@@ -59,8 +59,6 @@ fun BattleScreen(viewModel: GameViewModel) {
 
     // ─── Battle UI States ──────────────────────────────────────────
     var showFullLog by remember { mutableStateOf(false) }
-    var currentTurnActorName by remember { mutableStateOf<String?>(null) }
-    var showTurnBanner by remember { mutableStateOf(false) }
 
     var showExitDialog by remember { mutableStateOf(false) }
 
@@ -125,18 +123,6 @@ fun BattleScreen(viewModel: GameViewModel) {
         delay(1500)
         battleTextVisible = false
         viewModel.onIntroComplete()
-    }
-
-    // Turn Banner Logic
-    LaunchedEffect(state.currentActorId) {
-        if (state.phase == BattlePhase.INTRO) return@LaunchedEffect
-        val actor = state.turnOrder.find { it.id == state.currentActorId }
-        if (actor != null) {
-            currentTurnActorName = actor.name
-            showTurnBanner = true
-            delay(1000)
-            showTurnBanner = false
-        }
     }
 
     // ─── Sprite Animations ─────────────────────────────────────────
@@ -213,6 +199,13 @@ fun BattleScreen(viewModel: GameViewModel) {
 
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize().padding(bottom = 400.dp)) {
+                TurnIndicator(
+                    actorName = state.turnOrder.find { it.id == state.currentActorId }?.name,
+                    actorElement = state.turnOrder.find { it.id == state.currentActorId }?.element,
+                    visible = state.phase != BattlePhase.INTRO && state.currentActorId != null,
+                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp)
+                )
+
                 // Header
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -375,9 +368,6 @@ fun BattleScreen(viewModel: GameViewModel) {
 
         BattleEffectOverlay(events = state.eventLog, heroPositions = heroPositions, monsterPosition = monsterPos, pool = pool, modifier = Modifier.fillMaxSize())
         
-        // Turn Banner Overlay
-        TurnBanner(actorName = currentTurnActorName, visible = showTurnBanner, modifier = Modifier.align(Alignment.Center))
-
         // Battle Start Text Overlay
         AnimatedVisibility(
             visible = battleTextVisible,
@@ -440,21 +430,61 @@ fun BattleLogDialog(log: List<String>, onDismiss: () -> Unit) {
 
 @Composable
 fun TurnOrderList(state: BattleState) {
+    val infiniteTransition = rememberInfiniteTransition()
+    val bounceOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
     LazyColumn(
-        modifier = Modifier.padding(4.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        horizontalAlignment = Alignment.Start
+        modifier = Modifier.padding(start = 4.dp, top = 2.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp)
     ) {
         items(state.turnOrder) { actor ->
             val isActive = actor.id == state.currentActorId
             val color = elementToColor(actor.element)
             
             Text(
-                text = (if (isActive) "▶ " else "") + actor.name.uppercase(),
-                color = if (isActive) color else Color.White.copy(alpha = 0.7f),
-                fontWeight = if (isActive) FontWeight.Black else FontWeight.Bold,
-                fontSize = 11.sp,
-                modifier = Modifier.padding(horizontal = 4.dp)
+                text = actor.name.uppercase(),
+                color = if (isActive) color else Color.White.copy(alpha = 0.6f),
+                fontWeight = if (isActive) FontWeight.Black else FontWeight.Normal,
+                fontSize = if (isActive) 12.sp else 10.sp,
+                modifier = Modifier
+                    .padding(horizontal = 4.dp, vertical = 0.dp)
+                    .then(if (isActive) Modifier.graphicsLayer { translationY = bounceOffset } else Modifier)
+            )
+        }
+    }
+}
+
+@Composable
+fun TurnIndicator(
+    actorName: String?,
+    actorElement: Element?,
+    visible: Boolean,
+    modifier: Modifier = Modifier
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn() + slideInVertically { -it },
+        exit = fadeOut() + slideOutVertically { -it }
+    ) {
+        Surface(
+            modifier = modifier,
+            shape = RoundedCornerShape(12.dp),
+            color = if (actorElement != null) elementToColor(actorElement).copy(alpha = 0.7f)
+                    else Color.Black.copy(alpha = 0.6f)
+        ) {
+            Text(
+                text = "${actorName ?: "Unknown"}'s Turn",
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
             )
         }
     }
