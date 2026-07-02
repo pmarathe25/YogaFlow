@@ -12,6 +12,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
@@ -53,7 +54,7 @@ fun FloatingHUD(
     )
 
     Column(
-        modifier = modifier.width(width.dp),
+        modifier = modifier.requiredWidth(width.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Name and Turn Indicator
@@ -76,11 +77,19 @@ fun FloatingHUD(
         if (shield > 0) {
             val shieldPct = (shield.toFloat() / maxHp).coerceAtMost(1f)
             Canvas(modifier = Modifier.fillMaxWidth().height(3.dp)) {
-                drawRoundRect(
-                    color = Color(0xFF42A5F5),
-                    size = Size(size.width * shieldPct, size.height),
-                    cornerRadius = CornerRadius(1f)
-                )
+                val shieldWidth = size.width * shieldPct
+                if (shieldWidth > 0f) {
+                    drawRoundRect(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF64B5F6),
+                                Color(0xFF1E88E5)
+                            )
+                        ),
+                        size = Size(shieldWidth, size.height),
+                        cornerRadius = CornerRadius(1f)
+                    )
+                }
             }
             Spacer(Modifier.height(1.dp))
         }
@@ -90,15 +99,34 @@ fun FloatingHUD(
             Canvas(modifier = Modifier.fillMaxSize()) {
                 // Background
                 drawRoundRect(
-                    Color.Black.copy(alpha = 0.6f),
-                    cornerRadius = CornerRadius(2f)
+                    color = Color.Black.copy(alpha = 0.5f),
+                    cornerRadius = CornerRadius(3f)
                 )
-                // Fill
-                drawRoundRect(
-                    color = hpBarColor ?: hpColorFromPercent(animatedHpPercent),
-                    size = Size(size.width * animatedHpPercent, size.height),
-                    cornerRadius = CornerRadius(2f)
-                )
+                // Fill with vertical gradient
+                val baseColor = hpBarColor ?: hpColorFromPercent(animatedHpPercent)
+                val fillWidth = size.width * animatedHpPercent
+                if (fillWidth > 0f) {
+                    drawRoundRect(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                baseColor.copy(alpha = 0.9f),
+                                baseColor,
+                                baseColor.copy(
+                                    red = (baseColor.red * 0.6f).coerceAtMost(1f),
+                                    green = (baseColor.green * 0.6f).coerceAtMost(1f),
+                                    blue = (baseColor.blue * 0.6f).coerceAtMost(1f)
+                                )
+                            )
+                        ),
+                        size = Size(fillWidth, size.height),
+                        cornerRadius = CornerRadius(3f)
+                    )
+                    drawRoundRect(
+                        color = Color.White.copy(alpha = 0.15f),
+                        size = Size(fillWidth.coerceAtLeast(1f), size.height * 0.3f),
+                        cornerRadius = CornerRadius(1f)
+                    )
+                }
             }
             
             // Numerical HP
@@ -118,11 +146,20 @@ fun FloatingHUD(
             Box(modifier = Modifier.fillMaxWidth(0.8f).height(2.dp)) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     drawRoundRect(Color.Black.copy(alpha = 0.3f), cornerRadius = CornerRadius(1f))
-                    drawRoundRect(
-                        color = Color(0xFFFFD700),
-                        size = Size(size.width * gPct, size.height),
-                        cornerRadius = CornerRadius(1f)
-                    )
+                    val gaugeWidth = size.width * gPct
+                    if (gaugeWidth > 0f) {
+                        drawRoundRect(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFFFFF176),
+                                    Color(0xFFFFD700),
+                                    Color(0xFFFF8F00)
+                                )
+                            ),
+                            size = Size(gaugeWidth, size.height),
+                            cornerRadius = CornerRadius(1f)
+                        )
+                    }
                 }
             }
         }

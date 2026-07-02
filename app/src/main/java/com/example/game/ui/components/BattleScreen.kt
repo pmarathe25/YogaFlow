@@ -260,26 +260,28 @@ fun BattleScreen(viewModel: GameViewModel) {
                                 }
                             } else Modifier
 
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.weight(1f).graphicsLayer { translationY = with(density) { heroEntry.dp.toPx() } }
-                                    .then(heroClickable)
-                            ) {
-                                HeroHUD(hero = hero, statuses = state.getStatusesForTarget(hero.heroId), isCurrentTurn = isTurn, modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp))
-                                Box(contentAlignment = Alignment.Center) {
-                                    HeroSprite(
-                                        heroName = hero.heroId,
-                                        elementColor = elementToColor(hero.element),
-                                        isActive = !hero.isDead,
-                                        isFlashing = heroFlash > 0f,
-                                        flashColor = heroFlashColors[hero.heroId] ?: Color.Red,
-                                        flashAlpha = heroFlash,
-                                        animState = animState,
-                                        modifier = Modifier.size(120.dp).graphicsLayer {
-                                            if (isTargeted) { scaleX = 1.15f; scaleY = 1.15f }
-                                        }
-                                    )
-                                    if (isTargeting) TargetCircle(color = Color.Green, isSelected = isTargeted)
+                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.graphicsLayer { translationY = with(density) { heroEntry.dp.toPx() } }
+                                        .then(heroClickable)
+                                ) {
+                                    HeroHUD(hero = hero, statuses = state.getStatusesForTarget(hero.heroId), isCurrentTurn = isTurn, modifier = Modifier.padding(bottom = 4.dp))
+                                    Box(contentAlignment = Alignment.Center) {
+                                        HeroSprite(
+                                            heroName = hero.heroId,
+                                            elementColor = elementToColor(hero.element),
+                                            isActive = !hero.isDead,
+                                            isFlashing = heroFlash > 0f,
+                                            flashColor = heroFlashColors[hero.heroId] ?: Color.Red,
+                                            flashAlpha = heroFlash,
+                                            animState = animState,
+                                            modifier = Modifier.size(120.dp).graphicsLayer {
+                                                if (isTargeted) { scaleX = 1.15f; scaleY = 1.15f }
+                                            }
+                                        )
+                                        if (isTargeting) TargetCircle(color = Color.Green, isSelected = isTargeted)
+                                    }
                                 }
                             }
                         }
