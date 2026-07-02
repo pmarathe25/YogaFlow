@@ -9,21 +9,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.game.viewmodel.GameViewModel
 
-enum class HubView { DASHBOARD, PATH_OF_ZEN }
-
 @Composable
 fun HubScreen(
     onNavigateToBattle: (String) -> Unit,
-    onNavigateToShop: () -> Unit,
-    onNavigateToParty: () -> Unit,
-    onNavigateToSettings: () -> Unit,
-    onNavigateToTrophies: () -> Unit,
+    onExitHub: () -> Unit,
     model: GameViewModel
 ) {
     val saveData by model.saveData.collectAsState()
     val error by model.error.collectAsState()
-
-    var currentHubView by remember { mutableStateOf(HubView.DASHBOARD) }
 
     LaunchedEffect(Unit) { model.refreshSync() }
 
@@ -32,21 +25,11 @@ fun HubScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        when (currentHubView) {
-            HubView.DASHBOARD -> YourJourneyDashboard(
-                onNavigateToPath = { currentHubView = HubView.PATH_OF_ZEN },
-                onNavigateToShop = onNavigateToShop,
-                onNavigateToParty = onNavigateToParty,
-                onNavigateToSettings = onNavigateToSettings,
-                onNavigateToTrophies = onNavigateToTrophies,
-                model = model
-            )
-            HubView.PATH_OF_ZEN -> MonsterRoadSelection(
-                defeatedMonsterIds = saveData.defeatedMonsterIds,
-                onSelectMonster = onNavigateToBattle,
-                onDismiss = { currentHubView = HubView.DASHBOARD }
-            )
-        }
+        MonsterRoadSelection(
+            defeatedMonsterIds = saveData.defeatedMonsterIds,
+            onSelectMonster = onNavigateToBattle,
+            onDismiss = onExitHub
+        )
 
         error?.let { msg ->
             Snackbar(

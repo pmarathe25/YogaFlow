@@ -17,6 +17,42 @@ enum class TurnAction {
     SKILL, ULTIMATE, DEFEND, ITEM, COMBO
 }
 
+enum class CombatSide {
+    HERO, MONSTER
+}
+
+data class GameProgress(
+    val version: Int = 2,
+    val party: List<HeroSaveData> = emptyList(),
+    val unlockedHeroIds: Set<String> = emptySet(),
+    val defeatedEncounterIds: Set<String> = emptySet(),
+    val inventory: List<String> = emptyList(),
+    val sparks: Int = 0,
+    val yogaLevel: Int = 1,
+    val totalYogaXp: Int = 0,
+    val totalGoldSpent: Int = 0,
+    val lastSyncedMainSparks: Int = 0,
+    val totalBattlesWon: Int = 0,
+    val earnedTrophyIds: Set<String> = emptySet(),
+    val lastPlayedTimestamp: Long = 0L
+)
+
+data class CombatantState(
+    val id: String,
+    val side: CombatSide,
+    val name: String,
+    val element: Element,
+    val maxHp: Int,
+    val hp: Int,
+    val attack: Int,
+    val speed: Int,
+    val shield: Int = 0,
+    val gauge: Int = 0,
+    val cooldowns: Map<String, Int> = emptyMap(),
+    val statuses: List<BattleStatus> = emptyList(),
+    val isDefeated: Boolean = false
+)
+
 data class ActionOutcome(
     val action: TurnAction,
     val actorId: String,

@@ -128,11 +128,9 @@ fun ActionPanel(
                 // Animation finished, execute skill or wait for target
                 val skill = (currentHero.skills + currentHero.ultimate).find { it.id == selectedCardId }
                 if (skill != null) {
-                    onSkill(skill, emptyList()) // VM will handle if targeting is needed
-                    if (skill.targetType != TargetType.SINGLE_ALLY && skill.targetType != TargetType.SELF && skill.targetType != TargetType.SINGLE_ENEMY) {
-                        viewModel.dismissSelectedCard()
-                        isUsingSkill = false
-                    }
+                    onSkill(skill, emptyList())
+                    viewModel.dismissSelectedCard()
+                    isUsingSkill = false
                 }
             }
         }
@@ -257,9 +255,8 @@ fun ActionPanel(
                                     scaleX = lerp(1.2f, targetScale, useAnimProgress.value)
                                     scaleY = lerp(1.2f, targetScale, useAnimProgress.value)
                                 } else {
-                                    val yBias = 60.dp.toPx()
                                     translationX = lerp(origin.tx.dp.toPx(), 0f, entryProgress)
-                                    translationY = lerp(origin.ty.dp.toPx() + yBias, 0f, entryProgress)
+                                    translationY = lerp(origin.ty.dp.toPx(), 0f, entryProgress)
                                     rotationZ = lerp(origin.rot, 0f, entryProgress)
                                     scaleX = lerp(1f, 1.2f, entryProgress)
                                     scaleY = lerp(1f, 1.2f, entryProgress)

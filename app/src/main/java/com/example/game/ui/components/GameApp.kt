@@ -15,7 +15,10 @@ fun GameApp(
     val currentScreen by viewModel.currentScreen.collectAsState()
 
     BackHandler(enabled = currentScreen != GameScreen.HUB) {
-        viewModel.navigateBack()
+        when (currentScreen) {
+            GameScreen.PARTY, GameScreen.SHOP, GameScreen.TROPHIES, GameScreen.EQUIPMENT, GameScreen.SETTINGS -> onExitHub()
+            else -> viewModel.navigateBack()
+        }
     }
 
     AnimatedContent(
@@ -34,10 +37,7 @@ fun GameApp(
             GameScreen.HUB -> HubScreen(
                 model = viewModel,
                 onNavigateToBattle = { monsterId -> viewModel.startBattle(monsterId) },
-                onNavigateToShop = { viewModel.navigateTo(GameScreen.SHOP) },
-                onNavigateToParty = { viewModel.navigateTo(GameScreen.PARTY) },
-                onNavigateToSettings = { viewModel.navigateTo(GameScreen.SETTINGS) },
-                onNavigateToTrophies = { viewModel.navigateTo(GameScreen.TROPHIES) }
+                onExitHub = onExitHub
             )
             GameScreen.BATTLE -> BattleScreen(viewModel = viewModel)
             GameScreen.PARTY -> PartyScreen(viewModel = viewModel)
@@ -48,10 +48,7 @@ fun GameApp(
             GameScreen.SETTINGS -> HubScreen(
                 model = viewModel,
                 onNavigateToBattle = { monsterId -> viewModel.startBattle(monsterId) },
-                onNavigateToShop = { viewModel.navigateTo(GameScreen.SHOP) },
-                onNavigateToParty = { viewModel.navigateTo(GameScreen.PARTY) },
-                onNavigateToSettings = { viewModel.navigateTo(GameScreen.SETTINGS) },
-                onNavigateToTrophies = { viewModel.navigateTo(GameScreen.TROPHIES) }
+                onExitHub = onExitHub
             )
         }
     }

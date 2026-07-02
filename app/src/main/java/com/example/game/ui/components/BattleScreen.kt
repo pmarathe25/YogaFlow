@@ -18,6 +18,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
@@ -349,7 +350,7 @@ fun BattleScreen(viewModel: GameViewModel) {
                         selectedTargets = selectedTargets.toList(),
                         onCancelTargeting = { viewModel.cancelAction(); selectedTargets.clear() },
                         viewModel = viewModel,
-                        modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                        modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().zIndex(1f)
                     )
                 }
             }

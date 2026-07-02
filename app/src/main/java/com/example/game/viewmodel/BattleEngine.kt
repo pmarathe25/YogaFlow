@@ -504,10 +504,12 @@ object BattleEngine {
         monsters.filter { !it.isDead }.forEach { m ->
             actors.add(BattleActor(m.monsterId, m.name, m.spd, false, m.element))
         }
-        return actors.sortedByDescending { actor ->
-            val variance = 1f + (rng.nextFloat() * 0.1f - 0.05f)
-            actor.speed * variance
-        }
+        val tiebreakers = actors.associate { it.id to rng.nextInt(Int.MAX_VALUE) }
+        return actors.sortedWith(
+            compareByDescending<BattleActor> { it.speed }
+                .thenByDescending { it.isHero }
+                .thenBy { tiebreakers[it.id] }
+        )
     }
 
     fun resolveTargets(
