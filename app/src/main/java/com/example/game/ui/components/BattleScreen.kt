@@ -161,7 +161,15 @@ fun BattleScreen(viewModel: GameViewModel) {
                                 else Color(0xFF42A5F5)
 
                 if (isAttack) {
-                    monsterFlashColor = Color.Red
+                    val totalShieldDamage = event.outcomes.sumOf { outcome ->
+                        outcome.perTargetResult.values.sumOf { it.shieldDamage }
+                    }
+                    val totalDamage = event.outcomes.sumOf { it.damageDealt }
+                    monsterFlashColor = if (totalShieldDamage > 0 && totalShieldDamage >= totalDamage) {
+                        Color(0xFF9C27B0)
+                    } else {
+                        Color.Red
+                    }
                     monsterFlashAlpha = 1f
                     delay(150)
                     monsterFlashAlpha = 0f

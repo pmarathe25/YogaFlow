@@ -368,7 +368,7 @@ object BattleEngine {
     fun applyOutcome(
         state: BattleState,
         outcome: ActionOutcome
-    ): Pair<BattleState, List<BattleEvent>> {
+    ): Triple<BattleState, List<BattleEvent>, ActionOutcome> {
         val events = mutableListOf<BattleEvent>()
         val skill = outcome.skillUsed
         val combo = outcome.comboTriggered
@@ -376,10 +376,12 @@ object BattleEngine {
         val heroUpdates = mutableMapOf<String, HeroInstance>()
         val monsterUpdates = mutableMapOf<String, MonsterInstance>()
         var newStatusEffects = state.statusEffects
+        val updatedPerTarget = outcome.perTargetResult.toMutableMap()
 
         outcome.perTargetResult.forEach { (targetId, result) ->
             val hero = heroUpdates[targetId] ?: state.heroes.find { it.heroId == targetId }
             val monster = monsterUpdates[targetId] ?: state.monsters.find { it.monsterId == targetId }
+            var shieldDmg = 0
 
             if (result.damage > 0) {
                 if (hero != null) {
@@ -387,8 +389,10 @@ object BattleEngine {
                     val dmg = result.damage
                     if (h.shield >= dmg) {
                         h = h.copy(shield = h.shield - dmg)
+                        shieldDmg = dmg
                     } else {
                         val remaining = dmg - h.shield
+                        shieldDmg = h.shield
                         h = h.copy(shield = 0, currentHp = (h.currentHp - remaining).coerceAtLeast(0))
                     }
                     heroUpdates[targetId] = h
@@ -397,12 +401,18 @@ object BattleEngine {
                     val dmg = result.damage
                     if (m.shield >= dmg) {
                         m = m.copy(shield = m.shield - dmg)
+                        shieldDmg = dmg
                     } else {
                         val remaining = dmg - m.shield
+                        shieldDmg = m.shield
                         m = m.copy(shield = 0, currentHp = (m.currentHp - remaining).coerceAtLeast(0))
                     }
                     monsterUpdates[targetId] = m
                 }
+            }
+
+            if (shieldDmg > 0) {
+                updatedPerTarget[targetId] = result.copy(shieldDamage = shieldDmg)
             }
 
             if (result.heal > 0 && hero != null) {
@@ -471,13 +481,15 @@ object BattleEngine {
             }
         }
 
+        val updatedOutcome = outcome.copy(perTargetResult = updatedPerTarget)
+
         val newState = state.copy(
             heroes = finalHeroes,
             monsters = finalMonsters,
             statusEffects = newStatusEffects
         )
 
-        return Pair(newState, events)
+        return Triple(newState, events, updatedOutcome)
     }
 
     fun calculateTurnOrder(

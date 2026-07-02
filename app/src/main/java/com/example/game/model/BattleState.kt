@@ -40,6 +40,7 @@ data class TargetResult(
     val damage: Int = 0,
     val heal: Int = 0,
     val shield: Int = 0,
+    val shieldDamage: Int = 0,
     val statuses: List<String> = emptyList(),
     val cleansed: Boolean = false
 )

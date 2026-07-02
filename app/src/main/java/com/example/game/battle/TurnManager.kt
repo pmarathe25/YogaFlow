@@ -125,16 +125,16 @@ class TurnManager(private val rng: RandomProvider = DefaultRandomProvider) {
         if ((cooldowns[skill.id] ?: 0) > 0) return TurnResult(newState = state)
 
         val outcomeResult = BattleEngine.computeSkillOutcome(hero, skill, state, targets, rng)
-        val (postApplyState, applyEvents) = BattleEngine.applyOutcome(state, outcomeResult.outcome)
+        val (postApplyState, applyEvents, updatedOutcome) = BattleEngine.applyOutcome(state, outcomeResult.outcome)
 
         val logMessages = mutableListOf<String>()
         logMessages.add("${hero.name} uses ${skill.name}!")
 
-        if (outcomeResult.outcome.healingDone > 0) {
-            logMessages.add("${hero.name} heals for ${outcomeResult.outcome.healingDone} HP!")
+        if (updatedOutcome.healingDone > 0) {
+            logMessages.add("${hero.name} heals for ${updatedOutcome.healingDone} HP!")
         }
-        if (outcomeResult.outcome.shieldApplied > 0) {
-            logMessages.add("${hero.name} applies ${outcomeResult.outcome.shieldApplied} shield!")
+        if (updatedOutcome.shieldApplied > 0) {
+            logMessages.add("${hero.name} applies ${updatedOutcome.shieldApplied} shield!")
         }
 
         val newStateWithGauge = postApplyState.copy(
@@ -152,7 +152,7 @@ class TurnManager(private val rng: RandomProvider = DefaultRandomProvider) {
             newStateWithGauge.skillCooldowns
         }
 
-        val allEvents = applyEvents + BattleEvent.SkillUsed(heroId, skill, targets, listOf(outcomeResult.outcome))
+        val allEvents = applyEvents + BattleEvent.SkillUsed(heroId, skill, targets, listOf(updatedOutcome))
 
         return TurnResult(
             newState = newStateWithGauge.copy(
@@ -177,7 +177,7 @@ class TurnManager(private val rng: RandomProvider = DefaultRandomProvider) {
         if (targets.isEmpty()) return TurnResult(newState = state)
 
         val outcomeResult = BattleEngine.computeSkillOutcome(hero, skill, state, targets, rng)
-        val (postApplyState, applyEvents) = BattleEngine.applyOutcome(state, outcomeResult.outcome)
+        val (postApplyState, applyEvents, updatedOutcome) = BattleEngine.applyOutcome(state, outcomeResult.outcome)
 
         val logMessages = mutableListOf<String>()
         logMessages.add("${hero.name} unleashes ${skill.name}!")
@@ -190,7 +190,7 @@ class TurnManager(private val rng: RandomProvider = DefaultRandomProvider) {
             }
         )
 
-        val allEvents = applyEvents + BattleEvent.SkillUsed(heroId, skill, targets, listOf(outcomeResult.outcome))
+        val allEvents = applyEvents + BattleEvent.SkillUsed(heroId, skill, targets, listOf(updatedOutcome))
 
         return TurnResult(
             newState = newStateWithGauge.copy(
@@ -216,7 +216,7 @@ class TurnManager(private val rng: RandomProvider = DefaultRandomProvider) {
         val partnerIds = participants.drop(1).map { it.heroId }
 
         val outcomeResult = BattleEngine.computeComboOutcome(combo, casterId, partnerIds, state)
-        val (postApplyState, applyEvents) = BattleEngine.applyOutcome(state, outcomeResult.outcome)
+        val (postApplyState, applyEvents, updatedOutcome) = BattleEngine.applyOutcome(state, outcomeResult.outcome)
 
         val logMessages = mutableListOf<String>()
         logMessages.add("Party unleashes ${combo.name}!")
@@ -229,7 +229,7 @@ class TurnManager(private val rng: RandomProvider = DefaultRandomProvider) {
             }
         )
 
-        val allEvents = applyEvents + BattleEvent.ComboUsed(participantIds, combo, outcomeResult.outcome.targets, outcomeResult.outcome)
+        val allEvents = applyEvents + BattleEvent.ComboUsed(participantIds, combo, updatedOutcome.targets, updatedOutcome)
 
         return TurnResult(
             newState = newStateWithGauge.copy(
@@ -294,7 +294,7 @@ class TurnManager(private val rng: RandomProvider = DefaultRandomProvider) {
         }
 
         val outcomeResult = BattleEngine.computeMonsterOutcome(currentState, updatedMonster, skill, targets, rng)
-        val (afterActionState, applyEvents) = BattleEngine.applyOutcome(currentState, outcomeResult.outcome)
+        val (afterActionState, applyEvents, updatedOutcome) = BattleEngine.applyOutcome(currentState, outcomeResult.outcome)
         currentState = afterActionState
         allEvents.addAll(applyEvents)
 
@@ -320,7 +320,7 @@ class TurnManager(private val rng: RandomProvider = DefaultRandomProvider) {
             }
         }
 
-        val monsterTurnEvent = BattleEvent.MonsterTurn(monsterId, skill, targets, outcomeResult.outcome)
+        val monsterTurnEvent = BattleEvent.MonsterTurn(monsterId, skill, targets, updatedOutcome)
         allEvents.add(monsterTurnEvent)
 
         return TurnResult(

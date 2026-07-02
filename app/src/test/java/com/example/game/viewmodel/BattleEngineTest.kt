@@ -190,10 +190,11 @@ class BattleEngineTest {
             action = TurnAction.SKILL, actorId = "Shanti",
             perTargetResult = mapOf("Shanti" to TargetResult(damage = 60))
         )
-        val (newState, _) = BattleEngine.applyOutcome(state, outcome)
+        val (newState, _, updatedOutcome) = BattleEngine.applyOutcome(state, outcome)
         val updatedHero = newState.heroes.first()
         assertEquals(hero.maxHp, updatedHero.currentHp)
         assertEquals(40, updatedHero.shield)
+        assertEquals(60, updatedOutcome.perTargetResult["Shanti"]?.shieldDamage)
     }
 
     @Test
@@ -204,10 +205,11 @@ class BattleEngineTest {
             action = TurnAction.SKILL, actorId = "Shanti",
             perTargetResult = mapOf("Shanti" to TargetResult(damage = 100))
         )
-        val (newState, _) = BattleEngine.applyOutcome(state, outcome)
+        val (newState, _, updatedOutcome) = BattleEngine.applyOutcome(state, outcome)
         val updatedHero = newState.heroes.first()
         assertEquals(0, updatedHero.shield)
         assertEquals(hero.maxHp - 50, updatedHero.currentHp)
+        assertEquals(50, updatedOutcome.perTargetResult["Shanti"]?.shieldDamage)
     }
 
     @Test
@@ -218,7 +220,7 @@ class BattleEngineTest {
             action = TurnAction.SKILL, actorId = "Shanti",
             perTargetResult = mapOf("Shanti" to TargetResult(damage = 100))
         )
-        val (newState, events) = BattleEngine.applyOutcome(state, outcome)
+        val (newState, events, _) = BattleEngine.applyOutcome(state, outcome)
         val updatedHero = newState.heroes.first()
         assertEquals(0, updatedHero.currentHp)
         assertTrue(updatedHero.isDead)
@@ -233,7 +235,7 @@ class BattleEngineTest {
             action = TurnAction.SKILL, actorId = "Shanti",
             perTargetResult = mapOf("Shanti" to TargetResult(heal = 1000))
         )
-        val (newState, _) = BattleEngine.applyOutcome(state, outcome)
+        val (newState, _, _) = BattleEngine.applyOutcome(state, outcome)
         val updatedHero = newState.heroes.first()
         assertEquals(hero.maxHp, updatedHero.currentHp)
     }
@@ -251,7 +253,7 @@ class BattleEngineTest {
             action = TurnAction.SKILL, actorId = "Shanti", skillUsed = skill,
             perTargetResult = mapOf("Shanti" to TargetResult(statuses = listOf("ATK_DOWN")))
         )
-        val (newState, _) = BattleEngine.applyOutcome(state, outcome)
+        val (newState, _, _) = BattleEngine.applyOutcome(state, outcome)
         assertTrue(newState.statusEffects.containsKey("Shanti"))
         assertEquals(StatusEffectType.ATK_DOWN, newState.statusEffects["Shanti"]?.first()?.statusType)
     }
@@ -269,7 +271,7 @@ class BattleEngineTest {
             action = TurnAction.SKILL, actorId = "Shanti",
             perTargetResult = mapOf("Shanti" to TargetResult(cleansed = true))
         )
-        val (newState, _) = BattleEngine.applyOutcome(state, outcome)
+        val (newState, _, _) = BattleEngine.applyOutcome(state, outcome)
         assertFalse(newState.statusEffects.containsKey("Shanti"))
     }
 
@@ -287,7 +289,7 @@ class BattleEngineTest {
             action = TurnAction.SKILL, actorId = "Maitri", skillUsed = reviveSkill,
             perTargetResult = mapOf("Shanti" to TargetResult(heal = 300))
         )
-        val (newState, _) = BattleEngine.applyOutcome(state, outcome)
+        val (newState, _, _) = BattleEngine.applyOutcome(state, outcome)
         val revived = newState.heroes.first()
         assertFalse(revived.isDead)
         assertTrue(revived.currentHp > 0)
@@ -446,7 +448,7 @@ class BattleEngineTest {
             partnerIds = listOf("HeroB"),
             state = state
         )
-        val (newState, _) = BattleEngine.applyOutcome(state, result.outcome)
+        val (newState, _, _) = BattleEngine.applyOutcome(state, result.outcome)
         val updatedHero = newState.heroes.first { it.heroId == "HeroA" }
         assertTrue(updatedHero.currentHp > damagedHp)
     }
@@ -540,7 +542,7 @@ class BattleEngineTest {
             action = TurnAction.SKILL, actorId = "Shanti",
             perTargetResult = emptyMap()
         )
-        val (newState, _) = BattleEngine.applyOutcome(state, outcome)
+        val (newState, _, _) = BattleEngine.applyOutcome(state, outcome)
         assertEquals(hero.currentHp, newState.heroes.first().currentHp)
     }
 }

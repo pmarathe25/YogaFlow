@@ -37,70 +37,87 @@ fun BattleEffectOverlay(
             when (event) {
                 is BattleEvent.SkillUsed -> {
                     event.outcomes.forEach { outcome ->
-                        outcome.targets.forEach { targetId ->
+                        outcome.perTargetResult.forEach { (targetId, result) ->
                             val targetPos = heroPositions[targetId] ?: monsterPosition
-                            
-                            if (outcome.damageDealt > 0) {
-                                val entry = FloatingTextEntry(
+
+                            if (result.shieldDamage > 0) {
+                                damageNumbers.add(FloatingTextEntry(
                                     id = System.nanoTime(),
-                                    text = "-${outcome.damageDealt}",
+                                    text = "-${result.shieldDamage}",
+                                    color = Color(0xFF9C27B0),
+                                    startX = targetPos.x,
+                                    startY = targetPos.y - 15f,
+                                    startTime = System.currentTimeMillis()
+                                ))
+                                pool.emit(EmitterConfig(colors = listOf(Color(0xFF9C27B0), Color(0xFFCE93D8))), targetPos, 10)
+                            }
+
+                            val hpDmg = result.damage - result.shieldDamage
+                            if (hpDmg > 0) {
+                                damageNumbers.add(FloatingTextEntry(
+                                    id = System.nanoTime() + 1,
+                                    text = "-${hpDmg}",
                                     color = Color.Red,
                                     startX = targetPos.x,
                                     startY = targetPos.y,
                                     startTime = System.currentTimeMillis()
-                                )
-                                damageNumbers.add(entry)
-                                pool.emit(emitterConfigForElement(event.skill.damageComponents.firstOrNull()?.element ?: Element.NEUTRAL), targetPos, 15)
+                                ))
                             }
-                            
-                            if (outcome.healingDone > 0) {
-                                val entry = FloatingTextEntry(
-                                    id = System.nanoTime(),
-                                    text = "+${outcome.healingDone}",
+
+                            if (result.heal > 0) {
+                                damageNumbers.add(FloatingTextEntry(
+                                    id = System.nanoTime() + 2,
+                                    text = "+${result.heal}",
                                     color = Color.Green,
                                     startX = targetPos.x,
                                     startY = targetPos.y,
                                     startTime = System.currentTimeMillis()
-                                )
-                                damageNumbers.add(entry)
+                                ))
                                 pool.emit(EmitterConfig(colors = listOf(Color.Green)), targetPos, 10)
                             }
-                            
-                            if (outcome.shieldApplied > 0) {
-                                val entry = FloatingTextEntry(
-                                    id = System.nanoTime(),
-                                    text = "🛡️ ${outcome.shieldApplied}",
+
+                            if (result.shield > 0) {
+                                damageNumbers.add(FloatingTextEntry(
+                                    id = System.nanoTime() + 3,
+                                    text = "🛡️ ${result.shield}",
                                     color = Color.Cyan,
                                     startX = targetPos.x,
                                     startY = targetPos.y,
                                     startTime = System.currentTimeMillis()
-                                )
-                                damageNumbers.add(entry)
+                                ))
                                 pool.emit(EmitterConfig(colors = listOf(Color.Cyan)), targetPos, 8)
-                            }
-                            if (outcome.damageDealt > 0 || outcome.healingDone > 0 || outcome.shieldApplied > 0) {
-                                // Add a generic emission if specific ones fail to trigger
-                                pool.emit(EmitterConfig(colors = listOf(Color.White)), targetPos, 5)
                             }
                         }
                     }
                 }
                 is BattleEvent.MonsterTurn -> {
-                    val outcome = event.outcome
-                    outcome.targets.forEach { targetId ->
+                    event.outcome.perTargetResult.forEach { (targetId, result) ->
                         val targetPos = heroPositions[targetId] ?: Offset.Zero
-                        if (outcome.damageDealt > 0) {
-                            val entry = FloatingTextEntry(
+
+                        val shieldDmg = result.shieldDamage
+                        val hpDmg = result.damage - shieldDmg
+
+                        if (shieldDmg > 0) {
+                            damageNumbers.add(FloatingTextEntry(
                                 id = System.nanoTime(),
-                                text = "-${outcome.damageDealt}",
+                                text = "-${shieldDmg}",
+                                color = Color(0xFF9C27B0),
+                                startX = targetPos.x,
+                                startY = targetPos.y - 15f,
+                                startTime = System.currentTimeMillis()
+                            ))
+                        }
+                        if (hpDmg > 0) {
+                            damageNumbers.add(FloatingTextEntry(
+                                id = System.nanoTime() + 1,
+                                text = "-${hpDmg}",
                                 color = Color.Red,
                                 startX = targetPos.x,
                                 startY = targetPos.y,
                                 startTime = System.currentTimeMillis()
-                            )
-                            damageNumbers.add(entry)
-                            pool.emit(EmitterConfig(colors = listOf(Color.Black, Color.Red), force = 12f), targetPos, 12)
+                            ))
                         }
+                        pool.emit(EmitterConfig(colors = listOf(Color.Black, Color.Red), force = 12f), targetPos, 12)
                     }
                 }
                 else -> {}
