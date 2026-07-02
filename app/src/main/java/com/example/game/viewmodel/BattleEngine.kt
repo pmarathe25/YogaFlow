@@ -1,8 +1,9 @@
 package com.example.game.viewmodel
 
+import com.example.game.battle.DefaultRandomProvider
+import com.example.game.battle.RandomProvider
 import com.example.game.model.*
 import kotlin.math.*
-import kotlin.random.Random
 
 object BattleEngine {
 
@@ -97,7 +98,8 @@ object BattleEngine {
         hero: HeroInstance,
         skill: Skill,
         state: BattleState,
-        targets: List<String>
+        targets: List<String>,
+        rng: RandomProvider = DefaultRandomProvider
     ): SkillOutcomeResult {
         var totalDamage = 0
         var totalHeal = 0
@@ -141,9 +143,9 @@ object BattleEngine {
                             damageComponent = component,
                             atkBuffMultiplier = atkBuff + (spdBuff * 0.1f)
                         )
-                        
+
                         val finalAmount = (result.amount * (1f - dmgReduction)).toInt().coerceAtLeast(1)
-                        
+
                         tDmg += finalAmount
                         breakdown.add(result.breakdown.copy(amount = finalAmount))
                     }
@@ -163,7 +165,7 @@ object BattleEngine {
             }
 
             skill.statusEffects.forEach { se ->
-                if (Random.nextFloat() < se.chance) {
+                if (rng.nextFloat() < se.chance) {
                     tStatuses.add(se.type.name)
                 }
             }
@@ -314,7 +316,8 @@ object BattleEngine {
         state: BattleState,
         monster: MonsterInstance,
         skill: Skill,
-        targets: List<String>
+        targets: List<String>,
+        rng: RandomProvider = DefaultRandomProvider
     ): SkillOutcomeResult {
         var totalDamage = 0
         val perTarget = mutableMapOf<String, TargetResult>()
@@ -344,7 +347,7 @@ object BattleEngine {
             }
 
             skill.statusEffects.forEach { se ->
-                if (Random.nextFloat() < se.chance) {
+                if (rng.nextFloat() < se.chance) {
                     tStatuses.add(se.type.name)
                 }
             }
@@ -365,55 +368,64 @@ object BattleEngine {
     fun applyOutcome(
         state: BattleState,
         outcome: ActionOutcome
-    ): BattleState {
+    ): Pair<BattleState, List<BattleEvent>> {
+        val events = mutableListOf<BattleEvent>()
         val skill = outcome.skillUsed
         val combo = outcome.comboTriggered
 
+        val heroUpdates = mutableMapOf<String, HeroInstance>()
+        val monsterUpdates = mutableMapOf<String, MonsterInstance>()
+        var newStatusEffects = state.statusEffects
+
         outcome.perTargetResult.forEach { (targetId, result) ->
-            val hero = state.heroes.find { it.heroId == targetId }
-            val monster = state.monsters.find { it.monsterId == targetId }
-            val target = hero ?: monster ?: return@forEach
+            val hero = heroUpdates[targetId] ?: state.heroes.find { it.heroId == targetId }
+            val monster = monsterUpdates[targetId] ?: state.monsters.find { it.monsterId == targetId }
 
             if (result.damage > 0) {
-                val dmg = result.damage
                 if (hero != null) {
-                    if (hero.shield >= dmg) {
-                        hero.shield -= dmg
+                    var h = hero
+                    val dmg = result.damage
+                    if (h.shield >= dmg) {
+                        h = h.copy(shield = h.shield - dmg)
                     } else {
-                        val remaining = dmg - hero.shield
-                        hero.shield = 0
-                        hero.currentHp = (hero.currentHp - remaining).coerceAtLeast(0)
+                        val remaining = dmg - h.shield
+                        h = h.copy(shield = 0, currentHp = (h.currentHp - remaining).coerceAtLeast(0))
                     }
+                    heroUpdates[targetId] = h
                 } else if (monster != null) {
-                    if (monster.shield >= dmg) {
-                        monster.shield -= dmg
+                    var m = monster
+                    val dmg = result.damage
+                    if (m.shield >= dmg) {
+                        m = m.copy(shield = m.shield - dmg)
                     } else {
-                        val remaining = dmg - monster.shield
-                        monster.shield = 0
-                        monster.currentHp = (monster.currentHp - remaining).coerceAtLeast(0)
+                        val remaining = dmg - m.shield
+                        m = m.copy(shield = 0, currentHp = (m.currentHp - remaining).coerceAtLeast(0))
                     }
+                    monsterUpdates[targetId] = m
                 }
             }
 
             if (result.heal > 0 && hero != null) {
-                hero.currentHp = (hero.currentHp + result.heal).coerceAtMost(hero.maxHp)
+                val h = heroUpdates[targetId] ?: hero
+                heroUpdates[targetId] = h.copy(currentHp = (h.currentHp + result.heal).coerceAtMost(h.maxHp))
             }
 
             if (result.shield > 0 && hero != null) {
-                hero.shield += result.shield
+                val h = heroUpdates[targetId] ?: hero
+                heroUpdates[targetId] = h.copy(shield = h.shield + result.shield)
             }
 
             result.statuses.forEach { sName ->
                 val se = skill?.statusEffects?.find { it.type.name == sName }
                     ?: combo?.statusEffects?.find { it.type.name == sName }
                 if (se != null) {
-                    val list = state.statusEffects.getOrPut(targetId) { mutableListOf() }
-                    list.add(BattleStatus(targetId, se.type, se.duration, se.value))
+                    val existing = newStatusEffects[targetId] ?: emptyList()
+                    newStatusEffects = newStatusEffects + (targetId to (existing + BattleStatus(targetId, se.type, se.duration, se.value)))
                 }
             }
 
             if (result.cleansed) {
-                state.statusEffects.remove(targetId)
+                newStatusEffects = newStatusEffects - targetId
             }
         }
 
@@ -421,42 +433,57 @@ object BattleEngine {
         buffs?.forEach { buff ->
             val targetsToBuff = if (buff.targetsParty) state.aliveHeroes.map { it.heroId } else outcome.targets
             targetsToBuff.forEach { id ->
-                val list = state.statusEffects.getOrPut(id) { mutableListOf() }
-                list.add(BattleStatus(id, buff.type, buff.duration, buff.value))
+                val existing = newStatusEffects[id] ?: emptyList()
+                newStatusEffects = newStatusEffects + (id to (existing + BattleStatus(id, buff.type, buff.duration, buff.value)))
             }
         }
 
         if (skill?.revive == true || combo?.revive == true) {
             val fallen = state.heroes.filter { it.isDead }
             fallen.forEach { h ->
-                h.isDead = false
                 val scaling = skill?.healScaling ?: combo?.healScaling
                 val healPct = scaling?.let { if (it.isPercentage) it.baseHeal else 50 } ?: 50
-                h.currentHp = (h.maxHp * healPct / 100).coerceAtLeast(1)
+                val prev = heroUpdates[h.heroId] ?: h
+                heroUpdates[h.heroId] = prev.copy(
+                    isDead = false,
+                    currentHp = (h.maxHp * healPct / 100).coerceAtLeast(1)
+                )
             }
         }
 
-        state.heroes.forEach { h ->
+        val newHeroes = state.heroes.map { h -> heroUpdates[h.heroId] ?: h }
+        val newMonsters = state.monsters.map { m -> monsterUpdates[m.monsterId] ?: m }
+
+        val finalHeroes = newHeroes.map { h ->
             if (h.currentHp <= 0 && !h.isDead) {
-                h.isDead = true
-                h.currentHp = 0
-                state.addEvent(BattleEvent.HeroDown(h.heroId))
+                events.add(BattleEvent.HeroDown(h.heroId))
+                h.copy(isDead = true, currentHp = 0)
+            } else {
+                h
             }
         }
-        state.monsters.forEach { m ->
+        val finalMonsters = newMonsters.map { m ->
             if (m.currentHp <= 0 && !m.isDead) {
-                m.isDead = true
-                m.currentHp = 0
-                state.addEvent(BattleEvent.MonsterDown(m.monsterId))
+                events.add(BattleEvent.MonsterDown(m.monsterId))
+                m.copy(isDead = true, currentHp = 0)
+            } else {
+                m
             }
         }
 
-        return state
+        val newState = state.copy(
+            heroes = finalHeroes,
+            monsters = finalMonsters,
+            statusEffects = newStatusEffects
+        )
+
+        return Pair(newState, events)
     }
 
     fun calculateTurnOrder(
         heroes: List<HeroInstance>,
-        monsters: List<MonsterInstance>
+        monsters: List<MonsterInstance>,
+        rng: RandomProvider = DefaultRandomProvider
     ): List<BattleActor> {
         val actors = mutableListOf<BattleActor>()
         heroes.filter { !it.isDead }.forEach { h ->
@@ -466,7 +493,7 @@ object BattleEngine {
             actors.add(BattleActor(m.monsterId, m.name, m.spd, false, m.element))
         }
         return actors.sortedByDescending { actor ->
-            val variance = 1f + (Random.nextFloat() * 0.1f - 0.05f)
+            val variance = 1f + (rng.nextFloat() * 0.1f - 0.05f)
             actor.speed * variance
         }
     }
@@ -492,37 +519,41 @@ object BattleEngine {
     }
 
     fun checkPhaseTriggers(
-        state: BattleState,
         monster: MonsterInstance
-    ): List<BattleEvent> {
+    ): Pair<MonsterInstance, List<BattleEvent>> {
         val events = mutableListOf<BattleEvent>()
-        for (i in monster.phases.indices) {
-            val phase = monster.phases[i]
-            if (monster.hpPercent <= phase.hpThreshold && monster.activePhase < i) {
-                monster.activePhase = i
+        var updated = monster
+        for (i in updated.phases.indices) {
+            val phase = updated.phases[i]
+            if (updated.hpPercent <= phase.hpThreshold && updated.activePhase < i) {
+                updated = updated.copy(activePhase = i)
                 phase.triggers.forEach { trigger ->
-                    events.add(BattleEvent.PhaseTriggered(monster.monsterId, i, trigger))
+                    events.add(BattleEvent.PhaseTriggered(updated.monsterId, i, trigger))
                     when (trigger.type) {
-                        PhaseTriggerType.EXTRA_ACTION -> monster.extraActionsThisRound++
-                        PhaseTriggerType.DOUBLE_ACTIONS -> monster.extraActionsThisRound = 2
-                        PhaseTriggerType.GAIN_SHIELD -> monster.shield += (monster.maxHp * trigger.value).toInt()
+                        PhaseTriggerType.EXTRA_ACTION -> updated = updated.copy(extraActionsThisRound = updated.extraActionsThisRound + 1)
+                        PhaseTriggerType.DOUBLE_ACTIONS -> updated = updated.copy(extraActionsThisRound = 2)
+                        PhaseTriggerType.GAIN_SHIELD -> updated = updated.copy(shield = updated.shield + (updated.maxHp * trigger.value).toInt())
                         else -> {}
                     }
                 }
             }
         }
-        return events
+        return Pair(updated, events)
     }
 
     fun chooseMonsterTarget(
         heroes: List<HeroInstance>,
         strategy: TargetStrategy,
-        state: BattleState? = null
+        state: BattleState? = null,
+        rng: RandomProvider = DefaultRandomProvider
     ): String {
         val alive = heroes.filter { !it.isDead }
         if (alive.isEmpty()) return ""
         return when (strategy) {
-            TargetStrategy.RANDOM, TargetStrategy.RANDOM_HERO -> alive.random().heroId
+            TargetStrategy.RANDOM, TargetStrategy.RANDOM_HERO -> {
+                val idx = rng.nextInt(alive.size)
+                alive[idx].heroId
+            }
             TargetStrategy.LOWEST_HP -> alive.minByOrNull { it.currentHp }!!.heroId
             TargetStrategy.HIGHEST_HP -> alive.maxByOrNull { it.currentHp }!!.heroId
             TargetStrategy.MOST_BUFFS -> {

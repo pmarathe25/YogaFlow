@@ -185,12 +185,12 @@ class BattleEngineTest {
     @Test
     fun `applyOutcome_shieldAbsorbsBeforeHP`() {
         val hero = makeHeroInstance(id = "Shanti", baseHp = 500).apply { shield = 100 }
-        val state = BattleState(heroes = mutableListOf(hero), monsters = mutableListOf())
+        val state = BattleState(heroes = listOf(hero), monsters = listOf())
         val outcome = ActionOutcome(
             action = TurnAction.SKILL, actorId = "Shanti",
             perTargetResult = mapOf("Shanti" to TargetResult(damage = 60))
         )
-        val newState = BattleEngine.applyOutcome(state, outcome)
+        val (newState, _) = BattleEngine.applyOutcome(state, outcome)
         val updatedHero = newState.heroes.first()
         assertEquals(hero.maxHp, updatedHero.currentHp)
         assertEquals(40, updatedHero.shield)
@@ -199,12 +199,12 @@ class BattleEngineTest {
     @Test
     fun `applyOutcome_overkill_damagesHPAfterShieldDepleted`() {
         val hero = makeHeroInstance(id = "Shanti", baseHp = 500).apply { shield = 50 }
-        val state = BattleState(heroes = mutableListOf(hero), monsters = mutableListOf())
+        val state = BattleState(heroes = listOf(hero), monsters = listOf())
         val outcome = ActionOutcome(
             action = TurnAction.SKILL, actorId = "Shanti",
             perTargetResult = mapOf("Shanti" to TargetResult(damage = 100))
         )
-        val newState = BattleEngine.applyOutcome(state, outcome)
+        val (newState, _) = BattleEngine.applyOutcome(state, outcome)
         val updatedHero = newState.heroes.first()
         assertEquals(0, updatedHero.shield)
         assertEquals(hero.maxHp - 50, updatedHero.currentHp)
@@ -213,27 +213,27 @@ class BattleEngineTest {
     @Test
     fun `applyOutcome_death_whenHPReachesZero`() {
         val hero = makeHeroInstance(id = "Shanti", baseHp = 500).apply { currentHp = 30 }
-        val state = BattleState(heroes = mutableListOf(hero), monsters = mutableListOf())
+        val state = BattleState(heroes = listOf(hero), monsters = listOf())
         val outcome = ActionOutcome(
             action = TurnAction.SKILL, actorId = "Shanti",
             perTargetResult = mapOf("Shanti" to TargetResult(damage = 100))
         )
-        val newState = BattleEngine.applyOutcome(state, outcome)
+        val (newState, events) = BattleEngine.applyOutcome(state, outcome)
         val updatedHero = newState.heroes.first()
         assertEquals(0, updatedHero.currentHp)
         assertTrue(updatedHero.isDead)
-        assertTrue(newState.eventLog.any { it is BattleEvent.HeroDown })
+        assertTrue(events.any { it is BattleEvent.HeroDown })
     }
 
     @Test
     fun `applyOutcome_heal_clampedToMaxHp`() {
         val hero = makeHeroInstance(id = "Shanti", baseHp = 500).apply { currentHp = maxHp - 10 }
-        val state = BattleState(heroes = mutableListOf(hero), monsters = mutableListOf())
+        val state = BattleState(heroes = listOf(hero), monsters = listOf())
         val outcome = ActionOutcome(
             action = TurnAction.SKILL, actorId = "Shanti",
             perTargetResult = mapOf("Shanti" to TargetResult(heal = 1000))
         )
-        val newState = BattleEngine.applyOutcome(state, outcome)
+        val (newState, _) = BattleEngine.applyOutcome(state, outcome)
         val updatedHero = newState.heroes.first()
         assertEquals(hero.maxHp, updatedHero.currentHp)
     }
@@ -246,12 +246,12 @@ class BattleEngineTest {
             statusEffects = listOf(StatusEffectInfliction(StatusEffectType.ATK_DOWN, 1f, 3))
         )
         val hero = makeHeroInstance(id = "Shanti")
-        val state = BattleState(heroes = mutableListOf(hero), monsters = mutableListOf())
+        val state = BattleState(heroes = listOf(hero), monsters = listOf())
         val outcome = ActionOutcome(
             action = TurnAction.SKILL, actorId = "Shanti", skillUsed = skill,
             perTargetResult = mapOf("Shanti" to TargetResult(statuses = listOf("ATK_DOWN")))
         )
-        val newState = BattleEngine.applyOutcome(state, outcome)
+        val (newState, _) = BattleEngine.applyOutcome(state, outcome)
         assertTrue(newState.statusEffects.containsKey("Shanti"))
         assertEquals(StatusEffectType.ATK_DOWN, newState.statusEffects["Shanti"]?.first()?.statusType)
     }
@@ -259,15 +259,17 @@ class BattleEngineTest {
     @Test
     fun `applyOutcome_cleanse_removesDebuffs`() {
         val hero = makeHeroInstance(id = "Shanti")
-        val state = BattleState(heroes = mutableListOf(hero), monsters = mutableListOf())
-        state.statusEffects["Shanti"] = mutableListOf(
-            BattleStatus("Shanti", StatusEffectType.ATK_DOWN, 3, 0.2f)
+        val state = BattleState(
+            heroes = listOf(hero), monsters = listOf(),
+            statusEffects = mapOf("Shanti" to listOf(
+                BattleStatus("Shanti", StatusEffectType.ATK_DOWN, 3, 0.2f)
+            ))
         )
         val outcome = ActionOutcome(
             action = TurnAction.SKILL, actorId = "Shanti",
             perTargetResult = mapOf("Shanti" to TargetResult(cleansed = true))
         )
-        val newState = BattleEngine.applyOutcome(state, outcome)
+        val (newState, _) = BattleEngine.applyOutcome(state, outcome)
         assertFalse(newState.statusEffects.containsKey("Shanti"))
     }
 
@@ -280,12 +282,12 @@ class BattleEngineTest {
             revive = true
         )
         val hero = makeHeroInstance(id = "Shanti", baseHp = 500).apply { currentHp = 0; isDead = true }
-        val state = BattleState(heroes = mutableListOf(hero), monsters = mutableListOf())
+        val state = BattleState(heroes = listOf(hero), monsters = listOf())
         val outcome = ActionOutcome(
             action = TurnAction.SKILL, actorId = "Maitri", skillUsed = reviveSkill,
             perTargetResult = mapOf("Shanti" to TargetResult(heal = 300))
         )
-        val newState = BattleEngine.applyOutcome(state, outcome)
+        val (newState, _) = BattleEngine.applyOutcome(state, outcome)
         val revived = newState.heroes.first()
         assertFalse(revived.isDead)
         assertTrue(revived.currentHp > 0)
@@ -325,7 +327,7 @@ class BattleEngineTest {
         val skill = Skill(id = "test", name = "Test", description = "",
             targetType = TargetType.SINGLE_ALLY)
         val hero = makeHeroInstance(id = "Shanti")
-        val state = BattleState(heroes = mutableListOf(hero), monsters = mutableListOf())
+        val state = BattleState(heroes = listOf(hero), monsters = listOf())
         val targets = BattleEngine.resolveTargets(skill, "Shanti", state)
         assertEquals(listOf("Shanti"), targets)
     }
@@ -336,7 +338,7 @@ class BattleEngineTest {
             targetType = TargetType.SINGLE_ENEMY)
         val hero = makeHeroInstance(id = "Shanti")
         val monster = makeMonsterInstance(id = "Bhaya")
-        val state = BattleState(heroes = mutableListOf(hero), monsters = mutableListOf(monster))
+        val state = BattleState(heroes = listOf(hero), monsters = listOf(monster))
         val targets = BattleEngine.resolveTargets(skill, "Shanti", state)
         assertEquals(1, targets.size)
         assertEquals("Bhaya", targets[0])
@@ -351,8 +353,8 @@ class BattleEngineTest {
         val alive3 = makeHeroInstance(id = "Santosha")
         val dead1 = makeHeroInstance(id = "DeadHero").apply { currentHp = 0; isDead = true }
         val state = BattleState(
-            heroes = mutableListOf(alive1, alive2, alive3, dead1),
-            monsters = mutableListOf()
+            heroes = listOf(alive1, alive2, alive3, dead1),
+            monsters = listOf()
         )
         val targets = BattleEngine.resolveTargets(skill, "Shanti", state)
         assertEquals(3, targets.size)
@@ -366,7 +368,7 @@ class BattleEngineTest {
             targetType = TargetType.ALL_ENEMIES)
         val hero = makeHeroInstance(id = "Shanti")
         val monster = makeMonsterInstance(id = "Bhaya")
-        val state = BattleState(heroes = mutableListOf(hero), monsters = mutableListOf(monster))
+        val state = BattleState(heroes = listOf(hero), monsters = listOf(monster))
         val targets = BattleEngine.resolveTargets(skill, "Shanti", state)
         assertEquals(1, targets.size)
         assertEquals("Bhaya", targets[0])
@@ -385,7 +387,7 @@ class BattleEngineTest {
         val h1 = makeHeroInstance(id = "HeroA", baseHp = 500, level = 5)
         val h2 = makeHeroInstance(id = "HeroB", baseHp = 500, level = 5)
         val monster = makeMonsterInstance(id = "Enemy")
-        val state = BattleState(heroes = mutableListOf(h1, h2), monsters = mutableListOf(monster))
+        val state = BattleState(heroes = listOf(h1, h2), monsters = listOf(monster))
         val result = BattleEngine.computeComboOutcome(
             combo = combo,
             casterId = "HeroA",
@@ -410,7 +412,7 @@ class BattleEngineTest {
         val h2 = makeHeroInstance(id = "HeroB", level = 5)
         val h3 = makeHeroInstance(id = "HeroC", level = 5)
         val monster = makeMonsterInstance(id = "Enemy")
-        val state = BattleState(heroes = mutableListOf(h1, h2, h3), monsters = mutableListOf(monster))
+        val state = BattleState(heroes = listOf(h1, h2, h3), monsters = listOf(monster))
         val result = BattleEngine.computeComboOutcome(
             combo = combo,
             casterId = "HeroA",
@@ -435,8 +437,8 @@ class BattleEngineTest {
         h1.currentHp = (h1.currentHp - 200).coerceAtLeast(1)
         val damagedHp = h1.currentHp
         val state = BattleState(
-            heroes = mutableListOf(h1, h2),
-            monsters = mutableListOf()
+            heroes = listOf(h1, h2),
+            monsters = listOf()
         )
         val result = BattleEngine.computeComboOutcome(
             combo = combo,
@@ -444,7 +446,7 @@ class BattleEngineTest {
             partnerIds = listOf("HeroB"),
             state = state
         )
-        val newState = BattleEngine.applyOutcome(state, result.outcome)
+        val (newState, _) = BattleEngine.applyOutcome(state, result.outcome)
         val updatedHero = newState.heroes.first { it.heroId == "HeroA" }
         assertTrue(updatedHero.currentHp > damagedHp)
     }
@@ -463,10 +465,9 @@ class BattleEngineTest {
             currentHp = (maxHp * 0.45f).toInt()
             shield = 0
         }
-        val state = BattleState(heroes = mutableListOf(), monsters = mutableListOf(monster))
         val preShield = monster.shield
-        BattleEngine.checkPhaseTriggers(state, monster)
-        assertTrue(monster.shield > preShield)
+        val (updatedMonster, _) = BattleEngine.checkPhaseTriggers(monster)
+        assertTrue(updatedMonster.shield > preShield)
     }
 
     @Test
@@ -509,7 +510,7 @@ class BattleEngineTest {
             targetType = TargetType.ALL_ALLIES)
         val alive = makeHeroInstance(id = "Shanti")
         val dead = makeHeroInstance(id = "Virya").apply { currentHp = 0; isDead = true }
-        val state = BattleState(heroes = mutableListOf(alive, dead), monsters = mutableListOf())
+        val state = BattleState(heroes = listOf(alive, dead), monsters = listOf())
         val targets = BattleEngine.resolveTargets(skill, "Shanti", state)
         assertEquals(listOf("Shanti"), targets)
         assertFalse(targets.contains("Virya"))
@@ -534,12 +535,12 @@ class BattleEngineTest {
     @Test
     fun `applyOutcome_zeroDamage_noDeathEvents`() {
         val hero = makeHeroInstance(id = "Shanti")
-        val state = BattleState(heroes = mutableListOf(hero), monsters = mutableListOf())
+        val state = BattleState(heroes = listOf(hero), monsters = listOf())
         val outcome = ActionOutcome(
             action = TurnAction.SKILL, actorId = "Shanti",
             perTargetResult = emptyMap()
         )
-        val newState = BattleEngine.applyOutcome(state, outcome)
+        val (newState, _) = BattleEngine.applyOutcome(state, outcome)
         assertEquals(hero.currentHp, newState.heroes.first().currentHp)
     }
 }

@@ -22,7 +22,7 @@ data class ActionOutcome(
     val actorId: String,
     val skillUsed: Skill? = null,
     val targets: List<String> = emptyList(),
-    val damageDealt: Int = 0, // Total damage for summary/logs
+    val damageDealt: Int = 0,
     val healingDone: Int = 0,
     val shieldApplied: Int = 0,
     val statusApplied: List<String> = emptyList(),
@@ -89,67 +89,53 @@ sealed class BattleEvent {
     data class Defeat(val round: Int) : BattleEvent()
 }
 
-class BattleState(
-    val heroes: MutableList<HeroInstance>,
-    val monsters: MutableList<MonsterInstance>,
-    val turnOrder: MutableList<BattleActor> = mutableListOf(),
-    var currentTurnIndex: Int = 0,
-    var currentActorId: String = "",
-    var phase: BattlePhase = BattlePhase.START_OF_BATTLE,
-    var round: Int = 1,
-    var turnsTaken: Int = 0,
-    val statusEffects: MutableMap<String, MutableList<BattleStatus>> = mutableMapOf(),
-    var selectedTargets: List<String> = emptyList(),
-    private val _eventLog: MutableList<BattleEvent> = mutableListOf(),
-    var isComboAvailable: Boolean = false,
-    var pendingSkill: Skill? = null,
-    var showTargetSelection: Boolean = false,
-    val skillCooldowns: MutableMap<String, MutableMap<String, Int>> = mutableMapOf() // heroId -> (skillId -> remainingTurns)
+data class BattleState(
+    val heroes: List<HeroInstance>,
+    val monsters: List<MonsterInstance>,
+    val turnOrder: List<BattleActor> = emptyList(),
+    val currentTurnIndex: Int = 0,
+    val currentActorId: String = "",
+    val phase: BattlePhase = BattlePhase.START_OF_BATTLE,
+    val round: Int = 1,
+    val turnsTaken: Int = 0,
+    val statusEffects: Map<String, List<BattleStatus>> = emptyMap(),
+    val selectedTargets: List<String> = emptyList(),
+    val eventLog: List<BattleEvent> = emptyList(),
+    val isComboAvailable: Boolean = false,
+    val pendingSkill: Skill? = null,
+    val showTargetSelection: Boolean = false,
+    val skillCooldowns: Map<String, Map<String, Int>> = emptyMap()
 ) {
-    val eventLog: List<BattleEvent> get() = _eventLog.toList()
     val aliveHeroes: List<HeroInstance> get() = heroes.filter { !it.isDead }
     val aliveMonsters: List<MonsterInstance> get() = monsters.filter { !it.isDead }
     val isBattleOver: Boolean get() = phase == BattlePhase.VICTORY || phase == BattlePhase.DEFEAT
 
-    fun addEvent(event: BattleEvent) {
-        _eventLog.add(event)
-    }
-
     fun getActor(id: String): BattleActor? = turnOrder.find { it.id == id }
 
     fun getStatusesForTarget(id: String): List<BattleStatus> {
-        return statusEffects[id]?.toList() ?: emptyList()
+        return statusEffects[id] ?: emptyList()
     }
 
     fun hasStatus(targetId: String, type: StatusEffectType): Boolean {
         return statusEffects[targetId]?.any { it.statusType == type && it.remainingTurns > 0 } == true
     }
 
-    fun advanceRound() {
-        round++
-        statusEffects.forEach { (id, statuses) ->
-            statuses.removeAll { it.remainingTurns <= 1 }
-            statuses.replaceAll { it.copy(remainingTurns = it.remainingTurns - 1) }
-        }
+    fun advanceRound(): BattleState {
+        val newStatusEffects = statusEffects.mapValues { (_, statuses) ->
+            statuses
+                .filter { it.remainingTurns > 1 }
+                .map { it.copy(remainingTurns = it.remainingTurns - 1) }
+        }.filterValues { it.isNotEmpty() }
+        return copy(round = round + 1, statusEffects = newStatusEffects)
     }
 
-    fun snapshot(): BattleState = BattleState(
-        heroes = heroes.map { it.copy(equippedItems = it.equippedItems.toMutableList()) }.toMutableList(),
-        monsters = monsters.map { it.copy() }.toMutableList(),
-        turnOrder = turnOrder.toMutableList(),
-        currentTurnIndex = currentTurnIndex,
-        currentActorId = currentActorId,
-        phase = phase,
-        round = round,
-        turnsTaken = turnsTaken,
-        statusEffects = statusEffects.mapValues { it.value.toMutableList() }.toMutableMap(),
-        selectedTargets = selectedTargets.toList(),
-        _eventLog = _eventLog.toMutableList(),
-        isComboAvailable = isComboAvailable,
-        pendingSkill = pendingSkill,
-        showTargetSelection = showTargetSelection,
-        skillCooldowns = skillCooldowns.mapValues { it.value.toMutableMap() }.toMutableMap()
-    )
+    fun withUpdatedHero(heroId: String, update: (HeroInstance) -> HeroInstance): BattleState {
+        return copy(heroes = heroes.map { if (it.heroId == heroId) update(it) else it })
+    }
+
+    fun withUpdatedMonster(monsterId: String, update: (MonsterInstance) -> MonsterInstance): BattleState {
+        return copy(monsters = monsters.map { if (it.monsterId == monsterId) update(it) else it })
+    }
 }
 
 data class BattleActor(
@@ -193,5 +179,3 @@ data class StatusSaveData(
     val remainingTurns: Int,
     val value: Float
 )
-
-
