@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.game.model.*
@@ -299,34 +300,49 @@ fun HeroDetailsDialog(
                 // Gear Section
                 Text("Equipped Gear", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
-                
+
                 val equipped = viewModel.getEquippedItems(hero.id)
-                val slots = listOf(EquipmentSlot.WEAPON, EquipmentSlot.ARMOR, EquipmentSlot.ACCESSORY)
-                
-                slots.forEach { slot ->
-                    val item = equipped.find { it.slot == slot }
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier.size(120.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                            Surface(Modifier.size(36.dp), shape = CircleShape, color = MaterialTheme.colorScheme.surfaceVariant) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(item?.getIcon() ?: "", fontSize = 18.sp)
-                                }
-                            }
-                            Spacer(Modifier.width(12.dp))
-                            Column {
-                                Text(item?.name ?: "Empty $slot", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                                item?.let { Text(it.bonusDescription, style = MaterialTheme.typography.labelSmall, color = Color.Gray, maxLines = 1) }
-                            }
-                        }
-                        if (item != null) {
-                            IconButton(onClick = { viewModel.unequipItem(hero.id, item.id) }) {
-                                Icon(Icons.Default.LinkOff, contentDescription = "Unequip", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
-                            }
-                        }
+                        HeroPortrait(hero.id, heroColor, Modifier.size(100.dp))
+                    }
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val weaponItem = equipped.find { it.slot == EquipmentSlot.WEAPON }
+                        val armorItem = equipped.find { it.slot == EquipmentSlot.ARMOR }
+                        val accessoryItem = equipped.find { it.slot == EquipmentSlot.ACCESSORY }
+
+                        EquipmentSlotCard(
+                            slot = EquipmentSlot.WEAPON,
+                            item = weaponItem,
+                            heroColor = heroColor,
+                            onUnequip = { viewModel.unequipItem(hero.id, it) },
+                            onEquip = {}
+                        )
+                        EquipmentSlotCard(
+                            slot = EquipmentSlot.ARMOR,
+                            item = armorItem,
+                            heroColor = heroColor,
+                            onUnequip = { viewModel.unequipItem(hero.id, it) },
+                            onEquip = {}
+                        )
+                        EquipmentSlotCard(
+                            slot = EquipmentSlot.ACCESSORY,
+                            item = accessoryItem,
+                            heroColor = heroColor,
+                            onUnequip = { viewModel.unequipItem(hero.id, it) },
+                            onEquip = {}
+                        )
                     }
                 }
                 
@@ -359,6 +375,64 @@ fun HeroDetailsDialog(
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EquipmentSlotCard(
+    slot: EquipmentSlot,
+    item: Equipment?,
+    heroColor: Color,
+    onUnequip: (String) -> Unit,
+    onEquip: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = if (item != null)
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+        else
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { if (item != null) onUnequip(item.id) else onEquip() }
+    ) {
+        Row(
+            modifier = Modifier.padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                item?.getIcon() ?: when (slot) {
+                    EquipmentSlot.WEAPON -> "\uD83D\uDDE1\uFE0F"
+                    EquipmentSlot.ARMOR -> "\uD83D\uDEE1\uFE0F"
+                    EquipmentSlot.ACCESSORY -> "\uD83D\uDC8D"
+                },
+                fontSize = 20.sp,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    item?.name ?: "Empty ${slot.name.lowercase().replaceFirstChar { it.uppercase() }}",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = if (item != null) FontWeight.Bold else FontWeight.Normal,
+                    color = if (item != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                )
+                if (item != null) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        item.bonusDescription.split("\n").first(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            if (item != null) {
+                IconButton(onClick = { onUnequip(item.id) }, modifier = Modifier.size(24.dp)) {
+                    Icon(Icons.Default.LinkOff, contentDescription = "Unequip", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
                 }
             }
         }
