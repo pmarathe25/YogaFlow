@@ -101,9 +101,13 @@ fun ShopScreen(viewModel: GameViewModel) {
 
             Spacer(Modifier.height(12.dp))
 
+            val battleRewardItemIds = DataLoader.monsters
+                .mapNotNull { it.firstDefeatItemReward }
+                .toSet()
+
             LazyColumn(modifier = Modifier.weight(1f)) {
                 val available = DataLoader.equipment.filter { eq ->
-                    eq.slot == selectedCategory
+                    eq.slot == selectedCategory && eq.id !in battleRewardItemIds
                 }
                 items(available) { item ->
                     val owned = item.id in saveData.inventory

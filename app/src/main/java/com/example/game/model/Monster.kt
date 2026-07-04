@@ -13,7 +13,8 @@ data class Monster(
     val aiBehavior: AIBehavior,
     val difficultyTier: DifficultyTier,
     val phases: List<MonsterPhase> = listOf(MonsterPhase(1f, emptyList())),
-    val isBoss: Boolean = false
+    val isBoss: Boolean = false,
+    val firstDefeatItemReward: String? = null
 )
 
 enum class DifficultyTier {

@@ -358,10 +358,17 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun onBattleWon() {
         val monster = _currentMonster.value ?: return
         val data = _saveData.value
+        val isFirstDefeat = monster.id.lowercase() !in data.defeatedMonsterIds
+
+        var inventory = data.inventory
+        if (isFirstDefeat && monster.firstDefeatItemReward != null) {
+            inventory = inventory + monster.firstDefeatItemReward
+        }
 
         _saveData.value = data.copy(
             totalBattlesWon = data.totalBattlesWon + 1,
             defeatedMonsterIds = data.defeatedMonsterIds + monster.id.lowercase(),
+            inventory = inventory,
             lastPlayedTimestamp = System.currentTimeMillis()
         )
         saveGame()

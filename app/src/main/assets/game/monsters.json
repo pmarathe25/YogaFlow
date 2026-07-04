@@ -30,7 +30,8 @@
     "aiBehavior": {"specialChance": 0.3, "tauntPreference": true, "targetStrategy": "RANDOM"},
     "difficultyTier": "EASY",
     "phases": [{"hpThreshold": 1, "triggers": []}],
-    "isBoss": false
+    "isBoss": false,
+    "firstDefeatItemReward": "shanti_prayer_beads"
   },
   {
     "id": "Tandra",
@@ -96,7 +97,8 @@
     "aiBehavior": {"specialChance": 0.25, "tauntPreference": true, "targetStrategy": "RANDOM"},
     "difficultyTier": "EASY",
     "phases": [{"hpThreshold": 1, "triggers": []}],
-    "isBoss": false
+    "isBoss": false,
+    "firstDefeatItemReward": "santosha_foundation_stone"
   },
   {
     "id": "Alasya",
@@ -162,7 +164,8 @@
     "aiBehavior": {"specialChance": 0.3, "tauntPreference": true, "targetStrategy": "MOST_BUFFS"},
     "difficultyTier": "MEDIUM",
     "phases": [{"hpThreshold": 1, "triggers": []}],
-    "isBoss": false
+    "isBoss": false,
+    "firstDefeatItemReward": "virya_ember_core"
   },
   {
     "id": "Krodha",
@@ -231,7 +234,8 @@
     "aiBehavior": {"specialChance": 0.3, "tauntPreference": true, "targetStrategy": "HIGHEST_HP"},
     "difficultyTier": "MEDIUM",
     "phases": [{"hpThreshold": 1, "triggers": []}],
-    "isBoss": false
+    "isBoss": false,
+    "firstDefeatItemReward": "dhairya_battle_standard"
   },
   {
     "id": "Moha",
@@ -297,7 +301,8 @@
     "aiBehavior": {"specialChance": 0.3, "tauntPreference": true, "targetStrategy": "RANDOM"},
     "difficultyTier": "HARD",
     "phases": [{"hpThreshold": 1, "triggers": []}],
-    "isBoss": false
+    "isBoss": false,
+    "firstDefeatItemReward": "maitri_universal_key"
   },
   {
     "id": "Abhimana",
