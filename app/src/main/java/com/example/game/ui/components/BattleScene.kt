@@ -54,6 +54,12 @@ fun BattleScene(viewModel: GameViewModel) {
         animationSpec = infiniteRepeatable(animation = tween(3000, easing = FastOutSlowInEasing))
     )
 
+    val dropGlowTransition = rememberInfiniteTransition()
+    val dropOverlayAlpha by dropGlowTransition.animateFloat(
+        initialValue = 0.15f, targetValue = 0.35f,
+        animationSpec = infiniteRepeatable(tween(700, easing = LinearEasing), RepeatMode.Reverse)
+    )
+
     val monster = state.monsters.firstOrNull()
     val monsterColor = monster?.let { elementToColor(it.element) } ?: Color.Gray
     val isBoss = monster?.isBoss ?: false
@@ -61,6 +67,8 @@ fun BattleScene(viewModel: GameViewModel) {
     // ─── Battle UI States ──────────────────────────────────────────
     var showFullLog by remember { mutableStateOf(false) }
     var showExitDialog by remember { mutableStateOf(false) }
+    var dragOverlayColor by remember { mutableStateOf<Color?>(null) }
+    var inspectedCardItem by remember { mutableStateOf<Any?>(null) }
 
     BackHandler(enabled = state.phase == PLAYER_TURN || state.phase == ENEMY_TURN) {
         showExitDialog = true
@@ -217,14 +225,7 @@ fun BattleScene(viewModel: GameViewModel) {
         )
 
         Box(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.fillMaxSize().padding(bottom = 220.dp)) {
-                // Turn indicator banner
-                TurnBanner(
-                    actorName = state.turnOrder.find { it.id == state.currentActorId }?.name,
-                    visible = state.phase != BattlePhase.INTRO && state.currentActorId != null,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-
+            Column(modifier = Modifier.fillMaxSize().padding(bottom = 250.dp)) {
                 // Header
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -380,6 +381,16 @@ fun BattleScene(viewModel: GameViewModel) {
                 }
             }
 
+            // Drop zone overlay during card drag
+            if (dragOverlayColor != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 250.dp)
+                        .background(dragOverlayColor!!.copy(alpha = dropOverlayAlpha))
+                )
+            }
+
             // Action Tray at bottom
             if (currentHero != null && state.phase == PLAYER_TURN) {
                 key(state.currentActorId) {
@@ -399,20 +410,12 @@ fun BattleScene(viewModel: GameViewModel) {
                             viewModel.cancelAction()
                             selectedTargets.clear()
                         },
+                        onCardDragStart = { color -> dragOverlayColor = color },
+                        onCardDragEnd = { dragOverlayColor = null },
+                        onCardTap = { item -> inspectedCardItem = item },
                         modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().zIndex(1f)
                     )
                 }
-            }
-
-            // Full-screen dismiss overlay when targeting is not active but card is selected
-            val selectedCardId by viewModel.selectedCardId.collectAsState()
-            if (selectedCardId != null && !isTargeting) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.3f))
-                        .clickable { viewModel.dismissSelectedCard() }
-                )
             }
         }
 
@@ -456,6 +459,41 @@ fun BattleScene(viewModel: GameViewModel) {
                 fontWeight = FontWeight.Black,
                 style = MaterialTheme.typography.headlineLarge
             )
+        }
+
+        // Turn indicator banner (animated popup like intro text)
+        TurnBanner(
+            actorName = state.turnOrder.find { it.id == state.currentActorId }?.name,
+            visible = state.phase != BattlePhase.INTRO && state.currentActorId != null,
+            modifier = Modifier.align(Alignment.Center)
+        )
+
+        // Inspected card overlay (full-screen dismiss)
+        if (inspectedCardItem != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .clickable { inspectedCardItem = null },
+                contentAlignment = Alignment.Center
+            ) {
+                val item = inspectedCardItem
+                if (item is Skill) {
+                    val isUlt = item.ultimateGain == 0
+                    SkillCard(
+                        skill = item,
+                        isUltimate = isUlt,
+                        ultReady = if (isUlt) (currentHero?.gauge ?: 0) >= 100 else false,
+                        cooldownRemaining = state.skillCooldowns[currentHero?.id ?: ""]?.get(item.id) ?: 0,
+                        modifier = Modifier.width(320.dp).height(460.dp)
+                    )
+                } else if (item is ComboSkill) {
+                    ComboCard(
+                        combo = item,
+                        modifier = Modifier.width(320.dp).height(460.dp)
+                    )
+                }
+            }
         }
 
         // Black overlay for intro

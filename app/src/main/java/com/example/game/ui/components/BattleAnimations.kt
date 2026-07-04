@@ -3,18 +3,13 @@ package com.example.game.ui.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.game.model.BattleEvent
 import com.example.game.model.BattleState
@@ -28,27 +23,29 @@ fun TurnBanner(
     visible: Boolean,
     modifier: Modifier = Modifier
 ) {
+    var showBanner by remember { mutableStateOf(false) }
+
+    LaunchedEffect(actorName, visible) {
+        if (visible && actorName != null) {
+            showBanner = true
+            delay(1500)
+            showBanner = false
+        }
+    }
+
     AnimatedVisibility(
-        visible = visible,
-        enter = slideInHorizontally { -it } + fadeIn(),
-        exit = slideOutHorizontally { it } + fadeOut(),
+        visible = showBanner,
+        enter = scaleIn(initialScale = 0.5f) + fadeIn(),
+        exit = scaleOut(targetScale = 1.5f) + fadeOut(),
         modifier = modifier
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.Black.copy(alpha = 0.7f))
-                .padding(vertical = 24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "${actorName ?: "Unknown"}'s Turn!",
-                color = Color.White,
-                fontSize = 36.sp,
-                fontWeight = FontWeight.Black,
-                style = MaterialTheme.typography.headlineLarge
-            )
-        }
+        Text(
+            text = "${actorName?.uppercase() ?: "???"}'S TURN",
+            fontSize = 36.sp,
+            fontWeight = FontWeight.Black,
+            color = androidx.compose.ui.graphics.Color.White,
+            style = MaterialTheme.typography.headlineLarge
+        )
     }
 }
 

@@ -356,7 +356,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
         _saveData.value = data.copy(
             totalBattlesWon = data.totalBattlesWon + 1,
-            defeatedMonsterIds = data.defeatedMonsterIds + monster.id,
+            defeatedMonsterIds = data.defeatedMonsterIds + monster.id.lowercase(),
             lastPlayedTimestamp = System.currentTimeMillis()
         )
         saveGame()

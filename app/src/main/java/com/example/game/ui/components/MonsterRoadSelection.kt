@@ -34,7 +34,7 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 private val SEGMENT_HEIGHT = 260.dp
-private val HEADER_AREA_HEIGHT = 140.dp
+private val HEADER_AREA_HEIGHT = 0.dp
 private val PATH_AMPLITUDE = 70.dp
 
 @Composable
@@ -51,19 +51,22 @@ fun MonsterRoadSelection(
     val density = LocalDensity.current
     val scrollState = rememberScrollState()
 
-    val topSpacer = 80.dp
-    val bottomSpacer = 120.dp
+    val topSpacer = 0.dp
+    val bottomSpacer = 0.dp
     val totalContentHeight = topSpacer + HEADER_AREA_HEIGHT + SEGMENT_HEIGHT * totalCount.toFloat() + bottomSpacer
 
-    val activeIndex = remember(sortedMonsters, defeatedIds) {
-        val idx = sortedMonsters.indexOfLast { !defeatedIds.contains(it.id) }
+    val normDefeated = remember(defeatedIds) {
+        defeatedIds.map { it.lowercase() }.toSet()
+    }
+
+    val activeIndex = remember(sortedMonsters, normDefeated) {
+        val idx = sortedMonsters.indexOfLast { !normDefeated.contains(it.id.lowercase()) }
         if (idx < 0) totalCount else idx
     }
 
-    LaunchedEffect(activeIndex) {
-        val scrollTarget = topSpacer + HEADER_AREA_HEIGHT + SEGMENT_HEIGHT * activeIndex - 250.dp
-        if (scrollTarget > 0.dp) {
-            scrollState.animateScrollTo(with(density) { scrollTarget.toPx().toInt() })
+    LaunchedEffect(Unit) {
+        if (scrollState.maxValue > 0) {
+            scrollState.scrollTo(scrollState.maxValue)
         }
     }
 
@@ -84,37 +87,41 @@ fun MonsterRoadSelection(
     ) {
         MapHeader(onBack = onBack)
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 56.dp)
-                .verticalScroll(scrollState)
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 56.dp)
+            .verticalScroll(scrollState)
         ) {
+            val canvasWidthDp = maxWidth
+            val dpScaleRatio = canvasWidthDp / 360.dp
+            val adjustedHeight = totalContentHeight * dpScaleRatio
+
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(totalContentHeight)
+                    .height(adjustedHeight)
             ) {
                 val sw = size.width
                 val sh = size.height
                 val dpScale = sw / 360f
 
                 drawBiomeBackground(totalCount, dpScale, sh,
-                    topSpacer.value * dpScale / 3f,
-                    HEADER_AREA_HEIGHT.value * dpScale / 3f,
-                    SEGMENT_HEIGHT.value * dpScale / 3f)
+                    topSpacer.value * dpScale,
+                    HEADER_AREA_HEIGHT.value * dpScale,
+                    SEGMENT_HEIGHT.value * dpScale)
 
                 drawBiomeDecorations(totalCount, dpScale, sh,
                     topSpacer, HEADER_AREA_HEIGHT, SEGMENT_HEIGHT, pulseAnim)
 
                 val pathPoints = drawPath(dpScale, sh)
 
-                drawPathSegments(totalCount, dpScale, sortedMonsters, defeatedIds, activeIndex, pathPoints,
+                drawPathSegments(totalCount, dpScale, sortedMonsters, normDefeated, activeIndex, pathPoints,
                     topSpacer, HEADER_AREA_HEIGHT, SEGMENT_HEIGHT)
 
                 drawSkyElements(dpScale, sh, driftAnim)
 
-                drawNodes(sortedMonsters, defeatedIds, activeIndex, dpScale, pulseAnim,
+                drawNodes(sortedMonsters, normDefeated, activeIndex, dpScale, pulseAnim,
                     topSpacer, HEADER_AREA_HEIGHT, SEGMENT_HEIGHT)
 
                 drawFogOfWar(activeIndex, dpScale, sh,
@@ -122,11 +129,12 @@ fun MonsterRoadSelection(
             }
 
             sortedMonsters.forEachIndexed { index, monster ->
-                val isDefeated = defeatedIds.contains(monster.id)
-                val isUnlocked = index == 0 || defeatedIds.contains(sortedMonsters[index - 1].id)
+                val isDefeated = normDefeated.contains(monster.id.lowercase())
+                val isUnlocked = index == sortedMonsters.lastIndex || normDefeated.contains(sortedMonsters[index + 1].id.lowercase())
                 val nodeSize = getNodeSizeDp(monster.difficultyTier)
-                val centerYDp = topSpacer + HEADER_AREA_HEIGHT + SEGMENT_HEIGHT * index + SEGMENT_HEIGHT * 0.5f
-                val cxDp = 180.dp + PATH_AMPLITUDE * sin(index * 0.8f)
+                val centerYDp = (topSpacer + HEADER_AREA_HEIGHT + SEGMENT_HEIGHT * index + SEGMENT_HEIGHT * 0.5f) * dpScaleRatio
+                val centerXDp = canvasWidthDp / 2
+                val cxDp = centerXDp + PATH_AMPLITUDE * dpScaleRatio * sin(index * 0.8f)
                 val topLeftXDp = cxDp - nodeSize * 0.5f
                 val topLeftYDp = centerYDp - nodeSize * 0.5f
 
@@ -223,9 +231,9 @@ private fun DrawScope.drawBiomeDecorations(
     totalCount: Int, dpScale: Float, sh: Float,
     topSp: Dp, headerH: Dp, segH: Dp, pulse: Float
 ) {
-    val tSp = topSp.value * dpScale / 3f
-    val hH = headerH.value * dpScale / 3f
-    val sH = segH.value * dpScale / 3f
+    val tSp = topSp.value * dpScale
+    val hH = headerH.value * dpScale
+    val sH = segH.value * dpScale
     val startY = tSp + hH
     val rng = Random(123)
 
@@ -385,7 +393,7 @@ private fun DrawScope.drawPath(dpScale: Float, sh: Float): List<RoadPoint> {
 
     var y = 0f
     while (y <= sh) {
-        val xOff = sin(y * 0.014f) * PATH_AMPLITUDE.value * dpScale / 3f * 2.5f
+        val xOff = sin(y * 0.014f) * PATH_AMPLITUDE.value * dpScale
         points.add(RoadPoint(centerX + xOff, y))
         y += step
     }
@@ -408,9 +416,9 @@ private fun DrawScope.drawPathSegments(
     topSp: Dp, headerH: Dp, segH: Dp
 ) {
     if (totalCount < 2) return
-    val tS = topSp.value * dpScale / 3f
-    val hH = headerH.value * dpScale / 3f
-    val sH = segH.value * dpScale / 3f
+    val tS = topSp.value * dpScale
+    val hH = headerH.value * dpScale
+    val sH = segH.value * dpScale
     val startY = tS + hH
 
     for (i in 0 until totalCount - 1) {
@@ -424,8 +432,8 @@ private fun DrawScope.drawPathSegments(
             for (p in 1 until segment.size) lineTo(segment[p].x, segment[p].y)
         }
 
-        val m1Defeated = defeatedIds.contains(sortedMonsters[i].id)
-        val m2Defeated = defeatedIds.contains(sortedMonsters[i + 1].id)
+        val m1Defeated = defeatedIds.contains(sortedMonsters[i].id.lowercase())
+        val m2Defeated = defeatedIds.contains(sortedMonsters[i + 1].id.lowercase())
         val isCompleted = m1Defeated && m2Defeated
         val isCurrent = activeIndex in (i + 1)..(i + 1)
 
@@ -451,22 +459,22 @@ private fun DrawScope.drawNodes(
     sortedMonsters: List<Monster>, defeatedIds: Set<String>, activeIndex: Int,
     dpScale: Float, pulseAnim: Float, topSp: Dp, headerH: Dp, segH: Dp
 ) {
-    val tS = topSp.value * dpScale / 3f
-    val hH = headerH.value * dpScale / 3f
-    val sH = segH.value * dpScale / 3f
+    val tS = topSp.value * dpScale
+    val hH = headerH.value * dpScale
+    val sH = segH.value * dpScale
     val startY = tS + hH
 
     sortedMonsters.forEachIndexed { index, monster ->
-        val isDefeated = defeatedIds.contains(monster.id)
+        val isDefeated = defeatedIds.contains(monster.id.lowercase())
         val isActive = index == activeIndex
-        val isUnlocked = index == 0 || defeatedIds.contains(sortedMonsters[index - 1].id)
+        val isUnlocked = index == sortedMonsters.lastIndex || defeatedIds.contains(sortedMonsters[index + 1].id.lowercase())
         val isLocked = !isUnlocked && !isDefeated
         val isBoss = monster.isBoss
         val difficulty = monster.difficultyTier
         val elColor = elementToColor(monster.element)
 
         val cy = startY + index * sH + sH / 2f
-        val cx = size.width / 2f + sin(index * 0.8f) * PATH_AMPLITUDE.value * dpScale / 3f * 2.5f
+        val cx = size.width / 2f + sin(index * 0.8f) * PATH_AMPLITUDE.value * dpScale
 
         val nodeScale = when (difficulty) {
             DifficultyTier.EASY -> 34f
@@ -546,10 +554,11 @@ private fun DrawScope.drawNodes(
             }
         }
 
-        // Monster silhouette (drawMonsterShape from BattleCanvas.kt)
+        // Monster silhouette
         if (!isLocked) {
             val silAlpha = if (isDefeated) 0.35f else 1f
             val silColor = if (isDefeated) Color.Gray else elColor
+            drawCircle(Color.Green, nodeScale * 0.5f, Offset(cx, cy))
             drawMonsterShape(cx = cx, cy = cy - nodeScale * 0.05f, s = nodeScale * 0.65f,
                 name = monster.name, tint = silColor.copy(alpha = silAlpha))
         }
@@ -627,9 +636,9 @@ private fun DrawScope.drawFogOfWar(
 ) {
     if (activeIndex >= Int.MAX_VALUE) return
 
-    val tS = topSp.value * dpScale / 3f
-    val hH = headerH.value * dpScale / 3f
-    val sH = segH.value * dpScale / 3f
+    val tS = topSp.value * dpScale
+    val hH = headerH.value * dpScale
+    val sH = segH.value * dpScale
     val fogY = tS + hH + sH * activeIndex
 
     drawRect(Color(0xFF000000).copy(alpha = 0.55f),
