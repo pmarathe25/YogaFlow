@@ -125,7 +125,6 @@ fun StatisticsPanel(
     val currentLevel by viewModel.currentLevel.collectAsState()
     val currentLevelName by viewModel.currentLevelName.collectAsState()
     val levelProgress by viewModel.levelProgress.collectAsState()
-    val totalSparks by viewModel.totalSparks.collectAsState()
     val dailyQuestCompleted by viewModel.dailyQuestCompleted.collectAsState()
     val gameSaveData by gameViewModel.saveData.collectAsState()
     val party by gameViewModel.party.collectAsState()
@@ -279,7 +278,7 @@ fun StatisticsPanel(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             StatCard(
-                value = "$totalSparks",
+                value = "${gameSaveData.sparks}",
                 label = "Zen Sparks",
                 icon = Icons.Default.Favorite,
                 color = MaterialTheme.colorScheme.tertiary,
@@ -287,7 +286,7 @@ fun StatisticsPanel(
                 isSelected = activeDialogType == "sparks",
                 modifier = Modifier.weight(1f)
             )
-            val availableGold = (gameSaveData.totalYogaXp / 10) - gameSaveData.totalGoldSpent
+            val availableGold = gameSaveData.gold
             StatCard(
                 value = "$availableGold",
                 label = "Zen Gold",
@@ -310,8 +309,8 @@ fun StatisticsPanel(
                     else -> "Zen Sparks ✨"
                 }
                 val infoDescription = when (activeDialogType) {
-                    "gold" -> "Zen Gold is earned through Karma XP. Use it in the Shop to buy powerful gear and items for your heroes."
-                    else -> "Zen Sparks represent daily mindfulness and consistent practice. You earn exactly 1 Zen Spark for each unique calendar day you practice. Each Zen Spark also grants a +150 XP bonus! Collect 3 Zen Sparks on different days to unlock the 'Zen Spark Collector' badge."
+                    "gold" -> "Zen Gold is earned through Karma XP. Use it in the Shop to buy powerful gear for your heroes."
+                    else -> "Zen Sparks represent daily mindfulness and consistent practice. You earn exactly 1 Zen Spark for each unique calendar day you practice. Each Zen Spark also grants a +150 XP bonus! Use Sparks to level up your heroes. Collect 3 Zen Sparks on different days to unlock the 'Zen Spark Collector' badge."
                 }
                 val infoIcon = when (activeDialogType) {
                     "gold" -> Icons.Default.MonetizationOn

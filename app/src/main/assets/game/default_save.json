@@ -1,7 +1,7 @@
 {
   "battleState": null,
-  "party": [],
-  "unlockedHeroIds": [],
+  "party": [{"heroId": "shanti"}],
+  "unlockedHeroIds": ["shanti"],
   "sparks": 0,
   "yogaLevel": 1,
   "earnedTrophyIds": [],
@@ -16,6 +16,6 @@
   "lastPlayedTimestamp": 0,
   "lastSyncedMainSparks": 0,
   "totalYogaXp": 0,
-  "totalGoldSpent": 0,
+  "gold": 0,
   "defeatedMonsterIds": []
 }

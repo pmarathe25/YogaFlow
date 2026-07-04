@@ -49,7 +49,7 @@ class GameSaveManagerTest {
             lastPlayedTimestamp = 1000000L,
             lastSyncedMainSparks = 10,
             totalYogaXp = 5200,
-            totalGoldSpent = 120,
+            gold = 400,
             defeatedMonsterIds = setOf("bhaya", "tandra", "chinta")
         )
 
@@ -70,7 +70,7 @@ class GameSaveManagerTest {
         assertEquals(original.inventory, loaded.inventory)
         assertEquals(original.defeatedMonsterIds, loaded.defeatedMonsterIds)
         assertEquals(original.totalYogaXp, loaded.totalYogaXp)
-        assertEquals(original.totalGoldSpent, loaded.totalGoldSpent)
+        assertEquals(original.gold, loaded.gold)
     }
 
     @Test
@@ -234,7 +234,7 @@ class GameSaveManagerTest {
             inventory = listOf("potion"),
             defeatedMonsterIds = setOf("bhaya"),
             totalYogaXp = 8000,
-            totalGoldSpent = 500
+            gold = 500
         )
         saveManager.saveGame(original)
         val loaded = saveManager.loadGame()

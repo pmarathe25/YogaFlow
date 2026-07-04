@@ -105,6 +105,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             updated = updated.copy(lastSyncedMainSparks = mainSparks)
         }
         updated = updated.copy(totalYogaXp = xpSum)
+        val previousGold = data.gold
+        val expectedGold = xpSum / 10
+        if (expectedGold > previousGold) {
+            updated = updated.copy(gold = expectedGold)
+        }
         if (updated != data) {
             _saveData.value = updated
             restoreParty(updated)
@@ -135,19 +140,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun restoreParty(data: GameProgress) {
-        val unlocked = DataLoader.heroes.filter { it.unlockYogaLevel <= data.yogaLevel }
-        val newParty = unlocked.map { heroDef ->
-            data.party.find { it.heroId == heroDef.id } ?: PartyMemberData(heroId = heroDef.id)
-        }
-        _party.value = newParty
+        _party.value = data.party
     }
 
     fun getUnlockedHeroes(): List<Hero> {
-        return DataLoader.heroes.filter { it.unlockYogaLevel <= _saveData.value.yogaLevel }
+        val unlockedIds = _saveData.value.unlockedHeroIds
+        return DataLoader.heroes.filter { it.id.lowercase() in unlockedIds }
     }
 
     fun getAvailableHeroes(): List<Hero> {
-        return getUnlockedHeroes().filter { h -> _party.value.none { it.heroId == h.id } }
+        val data = _saveData.value
+        return DataLoader.heroes.filter { h ->
+            h.unlockYogaLevel <= data.yogaLevel && h.id.lowercase() !in data.unlockedHeroIds
+        }
     }
 
     fun startBattle(monsterId: String) {
@@ -364,9 +369,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun resetAllProgress() {
         saveManager.resetToDefault()
-        _party.value = emptyList()
+        val defaultData = saveManager.loadGame()
+        _saveData.value = defaultData
+        _party.value = defaultData.party
         _battleState.value = null
-        viewModelScope.launch { syncWithMainApp() }
     }
 
     // --- Equipment ---
@@ -374,13 +380,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun purchaseItem(itemId: String): Boolean {
         val item = DataLoader.getEquipment(itemId)
         val data = _saveData.value
-        val availableGold = (data.totalYogaXp / 10) - data.totalGoldSpent
         if (data.yogaLevel < item.yogaLevelRequired) return false
-        if (availableGold < item.goldCost) return false
+        if (data.gold < item.goldCost) return false
         if (itemId in data.inventory) return false
 
         _saveData.value = data.copy(
-            totalGoldSpent = data.totalGoldSpent + item.goldCost,
+            gold = data.gold - item.goldCost,
             inventory = data.inventory + itemId
         )
         saveGame()
@@ -434,31 +439,25 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- Economy ---
 
-    fun getAvailableGold(): Int {
-        val data = _saveData.value
-        return (data.totalYogaXp / 10) - data.totalGoldSpent
-    }
-
     // --- Hero Level Up ---
 
     fun getHeroLevelUpCost(heroId: String): Int {
         val hero = _party.value.find { it.heroId == heroId } ?: return 0
-        return 100 * hero.level
+        return hero.level
     }
 
     fun levelUpHero(heroId: String): Boolean {
         val hero = _party.value.find { it.heroId == heroId } ?: return false
         val cost = getHeroLevelUpCost(heroId)
         val data = _saveData.value
-        val availableGold = (data.totalYogaXp / 10) - data.totalGoldSpent
 
-        if (availableGold >= cost) {
+        if (data.sparks >= cost) {
             val nextLevel = hero.level + 1
             val newParty = _party.value.map { if (it.heroId == heroId) it.copy(level = nextLevel) else it }
 
             _party.value = newParty
             _saveData.value = data.copy(
-                totalGoldSpent = data.totalGoldSpent + cost,
+                sparks = data.sparks - cost,
                 party = newParty
             )
             saveGame()
@@ -470,16 +469,20 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     // --- Hero Purchase ---
 
     fun purchaseHero(heroId: String): Boolean {
+        val normalId = heroId.trim().lowercase()
         val hero = DataLoader.getHero(heroId)
         val data = _saveData.value
-        if (heroId in data.unlockedHeroIds) return false
+        if (normalId in data.unlockedHeroIds) return false
         if (data.yogaLevel < hero.unlockYogaLevel) return false
-        val sparkCost = hero.unlockYogaLevel * 10
+        val sparkCost = hero.unlockYogaLevel
         if (data.sparks < sparkCost) return false
 
+        val newParty = data.party + PartyMemberData(heroId = normalId)
+        _party.value = _party.value + PartyMemberData(heroId = normalId)
         _saveData.value = data.copy(
             sparks = data.sparks - sparkCost,
-            unlockedHeroIds = data.unlockedHeroIds + heroId
+            unlockedHeroIds = data.unlockedHeroIds + normalId,
+            party = newParty
         )
         saveGame()
         return true

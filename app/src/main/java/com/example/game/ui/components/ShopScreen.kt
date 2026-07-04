@@ -52,6 +52,7 @@ fun ShopScreen(viewModel: GameViewModel) {
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
+                val availableGold = saveData.gold
                 Surface(
                     shape = MaterialTheme.shapes.large,
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
@@ -61,13 +62,13 @@ fun ShopScreen(viewModel: GameViewModel) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "\u2726",
+                            "\uD83E\uDE99",
                             color = Color(0xFFFFD740),
                             style = MaterialTheme.typography.labelLarge
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
-                            "${saveData.sparks}",
+                            "$availableGold",
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFFFFD740)
@@ -106,7 +107,8 @@ fun ShopScreen(viewModel: GameViewModel) {
                 }
                 items(available) { item ->
                     val owned = item.id in saveData.inventory
-                    val canAfford = saveData.sparks >= item.sparksCost
+                    val availableGold = saveData.gold
+                    val canAfford = availableGold >= item.goldCost
                     val partyHasHero = item.heroId == null || party.any { it.heroId == item.heroId }
                     val levelLocked = item.yogaLevelRequired > saveData.yogaLevel
 
@@ -198,7 +200,7 @@ private fun ShopItemCard(
                     }
                 } else {
                     Text(
-                        "${item.sparksCost} \u2726",
+                        "${item.goldCost} \uD83E\uDE99",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         color = if (canAfford && !levelLocked) Color(0xFFFFD740) else MaterialTheme.colorScheme.error

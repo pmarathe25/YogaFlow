@@ -156,7 +156,7 @@ fun LevelsInfoDialog(
                                         val heroReward = DataLoader.heroes.find { it.unlockYogaLevel == levelDef.level }
                                         if (heroReward != null) {
                                             Text(
-                                                text = "Unlocks Hero: ${heroReward.name}",
+                                                text = "Hero Available: ${heroReward.name}",
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = MaterialTheme.colorScheme.tertiary,
                                                 fontWeight = FontWeight.Bold

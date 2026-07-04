@@ -57,7 +57,7 @@ fun PartyScreen(viewModel: GameViewModel) {
             
             Spacer(Modifier.height(8.dp))
             Text(
-                "Yoga Level: ${saveData.yogaLevel} | Gold: ${(saveData.totalYogaXp / 10) - saveData.totalGoldSpent} \uD83E\uDE99",
+                "Yoga Level: ${saveData.yogaLevel} | Sparks: ${saveData.sparks} \u2726",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 modifier = Modifier.padding(start = 12.dp)
@@ -67,14 +67,23 @@ fun PartyScreen(viewModel: GameViewModel) {
             LazyColumn(modifier = Modifier.weight(1f)) {
                 items(allHeroes) { heroDef ->
                     val partyMember = party.find { it.heroId == heroDef.id }
-                    val isUnlocked = heroDef.unlockYogaLevel <= saveData.yogaLevel
+                    val isUnlocked = heroDef.id.lowercase() in saveData.unlockedHeroIds
+                    val canPurchase = heroDef.unlockYogaLevel <= saveData.yogaLevel && !isUnlocked
                     
-                    HeroListItem(
-                        hero = heroDef,
-                        partyMember = partyMember,
-                        isUnlocked = isUnlocked,
-                        onClick = { if (isUnlocked) detailHeroId = heroDef.id }
-                    )
+                    if (canPurchase) {
+                        PurchasableHeroItem(
+                            hero = heroDef,
+                            sparks = saveData.sparks,
+                            onPurchase = { viewModel.purchaseHero(heroDef.id) }
+                        )
+                    } else {
+                        HeroListItem(
+                            hero = heroDef,
+                            partyMember = partyMember,
+                            isUnlocked = isUnlocked,
+                            onClick = { if (isUnlocked) detailHeroId = heroDef.id }
+                        )
+                    }
                 }
             }
         }
@@ -151,12 +160,69 @@ private fun HeroListItem(hero: Hero, partyMember: PartyMemberData?, isUnlocked: 
                         Text("HP ${stats.maxHp}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                     }
                 } else {
-                    Text("Unlocks at Yoga Lv.${hero.unlockYogaLevel}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                    Text("Requires Yoga Lv.${hero.unlockYogaLevel}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
                 }
             }
             
             if (isUnlocked) {
                 Icon(Icons.Default.ChevronRight, contentDescription = "Details", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun PurchasableHeroItem(hero: Hero, sparks: Int, onPurchase: () -> Unit) {
+    val heroColor = elementToColor(hero.element)
+    val cost = hero.unlockYogaLevel
+    val canAfford = sparks >= cost
+
+    GlassCard(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
+        elevation = 3.dp,
+        useDefaultPadding = false
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(heroColor.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(hero.name.take(1), fontWeight = FontWeight.ExtraBold, color = heroColor, fontSize = 24.sp)
+            }
+
+            Spacer(Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    hero.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = heroColor,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    "Recruit for ${cost} \u2726",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (canAfford) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.error
+                )
+            }
+
+            FilledTonalButton(
+                onClick = onPurchase,
+                enabled = canAfford,
+                modifier = Modifier.height(36.dp),
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = heroColor.copy(alpha = 0.3f),
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Text("Buy", fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -171,9 +237,8 @@ fun HeroDetailsDialog(
     onDismiss: () -> Unit
 ) {
     val heroColor = elementToColor(hero.element)
-    val gold = (saveData.totalYogaXp / 10) - saveData.totalGoldSpent
     val levelUpCost = viewModel.getHeroLevelUpCost(hero.id)
-    val canLevelUp = gold >= levelUpCost
+    val canLevelUp = saveData.sparks >= levelUpCost
     val stats = computeHeroStats(hero, partyMember.level)
 
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
@@ -226,7 +291,7 @@ fun HeroDetailsDialog(
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = heroColor)
                 ) {
-                    Text("Level Up (${levelUpCost} \uD83E\uDE99)", fontWeight = FontWeight.Bold)
+                    Text("Level Up (${levelUpCost} \u2726)", fontWeight = FontWeight.Bold)
                 }
                 
                 Spacer(Modifier.height(24.dp))

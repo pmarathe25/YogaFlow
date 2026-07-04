@@ -24,7 +24,6 @@ class GameSaveManager(private val context: Context) {
         const val KEY_LAST_PLAYED_TIMESTAMP = "last_played_timestamp"
         const val KEY_LAST_SYNCED_MAIN_SPARKS = "last_synced_main_sparks"
         const val KEY_TOTAL_YOGA_XP = "total_yoga_xp"
-        const val KEY_TOTAL_GOLD_SPENT = "total_gold_spent"
         const val KEY_DEFEATED_MONSTER_IDS = "defeated_monster_ids"
     }
 
@@ -71,6 +70,7 @@ class GameSaveManager(private val context: Context) {
     }
 
     private fun loadLegacySave(): GameProgress {
+        val xp = prefs.getString(KEY_TOTAL_YOGA_XP, "0")?.toIntOrNull() ?: 0
         return GameProgress(
             party = readJsonList(KEY_PARTY, emptyList<PartyMemberData>()),
             unlockedHeroIds = readJsonStringSet(KEY_UNLOCKED_HERO_IDS),
@@ -81,8 +81,8 @@ class GameSaveManager(private val context: Context) {
             inventory = readJsonList(KEY_INVENTORY, emptyList<String>()),
             lastPlayedTimestamp = prefs.getLong(KEY_LAST_PLAYED_TIMESTAMP, 0L),
             lastSyncedMainSparks = prefs.getInt(KEY_LAST_SYNCED_MAIN_SPARKS, 0),
-            totalYogaXp = prefs.getString(KEY_TOTAL_YOGA_XP, "0")?.toIntOrNull() ?: 0,
-            totalGoldSpent = prefs.getString(KEY_TOTAL_GOLD_SPENT, "0")?.toIntOrNull() ?: 0,
+            totalYogaXp = xp,
+            gold = xp / 10,
             defeatedMonsterIds = readJsonStringSet(KEY_DEFEATED_MONSTER_IDS)
         )
     }
