@@ -264,7 +264,47 @@ fun GearDetailsDialog(item: Equipment, onDismiss: () -> Unit) {
                         fontWeight = FontWeight.Medium
                     )
                 }
-                
+
+                // Set bonus section for unique items
+                if (item.tier == EquipmentTier.UNIQUE && item.heroId != null) {
+                    val heroDef = DataLoader.heroes.find { it.id == item.heroId }
+                    val setBonus = heroDef?.setBonusId?.let { sid ->
+                        DataLoader.setBonuses.find { it.name == sid }
+                    }
+
+                    if (setBonus != null) {
+                        Spacer(Modifier.height(16.dp))
+                        Surface(
+                            color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    "Set: ${setBonus.name}",
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                val otherItems = setBonus.requiredItems.filter { it != item.id }
+                                Text(
+                                    "Other items: ${otherItems.joinToString(", ") { id ->
+                                        DataLoader.getEquipment(id)?.name ?: id
+                                    }}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    "Bonus: ${setBonus.description}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
+
                 Spacer(Modifier.height(24.dp))
                 Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
                     Text("Close")
