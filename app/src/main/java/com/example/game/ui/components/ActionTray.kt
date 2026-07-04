@@ -55,7 +55,6 @@ fun ActionTray(
     onCancelTargeting: () -> Unit,
     onCardDragStart: ((Color) -> Unit)? = null,
     onCardDragEnd: (() -> Unit)? = null,
-    onCardTap: ((Any) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val allCards = remember(currentHero, availableCombos) {
@@ -104,7 +103,6 @@ fun ActionTray(
                 onComboSelect = onComboById,
                 onCardDragStart = onCardDragStart,
                 onCardDragEnd = onCardDragEnd,
-                onCardTap = { item -> onCardTap?.invoke(item) }
             )
         }
 
@@ -138,7 +136,6 @@ private fun HandOfCards(
     onComboSelect: (String) -> Unit,
     onCardDragStart: ((Color) -> Unit)? = null,
     onCardDragEnd: (() -> Unit)? = null,
-    onCardTap: ((Any) -> Unit)? = null
 ) {
     val allCards: List<Any> = buildList {
         currentHero.skills.forEach { add(it) }
@@ -148,7 +145,9 @@ private fun HandOfCards(
     val cardCount = allCards.size
     val density = LocalDensity.current
     val thresholdPx = with(density) { 200.dp.toPx() }
+    val tapPopPositionPx = with(density) { 130.dp.toPx() }
     var scrollOffset by remember { mutableStateOf(0f) }
+    var poppedCardIndex by remember { mutableIntStateOf(-1) }
     var dragActiveIndex by remember { mutableIntStateOf(-1) }
     var rawDragY by remember { mutableStateOf(0f) }
     var rawDragX by remember { mutableStateOf(0f) }
@@ -205,10 +204,16 @@ private fun HandOfCards(
                 Modifier.pointerInput(index) {
                     detectVerticalDragGestures(
                         onDragStart = { startPos ->
-                            rawDragX = 0f
-                            rawDragY = 0f
-                            isPopped = false
-                            lastDragX = startPos.x
+                            if (dragActiveIndex == index && isPopped) {
+                                poppedCardIndex = -1
+                                lastDragX = startPos.x
+                            } else {
+                                poppedCardIndex = -1
+                                rawDragX = 0f
+                                rawDragY = 0f
+                                isPopped = false
+                                lastDragX = startPos.x
+                            }
                             dragActiveIndex = index
                             onCardDragStart?.invoke(cardColor)
                         },
@@ -242,11 +247,13 @@ private fun HandOfCards(
                                 }
                             }
                             dragActiveIndex = -1
+                            poppedCardIndex = -1
                             isPopped = false
                             onCardDragEnd?.invoke()
                         },
                         onDragCancel = {
                             dragActiveIndex = -1
+                            poppedCardIndex = -1
                             isPopped = false
                             onCardDragEnd?.invoke()
                         }
@@ -256,7 +263,20 @@ private fun HandOfCards(
 
             val tapMod = if (item is com.example.game.model.Skill || item is ComboSkill) {
                 Modifier.pointerInput(index) {
-                    detectTapGestures { onCardTap?.invoke(item) }
+                    detectTapGestures {
+                        if (poppedCardIndex == index) {
+                            poppedCardIndex = -1
+                            dragActiveIndex = -1
+                            isPopped = false
+                            rawDragY = 0f
+                        } else {
+                            poppedCardIndex = index
+                            dragActiveIndex = index
+                            isPopped = true
+                            rawDragY = -tapPopPositionPx
+                            rawDragX = 0f
+                        }
+                    }
                 }
             } else Modifier
 

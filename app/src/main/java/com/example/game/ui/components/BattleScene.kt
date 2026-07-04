@@ -68,8 +68,6 @@ fun BattleScene(viewModel: GameViewModel) {
     var showFullLog by remember { mutableStateOf(false) }
     var showExitDialog by remember { mutableStateOf(false) }
     var dragOverlayColor by remember { mutableStateOf<Color?>(null) }
-    var inspectedCardItem by remember { mutableStateOf<Any?>(null) }
-
     BackHandler(enabled = state.phase == PLAYER_TURN || state.phase == ENEMY_TURN) {
         showExitDialog = true
     }
@@ -412,7 +410,6 @@ fun BattleScene(viewModel: GameViewModel) {
                         },
                         onCardDragStart = { color -> dragOverlayColor = color },
                         onCardDragEnd = { dragOverlayColor = null },
-                        onCardTap = { item -> inspectedCardItem = item },
                         modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().zIndex(1f)
                     )
                 }
@@ -467,34 +464,6 @@ fun BattleScene(viewModel: GameViewModel) {
             visible = state.phase != BattlePhase.INTRO && state.currentActorId != null,
             modifier = Modifier.align(Alignment.Center)
         )
-
-        // Inspected card overlay (full-screen dismiss)
-        if (inspectedCardItem != null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .clickable { inspectedCardItem = null },
-                contentAlignment = Alignment.Center
-            ) {
-                val item = inspectedCardItem
-                if (item is Skill) {
-                    val isUlt = item.ultimateGain == 0
-                    SkillCard(
-                        skill = item,
-                        isUltimate = isUlt,
-                        ultReady = if (isUlt) (currentHero?.gauge ?: 0) >= 100 else false,
-                        cooldownRemaining = state.skillCooldowns[currentHero?.id ?: ""]?.get(item.id) ?: 0,
-                        modifier = Modifier.width(320.dp).height(460.dp)
-                    )
-                } else if (item is ComboSkill) {
-                    ComboCard(
-                        combo = item,
-                        modifier = Modifier.width(320.dp).height(460.dp)
-                    )
-                }
-            }
-        }
 
         // Black overlay for intro
         Box(modifier = Modifier.fillMaxSize().alpha(blackAlpha).background(Color.Black))
