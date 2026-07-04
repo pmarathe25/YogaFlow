@@ -99,6 +99,26 @@ fun ShopScreen(viewModel: GameViewModel) {
                 }
             }
 
+            Spacer(Modifier.height(8.dp))
+
+            // Hero filter
+            var selectedHeroFilter by remember { mutableStateOf<String?>(null) } // null = "All"
+            val unlockedHeroes = viewModel.getUnlockedHeroes()
+
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(listOf(null) + unlockedHeroes.map { it.id }) { heroId ->
+                    val label = heroId ?: "All"
+                    FilterChip(
+                        selected = selectedHeroFilter == heroId,
+                        onClick = { selectedHeroFilter = heroId },
+                        label = { Text(label, style = MaterialTheme.typography.labelSmall) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    )
+                }
+            }
+
             Spacer(Modifier.height(12.dp))
 
             val battleRewardItemIds = DataLoader.monsters
@@ -107,7 +127,10 @@ fun ShopScreen(viewModel: GameViewModel) {
 
             LazyColumn(modifier = Modifier.weight(1f)) {
                 val available = DataLoader.equipment.filter { eq ->
-                    eq.slot == selectedCategory && eq.id !in battleRewardItemIds
+                    eq.slot == selectedCategory && eq.id !in battleRewardItemIds &&
+                    (selectedHeroFilter == null ||
+                     eq.tier == EquipmentTier.GENERIC ||
+                     eq.heroId == selectedHeroFilter)
                 }
                 items(available) { item ->
                     val owned = item.id in saveData.inventory
