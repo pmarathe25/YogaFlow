@@ -36,7 +36,7 @@ fun ShopScreen(viewModel: GameViewModel) {
         modifier = Modifier.fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        Column(modifier = Modifier.fillMaxSize().statusBarsPadding().padding(16.dp)) {
+        Column(modifier = Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
             // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
