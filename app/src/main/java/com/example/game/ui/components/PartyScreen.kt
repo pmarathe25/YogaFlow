@@ -140,7 +140,7 @@ private fun HeroListItem(hero: Hero, partyMember: PartyMemberData?, isUnlocked: 
                 if (!isUnlocked) {
                     Icon(Icons.Default.Lock, contentDescription = "Locked", tint = Color.Gray)
                 } else {
-                    Text(hero.name.take(1), fontWeight = FontWeight.ExtraBold, color = heroColor, fontSize = 24.sp)
+                    HeroPortrait(hero.id, heroColor, Modifier.size(48.dp))
                 }
             }
             
@@ -254,7 +254,7 @@ fun HeroDetailsDialog(
                         modifier = Modifier.size(64.dp).background(heroColor.copy(alpha = 0.1f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                         Text(hero.name.take(1), color = heroColor, fontWeight = FontWeight.Black, fontSize = 28.sp)
+                        HeroPortrait(hero.id, heroColor, Modifier.size(56.dp))
                     }
                     Spacer(Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {

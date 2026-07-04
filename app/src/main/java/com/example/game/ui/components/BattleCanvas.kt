@@ -432,7 +432,7 @@ fun MonsterSprite(
 
 // ─── Silhouette Drawers (unchanged from original) ──────────────────────
 
-internal fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, name: String, tint: Color) {
+fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, name: String, tint: Color) {
     val path = Path()
 
     when (name) {
