@@ -1,7 +1,7 @@
 package com.example.game.model
 
 data class Hero(
-    val id: String,
+    val id: Int,
     val name: String,
     val description: String,
     val element: Element,
@@ -31,7 +31,7 @@ fun Hero.toCombatantState(partyMember: PartyMemberData): CombatantState {
     val mult = 1f + (partyMember.level - 1) * 0.15f
     val hp = (baseHp * mult).toInt()
     return CombatantState(
-        id = id,
+        id = id.toString(),
         side = CombatSide.HERO,
         name = name.split(" ").first(),
         element = element,

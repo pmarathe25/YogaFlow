@@ -102,12 +102,12 @@ fun ShopScreen(viewModel: GameViewModel) {
             Spacer(Modifier.height(8.dp))
 
             // Hero filter
-            var selectedHeroFilter by remember { mutableStateOf<String?>(null) } // null = "All"
+            var selectedHeroFilter by remember { mutableStateOf<Int?>(null) } // null = "All"
             val unlockedHeroes = viewModel.getUnlockedHeroes()
 
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(listOf(null) + unlockedHeroes.map { it.id }) { heroId ->
-                    val label = heroId ?: "All"
+                    val label = if (heroId == null) "All" else DataLoader.heroes.find { it.id == heroId }?.name?.split(" ")?.first() ?: "#$heroId"
                     FilterChip(
                         selected = selectedHeroFilter == heroId,
                         onClick = { selectedHeroFilter = heroId },
@@ -182,7 +182,7 @@ private fun ShopItemCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Icon
-            Text(item.getIcon(), fontSize = 28.sp, modifier = Modifier.padding(end = 12.dp))
+            Text(item.icon, fontSize = 28.sp, modifier = Modifier.padding(end = 12.dp))
             
             Column(modifier = Modifier.weight(1f)) {
                 Row(
@@ -258,7 +258,7 @@ fun GearDetailsDialog(item: Equipment, onDismiss: () -> Unit) {
             modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
             Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(item.getIcon(), fontSize = 48.sp)
+                Text(item.icon, fontSize = 48.sp)
                 Spacer(Modifier.height(12.dp))
                 Text(
                     item.name, 

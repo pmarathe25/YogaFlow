@@ -1,6 +1,6 @@
 [
   {
-    "id": "Shanti",
+    "id": 1,
     "name": "Shanti (Calm)",
     "description": "The restorative spirit of peaceful calm.",
     "element": "WATER",
@@ -131,7 +131,7 @@
     "flavorQuote": "True peace begins with a single breath."
   },
   {
-    "id": "Santosha",
+    "id": 2,
     "name": "Santosha (Content)",
     "description": "The unbreakable shield of contentment.",
     "element": "EARTH",
@@ -262,7 +262,7 @@
     "flavorQuote": "Stability comes from within."
   },
   {
-    "id": "Virya",
+    "id": 3,
     "name": "Virya (Vigor)",
     "description": "The blazing fire of yoga-fueled vigor.",
     "element": "FIRE",
@@ -393,7 +393,7 @@
     "flavorQuote": "Let your inner fire burn through obstacles."
   },
   {
-    "id": "Dhairya",
+    "id": 4,
     "name": "Dhairya (Courage)",
     "description": "Patient, courageous fortitude.",
     "element": "LIGHT",
@@ -524,7 +524,7 @@
     "flavorQuote": "Courage is not the absence of fear, but the mastery of it."
   },
   {
-    "id": "Maitri",
+    "id": 5,
     "name": "Maitri (Loving-Kindness)",
     "description": "Universal benevolence.",
     "element": "AIR",

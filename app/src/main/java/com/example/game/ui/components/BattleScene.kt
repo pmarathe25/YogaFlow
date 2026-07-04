@@ -197,13 +197,12 @@ fun BattleScene(viewModel: GameViewModel) {
     val availableCombos = remember(state.heroes) {
         if (currentHero == null) emptyList()
         else {
-            val aliveHeroNames = state.heroes
-                .filter { it.hp > 0 && !it.isDefeated }
-                .map { it.name }
-                .toSet()
+            val aliveHeroes = state.heroes.filter { it.hp > 0 && !it.isDefeated }
+            val aliveHeroIds = aliveHeroes.mapNotNull { it.id.toIntOrNull() }.toSet()
+            val currentHeroId = currentHero.id.toIntOrNull() ?: -1
             DataLoader.combos.filter { combo ->
-                currentHero.name in combo.requiredHeroes &&
-                combo.requiredHeroes.all { name -> name in aliveHeroNames }
+                currentHeroId in combo.requiredHeroes &&
+                combo.requiredHeroes.all { id -> id in aliveHeroIds }
             }
         }
     }
@@ -276,6 +275,7 @@ fun BattleScene(viewModel: GameViewModel) {
                                 CombatantSprite(
                                     isMonster = true,
                                     name = monster.id,
+                                    heroId = 0,
                                     elementColor = monsterColor,
                                     isActive = !monster.isDefeated,
                                     isBoss = isBoss,
@@ -357,6 +357,7 @@ fun BattleScene(viewModel: GameViewModel) {
                                         CombatantSprite(
                                             isMonster = false,
                                             name = hero.id,
+                                            heroId = hero.id.toIntOrNull() ?: 0,
                                             elementColor = elementToColor(hero.element),
                                             isActive = !hero.isDefeated,
                                             isFlashing = heroFlash > 0f,

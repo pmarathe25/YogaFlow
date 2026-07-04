@@ -4,7 +4,7 @@ data class ComboSkill(
     val id: String,
     val name: String,
     val description: String,
-    val requiredHeroes: Set<String>,
+    val requiredHeroes: Set<Int>,
     val targetType: TargetType,
     val damageComponents: List<DamageComponent> = emptyList(),
     val baseDamage: Int = 0,

@@ -20,7 +20,7 @@ data class Equipment(
     val slot: EquipmentSlot,
     val tier: EquipmentTier,
     val heroClass: HeroClass? = null,
-    val heroId: String? = null,
+    val heroId: Int? = null,
     val minYogaLevel: Int = 1,
     val minHeroLevel: Int = 1,
     val sparkCost: Int = 0,
@@ -74,11 +74,11 @@ data class Equipment(
     fun getThemeColor(): Color {
         if (tier == EquipmentTier.UNIQUE && heroId != null) {
             return when (heroId) {
-                "Shanti" -> Color(0xFF2196F3)
-                "Santosha" -> Color(0xFF795548)
-                "Virya" -> Color(0xFFF44336)
-                "Dhairya" -> Color(0xFFFFEB3B)
-                "Maitri" -> Color(0xFFE1F5FE)
+                1 -> Color(0xFF2196F3)
+                2 -> Color(0xFF795548)
+                3 -> Color(0xFFF44336)
+                4 -> Color(0xFFFFD54F)
+                5 -> Color(0xFF81D4FA)
                 else -> Color.Gray
             }
         }
@@ -88,7 +88,6 @@ data class Equipment(
         }
     }
 
-    fun getIcon(): String = icon
 }
 
 data class EquipmentEffect(

@@ -182,12 +182,13 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
         participantIds: Set<String>
     ): TurnResult {
         if (state.phase != PLAYER_TURN) return TurnResult(state)
-        if (!participantIds.containsAll(combo.requiredHeroes)) return TurnResult(state)
+        val requiredIds = combo.requiredHeroes.map(Int::toString).toSet()
+        if (!participantIds.containsAll(requiredIds)) return TurnResult(state)
         val participants = participantIds.mapNotNull { id -> state.heroes.firstOrNull { it.id == id && !it.isDefeated } }
         if (participants.size != combo.requiredHeroes.size) return TurnResult(state)
 
         val casterId = state.currentActorId.takeIf { it in participantIds } ?: participants.first().id
-        val partnerIds = combo.requiredHeroes.filter { it != casterId }
+        val partnerIds = requiredIds.filter { it != casterId }
         val outcomeResult = computeComboOutcome(combo, casterId, partnerIds, state)
         val (applied, applyEvents, updatedOutcome) = applyOutcome(state, outcomeResult.outcome)
         val withGauge = applied.copy(
@@ -912,6 +913,6 @@ fun BattleState.withComboAvailability(): BattleState {
     val aliveHeroIds = aliveHeroes.map { it.id }.toSet()
     val combos = runCatching { com.example.game.persistence.DataLoader.combos }.getOrDefault(emptyList())
     return copy(isComboAvailable = combos.any { combo ->
-        aliveHeroIds.containsAll(combo.requiredHeroes)
+        aliveHeroIds.containsAll(combo.requiredHeroes.map(Int::toString))
     })
 }

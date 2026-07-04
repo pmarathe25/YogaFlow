@@ -1,9 +1,9 @@
 package com.example.game.model
 
 data class GameProgress(
-    val version: Int = 2,
+    val version: Int = 3,
     val party: List<PartyMemberData> = emptyList(),
-    val unlockedHeroIds: Set<String> = emptySet(),
+    val unlockedHeroIds: Set<Int> = emptySet(),
     val defeatedMonsterIds: Set<String> = emptySet(),
     val inventory: List<String> = emptyList(),
     val sparks: Int = 0,
@@ -23,7 +23,7 @@ data class GameProgress(
 )
 
 data class PartyMemberData(
-    val heroId: String,
+    val heroId: Int,
     val level: Int = 1,
     val equippedItemIds: List<String> = emptyList()
 )

@@ -39,7 +39,7 @@ object DataLoader {
         setBonuses
     }
 
-    fun getHero(id: String): Hero = heroes.first { it.id == id }
+    fun getHero(id: Int): Hero = heroes.first { it.id == id }
 
     fun getMonster(id: String): Monster = monsters.first { it.id == id }
 
@@ -48,7 +48,10 @@ object DataLoader {
     fun getCombo(id: String): ComboSkill = combos.first { it.id == id }
 
     fun findCombo(heroIds: List<String>): ComboSkill? =
-        combos.firstOrNull { it.requiredHeroes.toSet() == heroIds.toSet() }
+        combos.firstOrNull { combo ->
+            val intIds = heroIds.mapNotNull { it.toIntOrNull() }.toSet()
+            intIds == combo.requiredHeroes
+        }
 
     fun getTrophy(id: String): Trophy = trophies.first { it.id == id }
 

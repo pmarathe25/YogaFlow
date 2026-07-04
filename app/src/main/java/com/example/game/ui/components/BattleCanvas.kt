@@ -381,6 +381,7 @@ private fun DrawScope.drawPillar(x: Float, baseY: Float, width: Float, height: F
 fun HeroSprite(
     modifier: Modifier = Modifier,
     heroName: String,
+    heroId: Int = 0,
     elementColor: Color,
     isActive: Boolean = true,
     isFlashing: Boolean = false,
@@ -392,6 +393,7 @@ fun HeroSprite(
         modifier = modifier,
         isMonster = false,
         name = heroName,
+        heroId = heroId,
         elementColor = elementColor,
         isActive = isActive,
         isFlashing = isFlashing,
@@ -432,11 +434,11 @@ fun MonsterSprite(
 
 // ─── Silhouette Drawers (unchanged from original) ──────────────────────
 
-fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, name: String, tint: Color) {
+fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: Color) {
     val path = Path()
 
-    when (name) {
-        "Shanti" -> {
+    when (heroId) {
+        1 -> {
             // 1. Watery Halo (Aura)
             drawCircle(tint.copy(alpha = 0.15f), s * 0.45f, Offset(cx, cy - s * 0.7f))
             drawCircle(tint.copy(alpha = 0.1f), s * 0.55f, Offset(cx, cy - s * 0.7f))
@@ -477,7 +479,7 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, name: String, tint:
                 drawCircle(Color.White.copy(alpha = 0.6f), s * 0.025f, Offset(bx, by))
             }
         }
-        "Santosha" -> {
+        2 -> {
             // 1. Earthy Shield Base
             path.reset()
             path.moveTo(cx - s * 0.55f, cy - s * 0.4f)
@@ -509,7 +511,7 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, name: String, tint:
             crackPath.lineTo(cx + s * 0.6f, cy + s * 0.8f)
             drawPath(crackPath, tint.copy(alpha = 0.5f), style = Stroke(width = 2f))
         }
-        "Virya" -> {
+        3 -> {
             // 1. Flame Aura
             for (i in 0..12) {
                 val angle = i * 2f * kotlin.math.PI.toFloat() / 12f
@@ -538,7 +540,7 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, name: String, tint:
             // 4. Glowing Core
             drawCircle(Color.White.copy(alpha = 0.7f), s * 0.08f, Offset(cx, cy - s * 0.1f))
         }
-        "Dhairya" -> {
+        4 -> {
             // 1. Radiant Cape
             path.reset()
             path.moveTo(cx - s * 0.1f, cy - s * 0.6f)
@@ -569,7 +571,7 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, name: String, tint:
             flagPath.lineTo(cx + s * 0.3f, cy - s * 0.7f)
             drawPath(flagPath, tint.copy(alpha = 0.6f))
         }
-        "Maitri" -> {
+        5 -> {
             // 1. Gentle Winds (Spinning paths)
             for (i in 0..2) {
                 val windPath = Path()

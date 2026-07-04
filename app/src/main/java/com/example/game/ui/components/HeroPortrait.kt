@@ -6,7 +6,7 @@ import androidx.compose.ui.Modifier
 
 @Composable
 fun HeroPortrait(
-    heroId: String,
+    heroId: Int,
     elementColor: androidx.compose.ui.graphics.Color,
     modifier: Modifier = Modifier
 ) {

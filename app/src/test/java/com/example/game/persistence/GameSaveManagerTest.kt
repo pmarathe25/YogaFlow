@@ -23,9 +23,9 @@ class GameSaveManagerTest {
     }
 
     @Test
-    fun `default save loads with version 2`() {
+    fun `default save loads with version 3`() {
         val data = saveManager.loadGame()
-        assertEquals(2, data.version)
+        assertEquals(3, data.version)
         assertTrue(data.party.isEmpty())
         assertTrue(data.unlockedHeroIds.isEmpty())
         assertEquals(0, data.sparks)
@@ -35,12 +35,12 @@ class GameSaveManagerTest {
     @Test
     fun `save then load returns identical data`() {
         val original = GameProgress(
-            version = 2,
+            version = 3,
             party = listOf(
-                PartyMemberData("shanti", 3, listOf("training_blade")),
-                PartyMemberData("virya", 5, listOf("ember_pendant"))
+                PartyMemberData(1, 3, listOf("training_blade")),
+                PartyMemberData(3, 5, listOf("ember_pendant"))
             ),
-            unlockedHeroIds = setOf("shanti", "santosha", "virya"),
+            unlockedHeroIds = setOf(1, 2, 3),
             sparks = 150,
             yogaLevel = 4,
             earnedTrophyIds = setOf("badge_bhaya", "trophy_fearless"),
@@ -74,55 +74,40 @@ class GameSaveManagerTest {
     }
 
     @Test
-    fun `normalizeId converts PascalCase to lower snake case`() {
+    fun `save with int hero IDs preserves exact values`() {
         val data = GameProgress(
-            party = listOf(PartyMemberData("HeroA", 1)),
-            unlockedHeroIds = setOf("Shanti")
-        )
-        saveManager.saveGame(data)
-        val ctx = ApplicationProvider.getApplicationContext<android.content.Context>()
-        val prefs = ctx.getSharedPreferences("game_save", android.content.Context.MODE_PRIVATE)
-        val blob = prefs.getString("progress_blob_v2", null)
-
-        assertNotNull(blob)
-        assertTrue("blob should contain normalized hero_a", blob!!.contains("hero_a"))
-        assertTrue("blob should contain normalized shanti", blob.contains("shanti"))
-    }
-
-    @Test
-    fun `save with PascalCase hero IDs normalizes to lower snake case on save`() {
-        val data = GameProgress(
-            party = listOf(PartyMemberData("HeroA", 1)),
-            unlockedHeroIds = setOf("HeroB", "HeroC"),
+            party = listOf(PartyMemberData(1, 1)),
+            unlockedHeroIds = setOf(2, 3),
             defeatedMonsterIds = setOf("MonsterX")
         )
         saveManager.saveGame(data)
         val loaded = saveManager.loadGame()
 
-        assertTrue("hero_a should be lowercase", loaded.party.any { it.heroId == "hero_a" })
-        assertTrue("hero_b should be lowercase", loaded.unlockedHeroIds.contains("hero_b"))
-        assertTrue("hero_c should be lowercase", loaded.unlockedHeroIds.contains("hero_c"))
-        assertTrue("monster_x should be lowercase", loaded.defeatedMonsterIds.contains("monster_x"))
+        assertTrue("hero 1 should be 1", loaded.party.any { it.heroId == 1 })
+        assertTrue("hero 2 should be present", loaded.unlockedHeroIds.contains(2))
+        assertTrue("hero 3 should be present", loaded.unlockedHeroIds.contains(3))
+        assertTrue("monster_x should be lowercase", loaded.defeatedMonsterIds.contains("monsterx"))
     }
 
     @Test
     fun `save with mixed case IDs normalizes correctly`() {
         val data = GameProgress(
             party = listOf(
-                PartyMemberData("Shanti", 1),
-                PartyMemberData("VIRYA", 2),
-                PartyMemberData("dhairya", 3)
+                PartyMemberData(1, 1),
+                PartyMemberData(3, 2),
+                PartyMemberData(4, 3)
             ),
-            unlockedHeroIds = setOf("Maitri_Santosha"),
+            unlockedHeroIds = setOf(5, 2),
             defeatedMonsterIds = setOf("Bhaya_Fear", "Krodha--Anger")
         )
         saveManager.saveGame(data)
         val loaded = saveManager.loadGame()
 
-        assertEquals("shanti", loaded.party[0].heroId)
-        assertEquals("virya", loaded.party[1].heroId)
-        assertEquals("dhairya", loaded.party[2].heroId)
-        assertTrue(loaded.unlockedHeroIds.contains("maitri_santosha"))
+        assertEquals(1, loaded.party[0].heroId)
+        assertEquals(3, loaded.party[1].heroId)
+        assertEquals(4, loaded.party[2].heroId)
+        assertTrue(loaded.unlockedHeroIds.contains(5))
+        assertTrue(loaded.unlockedHeroIds.contains(2))
         assertTrue(loaded.defeatedMonsterIds.contains("bhaya_fear"))
         assertTrue(loaded.defeatedMonsterIds.contains("krodha_anger"))
     }
@@ -133,7 +118,7 @@ class GameSaveManagerTest {
         saveManager.saveGame(original)
         val loaded = saveManager.loadGame()
 
-        assertEquals(2, loaded.version)
+        assertEquals(3, loaded.version)
         assertTrue(loaded.party.isEmpty())
         assertTrue(loaded.unlockedHeroIds.isEmpty())
         assertEquals(0, loaded.sparks)
@@ -147,7 +132,7 @@ class GameSaveManagerTest {
     fun `resetToDefault restores fresh save state`() {
         val original = GameProgress(
             sparks = 999, yogaLevel = 10,
-            party = listOf(PartyMemberData("shanti", 5)),
+            party = listOf(PartyMemberData(1, 5)),
             totalBattlesWon = 50
         )
         saveManager.saveGame(original)
@@ -177,17 +162,17 @@ class GameSaveManagerTest {
         val loaded = saveManager.loadGame()
         assertEquals(300, loaded.sparks)
         assertEquals(15, loaded.totalBattlesWon)
-        assertEquals(2, loaded.version)
+        assertEquals(3, loaded.version)
     }
 
     @Test
     fun `party save data roundtrip preserves all fields`() {
         val original = GameProgress(
             party = listOf(
-                PartyMemberData("shanti", 3, listOf("training_blade", "simple_beads")),
-                PartyMemberData("virya", 5, listOf("fury_blade")),
-                PartyMemberData("santosha", 2),
-                PartyMemberData("dhairya", 1)
+                PartyMemberData(1, 3, listOf("training_blade", "simple_beads")),
+                PartyMemberData(3, 5, listOf("fury_blade")),
+                PartyMemberData(2, 2),
+                PartyMemberData(4, 1)
             )
         )
         saveManager.saveGame(original)
@@ -195,16 +180,16 @@ class GameSaveManagerTest {
 
         assertEquals(4, loaded.party.size)
 
-        val shanti = loaded.party.find { it.heroId == "shanti" }
+        val shanti = loaded.party.find { it.heroId == 1 }
         assertNotNull(shanti)
         assertEquals(3, shanti!!.level)
         assertEquals(listOf("training_blade", "simple_beads"), shanti.equippedItemIds)
 
-        val virya = loaded.party.find { it.heroId == "virya" }
+        val virya = loaded.party.find { it.heroId == 3 }
         assertNotNull(virya)
         assertEquals(5, virya!!.level)
 
-        val dhairya = loaded.party.find { it.heroId == "dhairya" }
+        val dhairya = loaded.party.find { it.heroId == 4 }
         assertNotNull(dhairya)
         assertEquals(1, dhairya!!.level)
     }
@@ -217,7 +202,7 @@ class GameSaveManagerTest {
 
         val fresh = GameSaveManager(ctx)
         val data = fresh.loadGame()
-        assertEquals(2, data.version)
+        assertEquals(3, data.version)
         assertEquals(0, data.sparks)
         assertEquals(1, data.yogaLevel)
     }
@@ -225,9 +210,9 @@ class GameSaveManagerTest {
     @Test
     fun `versioned JSON blob roundtrip preserves all fields`() {
         val original = GameProgress(
-            version = 2,
-            party = listOf(PartyMemberData("shanti", 3, listOf("blade"))),
-            unlockedHeroIds = setOf("shanti"),
+            version = 3,
+            party = listOf(PartyMemberData(1, 3, listOf("blade"))),
+            unlockedHeroIds = setOf(1),
             sparks = 200,
             yogaLevel = 5,
             totalBattlesWon = 20,
@@ -249,7 +234,7 @@ class GameSaveManagerTest {
     @Test
     fun `default save loaded from assets has expected structure`() {
         val data = saveManager.loadGame()
-        assertEquals(2, data.version)
+        assertEquals(3, data.version)
         assertNotNull(data.party)
         assertNotNull(data.unlockedHeroIds)
         assertNotNull(data.inventory)

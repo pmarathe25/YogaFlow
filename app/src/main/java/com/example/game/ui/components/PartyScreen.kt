@@ -34,7 +34,7 @@ fun PartyScreen(viewModel: GameViewModel) {
     val saveData by viewModel.saveData.collectAsState()
     val allHeroes = DataLoader.heroes
     
-    var detailHeroId by remember { mutableStateOf<String?>(null) }
+    var detailHeroId by remember { mutableStateOf<Int?>(null) }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -69,7 +69,7 @@ fun PartyScreen(viewModel: GameViewModel) {
             LazyColumn(modifier = Modifier.weight(1f)) {
                 items(allHeroes) { heroDef ->
                     val partyMember = party.find { it.heroId == heroDef.id }
-                    val isUnlocked = heroDef.id.lowercase() in saveData.unlockedHeroIds
+                    val isUnlocked = heroDef.id in saveData.unlockedHeroIds
                     val canPurchase = heroDef.unlockYogaLevel <= saveData.yogaLevel && !isUnlocked
                     
                     if (canPurchase) {
@@ -290,12 +290,12 @@ fun HeroDetailsDialog(
                 Spacer(Modifier.height(8.dp))
 
                 hero.skills.forEach { skill ->
-                    SkillCard(skill = skill, hero = hero, level = partyMember.level)
+                    SkillCard(skill = skill, hero = hero, level = partyMember.level, heroColor = heroColor)
                 }
 
                 // Ultimate
                 Spacer(Modifier.height(12.dp))
-                SkillCard(skill = hero.ultimate, hero = hero, level = partyMember.level, isUltimate = true)
+                SkillCard(skill = hero.ultimate, hero = hero, level = partyMember.level, isUltimate = true, heroColor = heroColor)
 
                 Spacer(Modifier.height(20.dp))
                 
@@ -393,7 +393,7 @@ fun HeroDetailsDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Text(item.getIcon(), fontSize = 24.sp)
+                                Text(item.icon, fontSize = 24.sp)
                                 Spacer(Modifier.width(8.dp))
                                 Column {
                                     Text(item.name, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
@@ -412,7 +412,7 @@ fun HeroDetailsDialog(
 }
 
 @Composable
-private fun SkillCard(skill: Skill, hero: Hero, level: Int, isUltimate: Boolean = false) {
+private fun SkillCard(skill: Skill, hero: Hero, level: Int, isUltimate: Boolean = false, heroColor: Color = Color.Gray) {
     val typeColor = when {
         isUltimate -> heroColor
         skill.healScaling != null -> Color(0xFF4CAF50)
@@ -532,7 +532,7 @@ private fun EquipmentSlotCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                item?.getIcon() ?: when (slot) {
+                    item?.icon ?: when (slot) {
                     EquipmentSlot.WEAPON -> "\uD83D\uDDE1\uFE0F"
                     EquipmentSlot.ARMOR -> "\uD83D\uDEE1\uFE0F"
                     EquipmentSlot.ACCESSORY -> "\uD83D\uDC8D"

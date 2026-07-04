@@ -19,6 +19,7 @@ fun CombatantSprite(
     isMonster: Boolean,
     name: String,
     elementColor: Color,
+    heroId: Int = 0,
     isActive: Boolean = true,
     isBoss: Boolean = false,
     isFlashing: Boolean = false,
@@ -109,7 +110,7 @@ fun CombatantSprite(
         if (isMonster) {
             drawMonsterShape(drawCx, drawCy, s, name, elementColor.copy(alpha = smoothAlpha))
         } else {
-            drawSilhouette(drawCx, drawCy, s, name, tint.copy(alpha = smoothAlpha))
+            drawSilhouette(drawCx, drawCy, s, heroId, tint.copy(alpha = smoothAlpha))
         }
 
         // Flash overlay

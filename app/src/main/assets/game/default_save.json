@@ -1,7 +1,7 @@
 {
   "battleState": null,
-  "party": [{"heroId": "shanti"}],
-  "unlockedHeroIds": ["shanti"],
+  "party": [{"heroId": 1}],
+  "unlockedHeroIds": [1],
   "sparks": 0,
   "yogaLevel": 1,
   "earnedTrophyIds": [],

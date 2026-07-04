@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import com.example.game.model.GameProgress
 import com.example.game.model.PartyMemberData
 import com.google.gson.Gson
+import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
 
 class GameSaveManager(private val context: Context) {
@@ -12,7 +13,7 @@ class GameSaveManager(private val context: Context) {
 
     private companion object {
         private val gson = Gson()
-        const val KEY_PROGRESS_BLOB = "progress_blob_v2"
+        const val KEY_PROGRESS_BLOB = "progress_blob_v3"
 
         const val KEY_PARTY = "party"
         const val KEY_UNLOCKED_HERO_IDS = "unlocked_hero_ids"
@@ -27,11 +28,17 @@ class GameSaveManager(private val context: Context) {
         const val KEY_DEFEATED_MONSTER_IDS = "defeated_monster_ids"
     }
 
+    private val stringHeroIdToInt = mapOf(
+        "shanti" to 1, "santosha" to 2, "virya" to 3, "dhairya" to 4, "maitri" to 5
+    )
+
     fun loadGame(): GameProgress {
         val blob = prefs.getString(KEY_PROGRESS_BLOB, null)
         if (!blob.isNullOrBlank()) {
-            return runCatching { gson.fromJson(blob, GameProgress::class.java).normalized() }
-                .getOrElse { loadDefaultSave() }
+            return runCatching {
+                val migrated = migrateBlobIfNeeded(blob)
+                gson.fromJson(migrated, GameProgress::class.java).normalized()
+            }.getOrElse { loadDefaultSave() }
         }
 
         if (prefs.all.isNotEmpty()) {
@@ -47,7 +54,7 @@ class GameSaveManager(private val context: Context) {
         val normalized = data.normalized()
         prefs.edit()
             .clear()
-            .putString(KEY_PROGRESS_BLOB, gson.toJson(normalized.copy(version = 2)))
+            .putString(KEY_PROGRESS_BLOB, gson.toJson(normalized.copy(version = 3)))
             .apply()
     }
 
@@ -73,7 +80,7 @@ class GameSaveManager(private val context: Context) {
         val xp = prefs.getString(KEY_TOTAL_YOGA_XP, "0")?.toIntOrNull() ?: 0
         return GameProgress(
             party = readJsonList(KEY_PARTY, emptyList<PartyMemberData>()),
-            unlockedHeroIds = readJsonStringSet(KEY_UNLOCKED_HERO_IDS),
+            unlockedHeroIds = readJsonStringSet(KEY_UNLOCKED_HERO_IDS).mapNotNull { id -> stringHeroIdToInt[id.trim().lowercase()] }.toSet(),
             sparks = prefs.getInt(KEY_SPARKS, 0),
             yogaLevel = prefs.getInt(KEY_YOGA_LEVEL, 1),
             earnedTrophyIds = readJsonStringSet(KEY_EARNED_TROPHY_IDS),
@@ -85,6 +92,51 @@ class GameSaveManager(private val context: Context) {
             gold = xp / 10,
             defeatedMonsterIds = readJsonStringSet(KEY_DEFEATED_MONSTER_IDS)
         )
+    }
+
+    private fun migrateBlobIfNeeded(blob: String): String {
+        return try {
+            val root = JsonParser.parseString(blob).asJsonObject
+            val version = root.get("version")?.asInt ?: 0
+            if (version >= 3) return blob
+
+            // Migrate party heroId from string to int
+            root.getAsJsonArray("party")?.forEach { partyElem ->
+                val partyObj = partyElem.asJsonObject
+                val heroId = partyObj.get("heroId")
+                if (heroId != null && heroId.isJsonPrimitive && heroId.asJsonPrimitive.isString) {
+                    val intId = stringHeroIdToInt[heroId.asString.trim().lowercase()]
+                    if (intId != null) {
+                        partyObj.addProperty("heroId", intId)
+                    } else {
+                        partyObj.addProperty("heroId", 1)
+                    }
+                }
+            }
+
+            // Migrate unlockedHeroIds from strings to ints
+            val unlocked = root.getAsJsonArray("unlockedHeroIds")
+            if (unlocked != null) {
+                val newArray = com.google.gson.JsonArray()
+                unlocked.forEach { elem ->
+                    val strId = if (elem.isJsonPrimitive && elem.asJsonPrimitive.isString) {
+                        elem.asString.trim().lowercase()
+                    } else {
+                        elem.asString
+                    }
+                    val intId = stringHeroIdToInt[strId]
+                    if (intId != null) {
+                        newArray.add(intId)
+                    }
+                }
+                root.add("unlockedHeroIds", newArray)
+            }
+
+            root.addProperty("version", 3)
+            root.toString()
+        } catch (e: Exception) {
+            blob
+        }
     }
 
     private inline fun <reified T> readJsonList(key: String, default: List<T>): List<T> {
@@ -101,18 +153,14 @@ class GameSaveManager(private val context: Context) {
 
     private fun GameProgress.normalized(): GameProgress =
         copy(
-            version = 2,
+            version = 3,
             party = party.map {
-                it.copy(heroId = normalizeId(it.heroId), equippedItemIds = it.equippedItemIds.map(::normalizeId))
+                it.copy(equippedItemIds = it.equippedItemIds.map(::normalizeItemId))
             },
-            unlockedHeroIds = unlockedHeroIds.map(::normalizeId).toSet(),
-            defeatedMonsterIds = defeatedMonsterIds.map(::normalizeId).toSet()
+            unlockedHeroIds = unlockedHeroIds,
+            defeatedMonsterIds = defeatedMonsterIds.map(::normalizeMonsterId).toSet()
         )
 
-    private fun normalizeId(id: String): String =
-        id.trim()
-            .replace(Regex("([a-z])([A-Z])"), "$1_$2")
-            .replace(Regex("[^A-Za-z0-9]+"), "_")
-            .trim('_')
-            .lowercase()
+    private fun normalizeItemId(id: String): String = id.trim().lowercase()
+    private fun normalizeMonsterId(id: String): String = id.trim().lowercase()
 }

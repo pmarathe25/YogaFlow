@@ -145,13 +145,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun getUnlockedHeroes(): List<Hero> {
         val unlockedIds = _saveData.value.unlockedHeroIds
-        return DataLoader.heroes.filter { it.id.lowercase() in unlockedIds }
+        return DataLoader.heroes.filter { it.id in unlockedIds }
     }
 
     fun getAvailableHeroes(): List<Hero> {
         val data = _saveData.value
         return DataLoader.heroes.filter { h ->
-            h.unlockYogaLevel <= data.yogaLevel && h.id.lowercase() !in data.unlockedHeroIds
+            h.unlockYogaLevel <= data.yogaLevel && h.id !in data.unlockedHeroIds
         }
     }
 
@@ -203,7 +203,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun updateComboAvailability(state: BattleState): BattleState {
         val aliveHeroIds = state.aliveHeroes.map { it.id }.toSet()
         val isAvailable = DataLoader.combos.any { combo ->
-            aliveHeroIds.containsAll(combo.requiredHeroes)
+            aliveHeroIds.containsAll(combo.requiredHeroes.map(Int::toString))
         }
         return state.copy(isComboAvailable = isAvailable)
     }
@@ -297,8 +297,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun executeComboById(comboId: String) {
         val combo = DataLoader.getCombo(comboId)
-        val participantIds = combo.requiredHeroes.mapNotNull { name ->
-            _battleState.value?.heroes?.find { it.name == name && !it.isDefeated }?.id
+        val participantIds = combo.requiredHeroes.mapNotNull { heroId ->
+            val heroDef = DataLoader.heroes.find { it.id == heroId }
+            val heroName = heroDef?.name?.split(" ")?.first()
+            _battleState.value?.heroes?.find { it.name == heroName && !it.isDefeated }?.id
         }.toSet()
         if (participantIds.size != combo.requiredHeroes.size) return
         executeCombo(participantIds)
@@ -399,7 +401,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         return true
     }
 
-    fun equipItem(heroId: String, itemId: String): Boolean {
+    fun equipItem(heroId: Int, itemId: String): Boolean {
         val partyMember = _party.value.find { it.heroId == heroId } ?: return false
         val item = DataLoader.getEquipment(itemId)
         if (itemId !in _saveData.value.inventory) return false
@@ -422,7 +424,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         return true
     }
 
-    fun unequipItem(heroId: String, itemId: String) {
+    fun unequipItem(heroId: Int, itemId: String) {
         val partyMember = _party.value.find { it.heroId == heroId } ?: return
 
         val updatedItems = partyMember.equippedItemIds.toMutableList()
@@ -439,7 +441,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         saveGame()
     }
 
-    fun getEquippedItems(heroId: String): List<Equipment> {
+    fun getEquippedItems(heroId: Int): List<Equipment> {
         val partyMember = _party.value.find { it.heroId == heroId } ?: return emptyList()
         return partyMember.equippedItemIds.mapNotNull { DataLoader.getEquipment(it) }
     }
@@ -448,12 +450,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- Hero Level Up ---
 
-    fun getHeroLevelUpCost(heroId: String): Int {
+    fun getHeroLevelUpCost(heroId: Int): Int {
         val hero = _party.value.find { it.heroId == heroId } ?: return 0
         return hero.level
     }
 
-    fun levelUpHero(heroId: String): Boolean {
+    fun levelUpHero(heroId: Int): Boolean {
         val hero = _party.value.find { it.heroId == heroId } ?: return false
         val cost = getHeroLevelUpCost(heroId)
         val data = _saveData.value
@@ -475,20 +477,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- Hero Purchase ---
 
-    fun purchaseHero(heroId: String): Boolean {
-        val normalId = heroId.trim().lowercase()
+    fun purchaseHero(heroId: Int): Boolean {
         val hero = DataLoader.getHero(heroId)
         val data = _saveData.value
-        if (normalId in data.unlockedHeroIds) return false
+        if (heroId in data.unlockedHeroIds) return false
         if (data.yogaLevel < hero.unlockYogaLevel) return false
         val sparkCost = hero.unlockYogaLevel
         if (data.sparks < sparkCost) return false
 
-        val newParty = data.party + PartyMemberData(heroId = normalId)
-        _party.value = _party.value + PartyMemberData(heroId = normalId)
+        val newParty = data.party + PartyMemberData(heroId = heroId)
+        _party.value = _party.value + PartyMemberData(heroId = heroId)
         _saveData.value = data.copy(
             sparks = data.sparks - sparkCost,
-            unlockedHeroIds = data.unlockedHeroIds + normalId,
+            unlockedHeroIds = data.unlockedHeroIds + heroId,
             party = newParty
         )
         saveGame()

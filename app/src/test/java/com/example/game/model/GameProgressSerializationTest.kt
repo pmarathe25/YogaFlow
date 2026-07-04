@@ -11,12 +11,12 @@ class GameProgressSerializationTest {
     @Test
     fun `serialize and deserialize GameProgress`() {
         val original = GameProgress(
-            version = 2,
+            version = 3,
             party = listOf(
-                PartyMemberData("shanti", 3, listOf("training_blade")),
-                PartyMemberData("virya", 5, listOf("ember_pendant"))
+                PartyMemberData(1, 3, listOf("training_blade")),
+                PartyMemberData(3, 5, listOf("ember_pendant"))
             ),
-            unlockedHeroIds = setOf("shanti", "virya"),
+            unlockedHeroIds = setOf(1, 3),
             sparks = 150,
             yogaLevel = 4,
             totalBattlesWon = 12
@@ -46,7 +46,7 @@ class GameProgressSerializationTest {
     fun `default values on missing fields`() {
         val json = """{}"""
         val restored = gson.fromJson(json, GameProgress::class.java)
-        assertEquals(2, restored.version)
+        assertEquals(3, restored.version)
         assertTrue(restored.party.isEmpty())
         assertTrue(restored.unlockedHeroIds.isEmpty())
         assertEquals(0, restored.sparks)
