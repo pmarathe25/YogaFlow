@@ -169,11 +169,7 @@ private fun ShopItemCard(
                         item.name,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = when (item.tier) {
-                            EquipmentTier.UNIQUE -> Color(0xFFFFD740)
-                            EquipmentTier.CLASS_SPECIFIC -> Color(0xFFB388FF)
-                            EquipmentTier.GENERIC -> MaterialTheme.colorScheme.onSurface
-                        }
+                        color = item.getThemeColor()
                     )
                 }
                 Spacer(Modifier.height(2.dp))
@@ -241,11 +237,7 @@ fun GearDetailsDialog(item: Equipment, onDismiss: () -> Unit) {
                     item.name, 
                     style = MaterialTheme.typography.titleLarge, 
                     fontWeight = FontWeight.Bold,
-                    color = when (item.tier) {
-                        EquipmentTier.UNIQUE -> Color(0xFFFFD740)
-                        EquipmentTier.CLASS_SPECIFIC -> Color(0xFFB388FF)
-                        else -> MaterialTheme.colorScheme.onSurface
-                    }
+                    color = item.getThemeColor()
                 )
                 Text(item.tier.name, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                 

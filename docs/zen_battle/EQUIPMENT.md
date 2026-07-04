@@ -7,12 +7,11 @@
 | Tier | Availability | Copies | Gated By |
 |------|-------------|--------|----------|
 | Generic | Any hero | Multi-copy | Yoga Level + Sparks |
-| Class-Specific | One role | Multi-copy | Yoga Level + Sparks |
-| Unique | One hero | Single copy | Yoga Level + Hero Level + Sparks |
+| Unique | One hero | Single copy | Yoga Level + Hero Level + Sparks (or Battle Reward) |
 
 Heroes with 2+ unique items gain a **Set Bonus** when all their available unique items are equipped simultaneously.
 
-## Generic Items (any class)
+## Generic Items (any hero)
 
 | Item | Slot | Yoga Lvl | Cost | Effect |
 |------|------|----------|------|--------|
@@ -29,46 +28,67 @@ Heroes with 2+ unique items gain a **Set Bonus** when all their available unique
 | Crystal Ward | Armor | 5 | 8 | Start battle with 15% max HP as shield |
 | Force Amulet | Accessory | 6 | 10 | All skill damage +8% |
 
-## Class-Specific Items (one role)
-
-| Item | Class | Slot | Yoga Lvl | Cost | Effect |
-|------|-------|------|----------|------|--------|
-| Staff of Life | Healer | Weapon | 2 | 8 | +20% heal amount |
-| Healer's Mantle | Healer | Armor | 4 | 10 | +20% healing received, +8% max HP |
-| Pacifier's Charm | Healer | Accessory | 7 | 15 | Heals also grant 10% of heal as shield |
-| Bulwark Shield | Tank | Weapon | 2 | 8 | +20% shield gained from skills |
-| Guardian's Plate | Tank | Armor | 4 | 10 | +15% max HP, party takes 5% less damage |
-| Defender's Crest | Tank | Accessory | 7 | 15 | 25% chance to gain 10% max HP shield when hit |
-| Fury Blade | DPS | Weapon | 2 | 8 | +20% fire/elemental damage |
-| Assault Armor | DPS | Armor | 4 | 10 | +10% ATK, -5% max HP |
-| Berserker's Band | DPS | Accessory | 7 | 15 | 15% chance to double-hit on Strike |
-| Guiding Lance | Buffer | Weapon | 3 | 8 | +20% buff duration |
-| Commander's Plate | Buffer | Armor | 5 | 10 | +10% all stats |
-| Inspirer's Crown | Buffer | Accessory | 7 | 15 | +15% buff effect amount |
-| Prism Staff | Mage | Weapon | 3 | 8 | +20% AOE damage |
-| Flowing Robes | Mage | Armor | 5 | 10 | +15% SPD |
-| Empath's Ring | Mage | Accessory | 7 | 15 | Healing AOE also cleanses 1 status per ally |
-
 ## Unique Items (one hero, single copy)
 
 Require both Yoga Level (account-wide) AND Hero Level (specific hero).
+Some unique items are obtained as first-defeat battle rewards instead of being sold in the shop.
 
-| Item | Hero | Slot | Yoga Lvl | Hero Lvl | Cost | Effect |
-|------|------|------|----------|----------|------|--------|
-| Prayer Beads | Shanti | Accessory | 5 | 3 | 15 | Calming Radiance also grants party SPD+ 3 turns |
-| Foundation Stone | Santosha | Armor | 5 | 3 | 15 | Battle start: gain 30% max HP as shield |
-| Ember Core | Virya | Accessory | 5 | 3 | 15 | Each Blazing Ascension hit has 30% burn chance |
-| Inferno's Wrath | Virya | Weapon | 8 | 6 | 20 | Tapas Blast +30% damage to burning targets |
-| Battle Standard | Dhairya | Weapon | 5 | 3 | 15 | Rallying Cry buffs last +2 turns |
-| Light's Vanguard | Dhairya | Armor | 8 | 6 | 20 | Courageous Strike shields all allies 10% max HP |
-| Universal Key | Maitri | Accessory | 5 | 3 | 15 | Universal Embrace revives one fallen ally |
-| Wind's Caress | Maitri | Weapon | 8 | 6 | 20 | Loving Aura damage +30% |
-| Heart's Embrace | Maitri | Armor | 10 | 8 | 25 | Compassion's Touch also grants SPD+ 3 turns |
+### Shanti (Calm) — Healer
 
-## Set Bonuses
+| Item | Slot | Yoga Lvl | Hero Lvl | Cost | Effect | Acquisition |
+|------|------|----------|----------|------|--------|-------------|
+| Shanti's Prayer Beads | Accessory | 5 | 3 | 15 | Calming Radiance also grants party SPD+ 3 turns | Reward: defeat Bhaya |
+| Shanti's Tidal Staff | Weapon | 3 | 2 | 10 | +15% heal amount, heals also grant 10% as shield | Shop |
+| Shanti's Serene Mantle | Armor | 7 | 5 | 18 | +15% max HP, +15% incoming healing | Shop |
+
+**Set Bonus (2): Calming Current** — Pranayama Breath also grants a shield equal to 10% of target's max HP
+
+### Santosha (Content) — Tank
+
+| Item | Slot | Yoga Lvl | Hero Lvl | Cost | Effect | Acquisition |
+|------|------|----------|----------|------|--------|-------------|
+| Santosha's Foundation Stone | Armor | 5 | 3 | 15 | Battle start: gain 30% max HP as shield | Reward: defeat Chinta |
+| Santosha's Earthen Bulwark | Weapon | 3 | 2 | 10 | +20% shield strength, +8% max HP | Shop |
+| Santosha's Contentment Beads | Accessory | 7 | 5 | 18 | Party takes 5% less damage, start with 10% shield | Shop |
+
+**Set Bonus (2): Eternal Foundation** — Battle start: gain an additional 15% max HP as shield
+
+### Virya (Vigor) — DPS
+
+| Item | Slot | Yoga Lvl | Hero Lvl | Cost | Effect | Acquisition |
+|------|------|----------|----------|------|--------|-------------|
+| Virya's Ember Core | Accessory | 5 | 3 | 15 | Each Blazing Ascension hit has 30% burn chance | Reward: defeat Matsarya |
+| Virya's Inferno Wrath | Weapon | 8 | 6 | 20 | Tapas Blast +30% damage to burning targets | Shop |
+| Virya's Blazing Mantle | Armor | 7 | 4 | 18 | +12% ATK, +5% crit chance | Shop |
+
+**Set Bonus (2): Raging Inferno** — Tapas Blast burn chance +20%
+
+### Dhairya (Courage) — Buffer
+
+| Item | Slot | Yoga Lvl | Hero Lvl | Cost | Effect | Acquisition |
+|------|------|----------|----------|------|--------|-------------|
+| Dhairya's Battle Standard | Weapon | 5 | 3 | 15 | Rallying Cry buffs last +2 turns | Reward: defeat Dvesha |
+| Dhairya's Light Vanguard | Armor | 8 | 6 | 20 | Courageous Strike shields all allies 10% max HP | Shop |
+| Dhairya's Courage Circlet | Accessory | 7 | 4 | 18 | +15% ultimate gauge gain, +5% all damage | Shop |
+
+**Set Bonus (2): Inspiring Presence** — Battle start: party ATK+ 3 turns
+
+### Maitri (Loving-Kindness) — Mage
+
+| Item | Slot | Yoga Lvl | Hero Lvl | Cost | Effect | Acquisition |
+|------|------|----------|----------|------|--------|-------------|
+| Maitri's Universal Key | Accessory | 5 | 3 | 15 | Universal Embrace revives one fallen ally | Reward: defeat Lobha |
+| Maitri's Wind Caress | Weapon | 8 | 6 | 20 | Loving Aura damage +30% | Shop |
+| Maitri's Heart Embrace | Armor | 10 | 8 | 25 | Compassion's Touch also grants SPD+ 3 turns | Shop |
+
+**Set Bonus (3): Universal Love** — Loving Aura cleanses statuses from all allies
+
+## Set Bonuses Summary
 
 | Hero | Items | Bonus |
 |------|-------|-------|
+| Shanti | Prayer Beads + Tidal Staff | **Calming Current**: Pranayama Breath also grants 10% shield |
+| Santosha | Foundation Stone + Earthen Bulwark | **Eternal Foundation**: Battle start: additional 15% shield |
 | Virya | Ember Core + Inferno's Wrath | **Raging Inferno**: Tapas Blast burn chance +20% |
 | Dhairya | Battle Standard + Light's Vanguard | **Inspiring Presence**: Battle start: party ATK+ 3 turns |
 | Maitri | Universal Key + Wind's Caress + Heart's Embrace | **Universal Love**: Loving Aura cleanses statuses from all allies |

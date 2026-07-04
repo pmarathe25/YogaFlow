@@ -31,8 +31,7 @@ data class Equipment(
     val sparksCost: Int get() = sparkCost
     val goldCost: Int get() = sparkCost * when (tier) {
         EquipmentTier.GENERIC -> 5
-        EquipmentTier.CLASS_SPECIFIC -> 8
-        EquipmentTier.UNIQUE -> 10
+        else -> 10
     }
     
     val bonusDescription: String get() = effects.joinToString("\n") { effect ->
@@ -84,7 +83,6 @@ data class Equipment(
         }
         return when (tier) {
             EquipmentTier.UNIQUE -> Color(0xFFFFD700)
-            EquipmentTier.CLASS_SPECIFIC -> Color(0xFFB388FF)
             else -> Color.Gray
         }
     }

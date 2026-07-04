@@ -125,8 +125,8 @@
       "ultimateGain": 0,
       "cooldown": 0
     },
-    "uniqueItemIds": ["shanti_prayer_beads"],
-    "setBonusId": null,
+    "uniqueItemIds": ["shanti_prayer_beads", "shanti_tidal_staff", "shanti_serene_mantle"],
+    "setBonusId": "Shanti",
     "colorTheme": null,
     "flavorQuote": "True peace begins with a single breath."
   },
@@ -256,8 +256,8 @@
       "ultimateGain": 0,
       "cooldown": 0
     },
-    "uniqueItemIds": ["santosha_foundation_stone"],
-    "setBonusId": null,
+    "uniqueItemIds": ["santosha_foundation_stone", "santosha_earthen_bulwark", "santosha_contentment_beads"],
+    "setBonusId": "Santosha",
     "colorTheme": null,
     "flavorQuote": "Stability comes from within."
   },
@@ -387,7 +387,7 @@
       "ultimateGain": 0,
       "cooldown": 0
     },
-    "uniqueItemIds": ["virya_ember_core", "virya_inferno_wrath"],
+    "uniqueItemIds": ["virya_ember_core", "virya_inferno_wrath", "virya_blazing_mantle"],
     "setBonusId": "Virya",
     "colorTheme": null,
     "flavorQuote": "Let your inner fire burn through obstacles."
@@ -518,7 +518,7 @@
       "ultimateGain": 0,
       "cooldown": 0
     },
-    "uniqueItemIds": ["dhairya_battle_standard", "dhairya_light_vanguard"],
+    "uniqueItemIds": ["dhairya_battle_standard", "dhairya_light_vanguard", "dhairya_courage_circlet"],
     "setBonusId": "Dhairya",
     "colorTheme": null,
     "flavorQuote": "Courage is not the absence of fear, but the mastery of it."
