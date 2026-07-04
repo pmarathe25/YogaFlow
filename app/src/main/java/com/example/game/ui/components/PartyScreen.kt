@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.example.game.model.*
 import com.example.game.persistence.DataLoader
 import com.example.game.viewmodel.GameViewModel
@@ -275,24 +276,39 @@ fun HeroDetailsDialog(
                 
                 HorizontalDivider(Modifier.padding(vertical = 16.dp))
                 
-                // Stats Row
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    DetailStat("HP", stats.maxHp.toString(), Icons.Default.Favorite, Color.Red)
-                    DetailStat("ATK", stats.atk.toString(), Icons.Default.Bolt, Color(0xFFFFA500))
-                    DetailStat("SPD", stats.spd.toString(), Icons.Default.Speed, Color.Cyan)
+                // Stats
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    StatBar("HP", stats.maxHp, 500, Color.Red, "\u2764\uFE0F")
+                    StatBar("ATK", stats.atk, 80, Color(0xFFFFA500), "\u2694\uFE0F")
+                    StatBar("SPD", stats.spd, 25, Color.Cyan, "\uD83D\uDCA8")
                 }
 
                 Spacer(Modifier.height(20.dp))
                 
                 // Level Up
+                var showLevelUpDialog by remember { mutableStateOf(false) }
+
                 Button(
-                    onClick = { viewModel.levelUpHero(hero.id) },
+                    onClick = { showLevelUpDialog = true },
                     enabled = canLevelUp,
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = heroColor)
                 ) {
                     Text("Level Up (${levelUpCost} \u2726)", fontWeight = FontWeight.Bold)
+                }
+
+                if (showLevelUpDialog) {
+                    LevelUpDialog(
+                        hero = hero,
+                        partyMember = partyMember,
+                        heroColor = heroColor,
+                        onConfirm = {
+                            viewModel.levelUpHero(hero.id)
+                            showLevelUpDialog = false
+                        },
+                        onDismiss = { showLevelUpDialog = false }
+                    )
                 }
                 
                 Spacer(Modifier.height(24.dp))
@@ -445,5 +461,98 @@ private fun DetailStat(label: String, value: String, icon: androidx.compose.ui.g
         Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
         Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
         Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+    }
+}
+
+@Composable
+private fun StatBar(label: String, value: Int, maxValue: Int, color: Color, icon: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+        Text(icon, fontSize = 16.sp, modifier = Modifier.width(24.dp))
+        Text(label, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(48.dp))
+        LinearProgressIndicator(
+            progress = { value.toFloat() / maxValue.toFloat() },
+            modifier = Modifier.weight(1f).height(12.dp).clip(RoundedCornerShape(6.dp)),
+            color = color,
+            trackColor = color.copy(alpha = 0.15f)
+        )
+        Spacer(Modifier.width(8.dp))
+        Text("$value", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+fun LevelUpDialog(
+    hero: Hero,
+    partyMember: PartyMemberData,
+    heroColor: Color,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val currentStats = computeHeroStats(hero, partyMember.level)
+    val nextStats = computeHeroStats(hero, partyMember.level + 1)
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surface) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text("Level Up ${hero.name}?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(16.dp))
+
+                Text("Stats", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(8.dp))
+                StatComparisonRow("HP", currentStats.maxHp, nextStats.maxHp, Color.Red)
+                StatComparisonRow("ATK", currentStats.atk, nextStats.atk, Color(0xFFFFA500))
+                StatComparisonRow("SPD", currentStats.spd, nextStats.spd, Color.Cyan)
+
+                Spacer(Modifier.height(16.dp))
+
+                Text("Skills", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(8.dp))
+                hero.skills.forEach { skill ->
+                    SkillComparisonRow(skill, partyMember.level)
+                }
+
+                Spacer(Modifier.height(20.dp))
+
+                Text("Cost: sparks \u2726", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text("Cancel") }
+                    Button(onClick = onConfirm, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = heroColor)) { Text("Confirm") }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatComparisonRow(label: String, current: Int, next: Int, color: Color) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Text("$current", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+        Text(" \u2192 ", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+        Text("$next", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = color)
+        Text(" (+${next - current})", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.width(48.dp))
+    }
+}
+
+@Composable
+private fun SkillComparisonRow(skill: Skill, currentLevel: Int) {
+    val current = skill.baseDamage + skill.damagePerLevel * (currentLevel - 1)
+    val next = skill.baseDamage + skill.damagePerLevel * currentLevel
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp)) {
+        Text(skill.name, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+        if (skill.damagePerLevel > 0) {
+            Text("$current \u2192 $next dmg", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+        } else if (skill.healScaling != null) {
+            val curHeal = skill.healScaling.baseHeal + skill.healScaling.healPerLevel * (currentLevel - 1)
+            val nxtHeal = skill.healScaling.baseHeal + skill.healScaling.healPerLevel * currentLevel
+            if (skill.healScaling.healPerLevel > 0) {
+                Text("$curHeal \u2192 $nxtHeal heal", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+            } else {
+                Text("No change", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+            }
+        } else {
+            Text("No change", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+        }
     }
 }
