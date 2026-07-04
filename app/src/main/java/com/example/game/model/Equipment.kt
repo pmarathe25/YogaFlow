@@ -25,7 +25,8 @@ data class Equipment(
     val minHeroLevel: Int = 1,
     val sparkCost: Int = 0,
     val description: String = "",
-    val effects: List<EquipmentEffect> = emptyList()
+    val effects: List<EquipmentEffect> = emptyList(),
+    val icon: String = "❓"
 ) {
     val yogaLevelRequired: Int get() = minYogaLevel
     val sparksCost: Int get() = sparkCost
@@ -87,25 +88,7 @@ data class Equipment(
         }
     }
 
-    fun getIcon(): String {
-        return when (slot) {
-            EquipmentSlot.WEAPON -> when (tier) {
-                EquipmentTier.UNIQUE -> "🔱"
-                EquipmentTier.CLASS_SPECIFIC -> "⚔️"
-                else -> "🗡️"
-            }
-            EquipmentSlot.ARMOR -> when (tier) {
-                EquipmentTier.UNIQUE -> "✨"
-                EquipmentTier.CLASS_SPECIFIC -> "🛡️"
-                else -> "🥋"
-            }
-            EquipmentSlot.ACCESSORY -> when (tier) {
-                EquipmentTier.UNIQUE -> "📿"
-                EquipmentTier.CLASS_SPECIFIC -> "💎"
-                else -> "💠"
-            }
-        }
-    }
+    fun getIcon(): String = icon
 }
 
 data class EquipmentEffect(
