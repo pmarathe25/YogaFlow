@@ -290,6 +290,7 @@ fun HeroDetailsDialog(
 
                 // Level Up
                 var showLevelUpDialog by remember { mutableStateOf(false) }
+                var equipSlot by remember { mutableStateOf<EquipmentSlot?>(null) }
 
                 Button(
                     onClick = { showLevelUpDialog = true },
@@ -346,54 +347,42 @@ fun HeroDetailsDialog(
                             item = weaponItem,
                             heroColor = heroColor,
                             onUnequip = { viewModel.unequipItem(hero.id, it) },
-                            onEquip = {}
+                            onEquip = { equipSlot = EquipmentSlot.WEAPON }
                         )
                         EquipmentSlotCard(
                             slot = EquipmentSlot.ARMOR,
                             item = armorItem,
                             heroColor = heroColor,
                             onUnequip = { viewModel.unequipItem(hero.id, it) },
-                            onEquip = {}
+                            onEquip = { equipSlot = EquipmentSlot.ARMOR }
                         )
                         EquipmentSlotCard(
                             slot = EquipmentSlot.ACCESSORY,
                             item = accessoryItem,
                             heroColor = heroColor,
                             onUnequip = { viewModel.unequipItem(hero.id, it) },
-                            onEquip = {}
+                            onEquip = { equipSlot = EquipmentSlot.ACCESSORY }
                         )
                     }
                 }
                 
-                Spacer(Modifier.height(16.dp))
-                
-                // Inventory (Available for this hero)
-                Text("Available Inventory", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-                val available = DataLoader.equipment.filter { eq ->
-                    eq.id in saveData.inventory && (eq.heroId == null || eq.heroId == hero.id) &&
-                    equipped.none { it.slot == eq.slot }
-                }
-                
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(available) { item ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Text(item.icon, fontSize = 24.sp)
-                                Spacer(Modifier.width(8.dp))
-                                Column {
-                                    Text(item.name, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-                                    Text(item.bonusDescription, style = MaterialTheme.typography.labelSmall, color = Color.Gray, maxLines = 1)
-                                }
-                            }
-                            TextButton(onClick = { viewModel.equipItem(hero.id, item.id) }) {
-                                Text("EQUIP", fontSize = 11.sp, fontWeight = FontWeight.Black)
-                            }
-                        }
+                equipSlot?.let { slot ->
+                    val availableItems = DataLoader.equipment.filter { eq ->
+                        eq.id in saveData.inventory && eq.slot == slot &&
+                        (eq.heroId == null || eq.heroId == hero.id)
                     }
+
+                    EquipItemDialog(
+                        slot = slot,
+                        items = availableItems,
+                        currentlyEquipped = equipped.find { it.slot == slot },
+                        heroColor = heroColor,
+                        onEquip = { itemId ->
+                            viewModel.equipItem(hero.id, itemId)
+                            equipSlot = null
+                        },
+                        onDismiss = { equipSlot = null }
+                    )
                 }
 
                 // Skills section
@@ -668,6 +657,180 @@ private fun SkillComparisonRow(skill: Skill, currentLevel: Int) {
             }
         } else {
             Text("No change", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+        }
+    }
+}
+
+@Composable
+private fun EquipItemDialog(
+    slot: EquipmentSlot,
+    items: List<Equipment>,
+    currentlyEquipped: Equipment?,
+    heroColor: Color,
+    onEquip: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().heightIn(max = 500.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(modifier = Modifier.padding(20.dp).verticalScroll(rememberScrollState())) {
+                Text(
+                    "Select ${slot.name.lowercase().replaceFirstChar { it.uppercase() }}",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    if (currentlyEquipped != null) "Currently: ${currentlyEquipped.name}" else "No item equipped",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(12.dp))
+
+                if (items.isEmpty()) {
+                    Text(
+                        "No items available for this slot.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(vertical = 24.dp)
+                    )
+                } else {
+                    items.forEach { item ->
+                        EquipItemRow(
+                            item = item,
+                            currentlyEquipped = currentlyEquipped,
+                            heroColor = heroColor,
+                            onEquip = { onEquip(item.id) }
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
+                OutlinedButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                    Text("Cancel")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EquipItemRow(
+    item: Equipment,
+    currentlyEquipped: Equipment?,
+    heroColor: Color,
+    onEquip: () -> Unit
+) {
+    val isAlreadyEquipped = item.id == currentlyEquipped?.id
+
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(
+            alpha = if (isAlreadyEquipped) 0.3f else 0.5f
+        ),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(item.icon, fontSize = 24.sp, modifier = Modifier.padding(end = 12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        item.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = item.getThemeColor()
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = item.getThemeColor().copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            item.tier.name.lowercase().replaceFirstChar { it.uppercase() },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = item.getThemeColor(),
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(4.dp))
+
+                if (currentlyEquipped != null && !isAlreadyEquipped) {
+                    StatComparison(
+                        currentItem = currentlyEquipped,
+                        newItem = item
+                    )
+                } else if (isAlreadyEquipped) {
+                    Text(
+                        "Currently equipped",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    Text(
+                        item.bonusDescription,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            if (!isAlreadyEquipped) {
+                Spacer(Modifier.width(8.dp))
+                FilledTonalButton(
+                    onClick = onEquip,
+                    modifier = Modifier.height(36.dp),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = heroColor.copy(alpha = 0.3f)
+                    )
+                ) {
+                    Text("Equip", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatComparison(currentItem: Equipment, newItem: Equipment) {
+    val allTypes = (currentItem.effects.map { it.type } + newItem.effects.map { it.type }).distinct()
+
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        allTypes.forEach { type ->
+            val currentVal = currentItem.effects.find { it.type == type }?.value ?: 0f
+            val newVal = newItem.effects.find { it.type == type }?.value ?: 0f
+
+            if (currentVal != newVal) {
+                val label = type.name.lowercase().replace("_", " ")
+                val fmt = { v: Float -> if (v >= 1f) "+${v.toInt()}" else if (v > 0f) "+${(v * 100).toInt()}%" else "0" }
+                val isBetter = newVal > currentVal
+
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        "${fmt(currentVal)} \u2192 ",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                    Text(
+                        fmt(newVal),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isBetter) Color(0xFF4CAF50) else Color(0xFFE53935)
+                    )
+                    Text(
+                        " $label",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                }
+            }
         }
     }
 }
