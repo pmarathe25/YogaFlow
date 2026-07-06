@@ -43,7 +43,8 @@ fun ShopScreen(viewModel: GameViewModel) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { viewModel.navigateBack() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back",
+                         tint = MaterialTheme.colorScheme.onBackground)
                 }
                 Text(
                     "Shop",
@@ -298,9 +299,8 @@ fun GearDetailsDialog(item: Equipment, onDismiss: () -> Unit) {
 
                 // Set bonus section for unique items
                 if (item.tier == EquipmentTier.UNIQUE && item.heroId != null) {
-                    val heroDef = DataLoader.heroes.find { it.id == item.heroId }
-                    val setBonus = heroDef?.setBonusId?.let { sid ->
-                        DataLoader.setBonuses.find { it.name == sid }
+                    val setBonus = item.heroId?.let { hid ->
+                        DataLoader.setBonuses.find { it.heroId == hid }
                     }
 
                     if (setBonus != null) {

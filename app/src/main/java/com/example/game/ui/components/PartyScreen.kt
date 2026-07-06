@@ -49,7 +49,8 @@ fun PartyScreen(viewModel: GameViewModel) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { viewModel.navigateBack() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back",
+                         tint = MaterialTheme.colorScheme.onBackground)
                 }
                 Text(
                     "Your Heroes",
