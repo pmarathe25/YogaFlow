@@ -168,138 +168,155 @@ private fun HandOfCards(
         animationSpec = spring(dampingRatio = 0.65f, stiffness = 300f)
     )
 
-    val draggableState = rememberDraggableState { delta ->
-        scrollOffset += delta
-    }
-
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp)
-            .draggable(state = draggableState, orientation = Orientation.Horizontal),
+            .height(280.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
-        allCards.forEachIndexed { index, item ->
+        val containerWidth = maxWidth.value
+
+        val (minOffset, maxOffset) = remember(cardCount, containerWidth) {
             val centerIndex = (cardCount - 1) / 2f
-            val relativeIndex = index - centerIndex + (scrollOffset / 150f)
-            val rotation = relativeIndex * 12f
-            val ty = (relativeIndex.pow(2) * 10f)
-            val tx = relativeIndex * 85f
+            val centerX = containerWidth / 2f
+            val maxOff = 150f * (centerIndex + (75f - centerX) / 85f)
+            val minOff = 150f * ((centerX - 75f - containerWidth) / 85f + (cardCount - 1 - centerIndex))
+            Pair(minOff, maxOff)
+        }
 
-            val isDragged = dragActiveIndex == index
+        val draggableState = rememberDraggableState { delta ->
+            scrollOffset = (scrollOffset + delta).coerceIn(minOffset, maxOffset)
+        }
 
-            val cardMod = Modifier
-                .graphicsLayer {
-                    val dy = if (isDragged) displayDragY else 0f
-                    val dx = if (isDragged && isPopped) displayDragX else 0f
-                    translationX = tx.dp.toPx() + dx
-                    translationY = ty.dp.toPx() + dy - (if (item is ComboSkill) 20f else 0f)
-                    rotationZ = if (isDragged) 0f else rotation
-                    if (isDragged) { scaleX = 1.15f; scaleY = 1.15f }
-                }
-                .zIndex(if (isDragged) 999f else index.toFloat())
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(280.dp)
+                .draggable(state = draggableState, orientation = Orientation.Horizontal),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            allCards.forEachIndexed { index, item ->
+                val centerIndex = (cardCount - 1) / 2f
+                val relativeIndex = index - centerIndex + (scrollOffset / 150f)
+                val rotation = relativeIndex * 12f
+                val ty = (relativeIndex.pow(2) * 10f)
+                val tx = relativeIndex * 85f
 
-            val dragMod = if (item is com.example.game.model.Skill || item is ComboSkill) {
-                val cardColor = getCardColor(item)
-                Modifier.pointerInput(index) {
-                    detectVerticalDragGestures(
-                        onDragStart = { startPos ->
-                            if (dragActiveIndex == index && isPopped) {
-                                poppedCardIndex = -1
-                                lastDragX = startPos.x
-                            } else {
-                                poppedCardIndex = -1
-                                rawDragX = 0f
-                                rawDragY = 0f
-                                isPopped = false
-                                lastDragX = startPos.x
-                            }
-                            dragActiveIndex = index
-                            onCardDragStart?.invoke(cardColor)
-                        },
-                        onVerticalDrag = { change: PointerInputChange, dragAmountY: Float ->
-                            rawDragY += dragAmountY
-                            if (!isPopped) {
-                                if (rawDragY < -popThresholdPx) {
-                                    isPopped = true
-                                    lastDragX = change.position.x
+                val isDragged = dragActiveIndex == index
+
+                val cardMod = Modifier
+                    .graphicsLayer {
+                        val dy = if (isDragged) displayDragY else 0f
+                        val dx = if (isDragged && isPopped) displayDragX else 0f
+                        translationX = tx.dp.toPx() + dx
+                        translationY = ty.dp.toPx() + dy - (if (item is ComboSkill) 20f else 0f)
+                        rotationZ = if (isDragged) 0f else rotation
+                        if (isDragged) { scaleX = 1.15f; scaleY = 1.15f }
+                    }
+                    .zIndex(if (isDragged) 999f else index.toFloat())
+
+                val dragMod = if (item is com.example.game.model.Skill || item is ComboSkill) {
+                    val cardColor = getCardColor(item)
+                    Modifier.pointerInput(index) {
+                        detectVerticalDragGestures(
+                            onDragStart = { startPos ->
+                                if (dragActiveIndex == index && isPopped) {
+                                    poppedCardIndex = -1
+                                    lastDragX = startPos.x
                                 } else {
-                                    lastDragX = change.position.x
+                                    poppedCardIndex = -1
+                                    rawDragX = 0f
+                                    rawDragY = 0f
+                                    isPopped = false
+                                    lastDragX = startPos.x
                                 }
-                            } else {
-                                val currentX = change.position.x
-                                rawDragX += currentX - lastDragX
-                                lastDragX = currentX
-                            }
-                        },
-                        onDragEnd = {
-                            if (rawDragY < -thresholdPx) {
-                                rawDragY = 0f
-                                when (item) {
-                                    is com.example.game.model.Skill -> {
-                                        val skill = item
-                                        val isUlt = skill.ultimateGain == 0
-                                        val canUse = if (isUlt) currentHero.gauge >= 100
-                                            else (skillCooldowns[skill.id] ?: 0) <= 0
-                                        if (canUse) onSkill(skill)
+                                dragActiveIndex = index
+                                onCardDragStart?.invoke(cardColor)
+                            },
+                            onVerticalDrag = { change: PointerInputChange, dragAmountY: Float ->
+                                rawDragY += dragAmountY
+                                if (!isPopped) {
+                                    if (rawDragY < -popThresholdPx) {
+                                        isPopped = true
+                                        lastDragX = change.position.x
+                                    } else {
+                                        lastDragX = change.position.x
                                     }
-                                    is ComboSkill -> onComboSelect(item.id)
+                                } else {
+                                    val currentX = change.position.x
+                                    rawDragX += currentX - lastDragX
+                                    lastDragX = currentX
                                 }
+                            },
+                            onDragEnd = {
+                                if (rawDragY < -thresholdPx) {
+                                    rawDragY = 0f
+                                    when (item) {
+                                        is com.example.game.model.Skill -> {
+                                            val skill = item
+                                            val isUlt = skill.ultimateGain == 0
+                                            val canUse = if (isUlt) currentHero.gauge >= 100
+                                                else (skillCooldowns[skill.id] ?: 0) <= 0
+                                            if (canUse) onSkill(skill)
+                                        }
+                                        is ComboSkill -> onComboSelect(item.id)
+                                    }
+                                }
+                                dragActiveIndex = -1
+                                poppedCardIndex = -1
+                                isPopped = false
+                                onCardDragEnd?.invoke()
+                            },
+                            onDragCancel = {
+                                dragActiveIndex = -1
+                                poppedCardIndex = -1
+                                isPopped = false
+                                onCardDragEnd?.invoke()
                             }
-                            dragActiveIndex = -1
-                            poppedCardIndex = -1
-                            isPopped = false
-                            onCardDragEnd?.invoke()
-                        },
-                        onDragCancel = {
-                            dragActiveIndex = -1
-                            poppedCardIndex = -1
-                            isPopped = false
-                            onCardDragEnd?.invoke()
-                        }
-                    )
-                }
-            } else Modifier
+                        )
+                    }
+                } else Modifier
 
-            val tapMod = if (item is com.example.game.model.Skill || item is ComboSkill) {
-                Modifier.pointerInput(index) {
-                    detectTapGestures {
-                        if (poppedCardIndex == index) {
-                            poppedCardIndex = -1
-                            dragActiveIndex = -1
-                            isPopped = false
-                            rawDragY = 0f
-                        } else {
-                            poppedCardIndex = index
-                            dragActiveIndex = index
-                            isPopped = true
-                            rawDragY = -tapPopPositionPx
-                            rawDragX = 0f
+                val tapMod = if (item is com.example.game.model.Skill || item is ComboSkill) {
+                    Modifier.pointerInput(index) {
+                        detectTapGestures {
+                            if (poppedCardIndex == index) {
+                                poppedCardIndex = -1
+                                dragActiveIndex = -1
+                                isPopped = false
+                                rawDragY = 0f
+                            } else {
+                                poppedCardIndex = index
+                                dragActiveIndex = index
+                                isPopped = true
+                                rawDragY = -tapPopPositionPx
+                                rawDragX = 0f
+                            }
                         }
                     }
-                }
-            } else Modifier
+                } else Modifier
 
-            when (item) {
-                is com.example.game.model.Skill -> {
-                    val isUlt = item.ultimateGain == 0
-                    val ultReady = currentHero.gauge >= 100
-                    val cooldown = skillCooldowns[item.id] ?: 0
+                when (item) {
+                    is com.example.game.model.Skill -> {
+                        val isUlt = item.ultimateGain == 0
+                        val ultReady = currentHero.gauge >= 100
+                        val cooldown = skillCooldowns[item.id] ?: 0
 
-                    SkillCard(
-                        skill = item,
-                        isUltimate = isUlt,
-                        ultReady = ultReady,
-                        baseCooldown = item.cooldown,
-                        cooldownRemaining = cooldown,
-                        modifier = Modifier.width(150.dp).height(220.dp).then(cardMod).then(dragMod).then(tapMod)
-                    )
-                }
-                is ComboSkill -> {
-                    ComboCard(
-                        combo = item,
-                        modifier = Modifier.width(150.dp).height(220.dp).then(cardMod).then(dragMod).then(tapMod)
-                    )
+                        SkillCard(
+                            skill = item,
+                            isUltimate = isUlt,
+                            ultReady = ultReady,
+                            baseCooldown = item.cooldown,
+                            cooldownRemaining = cooldown,
+                            modifier = Modifier.width(150.dp).height(220.dp).then(cardMod).then(dragMod).then(tapMod)
+                        )
+                    }
+                    is ComboSkill -> {
+                        ComboCard(
+                            combo = item,
+                            modifier = Modifier.width(150.dp).height(220.dp).then(cardMod).then(dragMod).then(tapMod)
+                        )
+                    }
                 }
             }
         }
