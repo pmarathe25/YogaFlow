@@ -40,9 +40,6 @@ fun YogaNavHost(
                 viewModel = viewModel,
                 onViewFlowDetails = { flow ->
                     navController.navigate(Screen.FlowDetails.createRoute(flow.id))
-                },
-                onOpenSettings = {
-                    navController.navigate(Screen.Settings.route)
                 }
             )
         }

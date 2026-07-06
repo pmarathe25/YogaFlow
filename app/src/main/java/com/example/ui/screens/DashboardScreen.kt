@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,8 +30,7 @@ import com.example.viewmodel.YogaViewModel
 @Composable
 fun YogaDashboardScreen(
     viewModel: YogaViewModel,
-    onViewFlowDetails: (com.example.model.YogaFlow) -> Unit,
-    onOpenSettings: () -> Unit
+    onViewFlowDetails: (com.example.model.YogaFlow) -> Unit
 ) {
     val context = LocalContext.current
     val allFlows = remember { com.example.model.FlowLoader.loadFlows(context) }
@@ -97,17 +95,6 @@ fun YogaDashboardScreen(
                     )
                 }
 
-                // Settings IconButton in the top right corner
-                IconButton(
-                    onClick = onOpenSettings,
-                    modifier = Modifier.testTag("settings_top_right_button")
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = "Settings",
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
-                }
             }
         }
 
