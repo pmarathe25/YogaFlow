@@ -15,9 +15,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.game.model.*
@@ -102,20 +106,15 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
 
             Spacer(Modifier.height(8.dp))
 
-            // Hero filter
-            var selectedHeroFilter by remember { mutableStateOf<Int?>(null) }
+            // Tier filter
+            var selectedTierFilter by remember { mutableStateOf<EquipmentTier?>(null) }
 
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(listOf(null) + DataLoader.heroes.map { it.id }) { heroId ->
-                    val hero = heroId?.let { DataLoader.heroes.find { h -> h.id == it } }
-                    val label = when {
-                        heroId == null -> "All"
-                        hero != null -> hero.name.split(" ").first()
-                        else -> "#$heroId"
-                    }
+                items(listOf(null) + EquipmentTier.values().toList()) { tier ->
+                    val label = tier?.name?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "All"
                     FilterChip(
-                        selected = selectedHeroFilter == heroId,
-                        onClick = { selectedHeroFilter = heroId },
+                        selected = selectedTierFilter == tier,
+                        onClick = { selectedTierFilter = tier },
                         label = { Text(label, style = MaterialTheme.typography.labelSmall) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
@@ -130,29 +129,63 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
                 .mapNotNull { it.firstDefeatItemReward }
                 .toSet()
 
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                val available = DataLoader.equipment.filter { eq ->
-                    (selectedCategory == null || eq.slot == selectedCategory) && eq.id !in battleRewardItemIds &&
-                    (selectedHeroFilter == null ||
-                     eq.tier == EquipmentTier.GENERIC ||
-                     eq.heroId == selectedHeroFilter)
-                }
-                items(available) { item ->
-                    val owned = item.id in saveData.inventory
-                    val availableGold = saveData.gold
-                    val canAfford = availableGold >= item.goldCost
-                    val partyHasHero = item.heroId == null || party.any { it.heroId == item.heroId }
-                    val levelLocked = item.yogaLevelRequired > saveData.yogaLevel
+            val available = DataLoader.equipment.filter { eq ->
+                (selectedCategory == null || eq.slot == selectedCategory) && eq.id !in battleRewardItemIds &&
+                (selectedTierFilter == null || eq.tier == selectedTierFilter)
+            }
 
-                    ShopItemCard(
-                        item = item,
-                        owned = owned,
-                        canAfford = canAfford,
-                        partyHasHero = partyHasHero,
-                        levelLocked = levelLocked,
-                        onPurchase = { viewModel.purchaseItem(item.id) },
-                        onShowDetail = { selectedItemForDetail = item }
+            LazyColumn(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                if (selectedTierFilter != null) {
+                    items(available, key = { it.id }) { item ->
+                        val owned = item.id in saveData.inventory
+                        val availableGold = saveData.gold
+                        val canAfford = availableGold >= item.goldCost
+                        val partyHasHero = item.heroId == null || party.any { it.heroId == item.heroId }
+                        val levelLocked = item.yogaLevelRequired > saveData.yogaLevel
+
+                        ShopItemCard(
+                            item = item,
+                            owned = owned,
+                            canAfford = canAfford,
+                            partyHasHero = partyHasHero,
+                            levelLocked = levelLocked,
+                            onPurchase = { viewModel.purchaseItem(item.id) },
+                            onShowDetail = { selectedItemForDetail = item }
+                        )
+                    }
+                } else {
+                    val grouped = available.groupBy { it.tier }
+                    val tierOrder = listOf(
+                        EquipmentTier.COMMON,
+                        EquipmentTier.UNCOMMON,
+                        EquipmentTier.RARE,
+                        EquipmentTier.UNIQUE
                     )
+                    for (tier in tierOrder) {
+                        val tierItems = grouped[tier].orEmpty()
+                        if (tierItems.isEmpty()) continue
+
+                        item(key = "header_${tier.name}") {
+                            TierSectionHeader(tier)
+                        }
+                        items(tierItems, key = { it.id }) { item ->
+                            val owned = item.id in saveData.inventory
+                            val availableGold = saveData.gold
+                            val canAfford = availableGold >= item.goldCost
+                            val partyHasHero = item.heroId == null || party.any { it.heroId == item.heroId }
+                            val levelLocked = item.yogaLevelRequired > saveData.yogaLevel
+
+                            ShopItemCard(
+                                item = item,
+                                owned = owned,
+                                canAfford = canAfford,
+                                partyHasHero = partyHasHero,
+                                levelLocked = levelLocked,
+                                onPurchase = { viewModel.purchaseItem(item.id) },
+                                onShowDetail = { selectedItemForDetail = item }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -183,7 +216,18 @@ private fun ShopItemCard(
         useDefaultPadding = false
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp)
+                .then(
+                    if (item.tier == EquipmentTier.UNIQUE && item.heroId != null)
+                        Modifier.drawBehind {
+                            drawRoundRect(
+                                color = item.getThemeColor().copy(alpha = 0.8f),
+                                cornerRadius = CornerRadius(16.dp.toPx()),
+                                style = Stroke(width = 2.dp.toPx())
+                            )
+                        }
+                    else Modifier
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Icon
@@ -203,12 +247,25 @@ private fun ShopItemCard(
                         fontWeight = FontWeight.Bold,
                         color = item.getThemeColor()
                     )
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = item.getThemeColor().copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            item.tier.name.lowercase().replaceFirstChar { it.uppercase() },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = item.getThemeColor(),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp)
+                        )
+                    }
                 }
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    if (levelLocked) "Requires Yoga Lv.${item.yogaLevelRequired}" else "Yoga Lv.${item.yogaLevelRequired}",
+                    item.bonusDescription.split("\n").first(),
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (levelLocked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
@@ -342,5 +399,31 @@ fun GearDetailsDialog(item: Equipment, onDismiss: () -> Unit) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun TierSectionHeader(tier: EquipmentTier) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f))
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(4.dp),
+            color = tier.getThemeColor().copy(alpha = 0.2f)
+        ) {
+            Text(
+                tier.name.lowercase().replaceFirstChar { it.uppercase() },
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = tier.getThemeColor(),
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+            )
+        }
+        Spacer(Modifier.weight(1f))
     }
 }

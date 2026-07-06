@@ -7,7 +7,14 @@ enum class EquipmentSlot {
 }
 
 enum class EquipmentTier {
-    GENERIC, CLASS_SPECIFIC, UNIQUE
+    COMMON, UNCOMMON, RARE, UNIQUE;
+
+    fun getThemeColor(): Color = when (this) {
+        COMMON -> Color.Gray
+        UNCOMMON -> Color(0xFF4CAF50)
+        RARE -> Color(0xFF2196F3)
+        UNIQUE -> Color(0xFFFFD700)
+    }
 }
 
 enum class HeroClass {
@@ -31,8 +38,10 @@ data class Equipment(
     val yogaLevelRequired: Int get() = minYogaLevel
     val sparksCost: Int get() = sparkCost
     val goldCost: Int get() = sparkCost * when (tier) {
-        EquipmentTier.GENERIC -> 5
-        else -> 10
+        EquipmentTier.COMMON -> 5
+        EquipmentTier.UNCOMMON -> 7
+        EquipmentTier.RARE -> 10
+        EquipmentTier.UNIQUE -> 10
     }
     
     val bonusDescription: String get() = effects.joinToString("\n") { effect ->
@@ -82,10 +91,7 @@ data class Equipment(
                 else -> Color.Gray
             }
         }
-        return when (tier) {
-            EquipmentTier.UNIQUE -> Color(0xFFFFD700)
-            else -> Color.Gray
-        }
+        return tier.getThemeColor()
     }
 
 }
