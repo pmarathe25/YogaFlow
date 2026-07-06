@@ -29,10 +29,10 @@
     {"id": "dhairya_courage_circlet", "name": "Dhairya's Courage Circlet", "slot": "ACCESSORY", "tier": "UNIQUE", "heroClass": null, "heroId": 4, "minYogaLevel": 7, "minHeroLevel": 4, "sparkCost": 18, "icon": "👑", "description": "A circlet that channels boundless courage.", "effects": [{"type": "ULTIMATE_GAIN_RATE", "value": 0.15, "target": "SELF"}, {"type": "DAMAGE_PERCENT", "value": 0.05, "target": "SELF"}]}
   ],
   "setBonuses": [
-    {"name": "Raging Inferno", "description": "Tapas Blast burn chance +20%", "requiredItems": ["virya_ember_core", "virya_inferno_wrath"], "effects": [{"type": "BURN_CHANCE_ON_ULTIMATE", "value": 0.2, "target": "SELF"}]},
-    {"name": "Inspiring Presence", "description": "Battle start: party ATK+ for 3 turns", "requiredItems": ["dhairya_battle_standard", "dhairya_light_vanguard"], "effects": [{"type": "ALL_STATS_PERCENT", "value": 0.1, "target": "SELF"}]},
-    {"name": "Universal Love", "description": "Loving Aura also cleanses statuses from all allies", "requiredItems": ["maitri_universal_key", "maitri_wind_caress", "maitri_heart_embrace"], "effects": [{"type": "CLEANSE_ON_HEAL", "value": 1, "target": "SELF"}]},
-    {"name": "Calming Current", "description": "Pranayama Breath also grants a shield equal to 10% of target's max HP", "requiredItems": ["shanti_prayer_beads", "shanti_tidal_staff"], "effects": [{"type": "SHIELD_GAIN", "value": 0.1, "target": "SELF"}]},
-    {"name": "Eternal Foundation", "description": "Battle start: gain an additional 15% max HP as shield", "requiredItems": ["santosha_foundation_stone", "santosha_earthen_bulwark"], "effects": [{"type": "START_SHIELD_PERCENT", "value": 0.15, "target": "SELF"}]}
+    {"name": "Raging Inferno", "heroId": 3, "description": "Tapas Blast burn chance +20%", "requiredItems": ["virya_ember_core", "virya_inferno_wrath"], "effects": [{"type": "BURN_CHANCE_ON_ULTIMATE", "value": 0.2, "target": "SELF"}]},
+    {"name": "Inspiring Presence", "heroId": 4, "description": "Battle start: party ATK+ for 3 turns", "requiredItems": ["dhairya_battle_standard", "dhairya_light_vanguard"], "effects": [{"type": "ALL_STATS_PERCENT", "value": 0.1, "target": "SELF"}]},
+    {"name": "Universal Love", "heroId": 5, "description": "Loving Aura also cleanses statuses from all allies", "requiredItems": ["maitri_universal_key", "maitri_wind_caress", "maitri_heart_embrace"], "effects": [{"type": "CLEANSE_ON_HEAL", "value": 1, "target": "SELF"}]},
+    {"name": "Calming Current", "heroId": 1, "description": "Pranayama Breath also grants a shield equal to 10% of target's max HP", "requiredItems": ["shanti_prayer_beads", "shanti_tidal_staff"], "effects": [{"type": "SHIELD_GAIN", "value": 0.1, "target": "SELF"}]},
+    {"name": "Eternal Foundation", "heroId": 2, "description": "Battle start: gain an additional 15% max HP as shield", "requiredItems": ["santosha_foundation_stone", "santosha_earthen_bulwark"], "effects": [{"type": "START_SHIELD_PERCENT", "value": 0.15, "target": "SELF"}]}
   ]
 }

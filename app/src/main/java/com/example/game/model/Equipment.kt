@@ -137,6 +137,7 @@ enum class EffectTarget {
 
 data class SetBonus(
     val name: String,
+    val heroId: Int? = null,
     val description: String,
     val requiredItems: List<String>,
     val effects: List<EquipmentEffect>
