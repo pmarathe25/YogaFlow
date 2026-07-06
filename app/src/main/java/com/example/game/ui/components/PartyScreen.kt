@@ -2,6 +2,8 @@ package com.example.game.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -249,7 +251,7 @@ fun HeroDetailsDialog(
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surface
         ) {
-            Column(modifier = Modifier.padding(24.dp)) {
+            Column(modifier = Modifier.padding(24.dp).verticalScroll(rememberScrollState())) {
                 // Header
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
@@ -285,20 +287,6 @@ fun HeroDetailsDialog(
 
                 HorizontalDivider(Modifier.padding(vertical = 16.dp))
 
-                // Skills section
-                Text("Skills", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(8.dp))
-
-                hero.skills.forEach { skill ->
-                    SkillCard(skill = skill, hero = hero, level = partyMember.level, heroColor = heroColor)
-                }
-
-                // Ultimate
-                Spacer(Modifier.height(12.dp))
-                SkillCard(skill = hero.ultimate, hero = hero, level = partyMember.level, isUltimate = true, heroColor = heroColor)
-
-                Spacer(Modifier.height(20.dp))
-                
                 // Level Up
                 var showLevelUpDialog by remember { mutableStateOf(false) }
 
@@ -406,6 +394,20 @@ fun HeroDetailsDialog(
                         }
                     }
                 }
+
+                // Skills section
+                Text("Skills", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(8.dp))
+
+                hero.skills.forEach { skill ->
+                    SkillCard(skill = skill, hero = hero, level = partyMember.level, heroColor = heroColor)
+                }
+
+                // Ultimate
+                Spacer(Modifier.height(12.dp))
+                SkillCard(skill = hero.ultimate, hero = hero, level = partyMember.level, isUltimate = true, heroColor = heroColor)
+
+                Spacer(Modifier.height(20.dp))
             }
         }
     }
