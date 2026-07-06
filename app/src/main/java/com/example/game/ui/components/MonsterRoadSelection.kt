@@ -10,8 +10,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -44,8 +42,7 @@ fun MonsterRoadSelection(
     monsters: List<Monster>,
     defeatedIds: Set<String>,
     partyMembers: List<PartyMemberData>,
-    onMonsterSelected: (Monster) -> Unit,
-    onBack: () -> Unit
+    onMonsterSelected: (Monster) -> Unit
 ) {
     val sortedMonsters = remember { monsters.reversed() }
     val totalCount = sortedMonsters.size
@@ -90,12 +87,9 @@ fun MonsterRoadSelection(
             .fillMaxSize()
             .background(Color(0xFF0D1B2A))
     ) {
-        MapHeader(onBack = onBack)
-
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 56.dp)
             .verticalScroll(scrollState)
         ) {
             val canvasWidthDp = maxWidth
@@ -168,34 +162,6 @@ fun MonsterRoadSelection(
             },
             onDismiss = { selectedMonster = null }
         )
-    }
-}
-
-@Composable
-private fun MapHeader(onBack: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF0D1B2A).copy(alpha = 0.92f))
-            .padding(horizontal = 8.dp, vertical = 8.dp)
-            .zIndex(10f),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier
-                .background(Color.White.copy(alpha = 0.15f), CircleShape)
-                .size(40.dp)
-        ) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
-        }
-        Spacer(Modifier.width(12.dp))
-        Column {
-            Text("The Path of Zen", style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold, color = Color(0xFFE8F5E9))
-            Text("Walk the path of enlightenment", style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFFA5D6A7))
-        }
     }
 }
 

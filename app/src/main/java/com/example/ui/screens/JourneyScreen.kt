@@ -80,8 +80,7 @@ fun ExpandedDashboardScreen(
                 gameViewModel.startBattle(monster.id)
                 onNavigateToBattle()
                 showMonsterRoad = false
-            },
-            onBack = { showMonsterRoad = false }
+            }
         )
     } else {
         val infiniteTransition = rememberInfiniteTransition()
