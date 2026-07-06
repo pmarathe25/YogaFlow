@@ -23,7 +23,6 @@ class GameSaveManager(private val context: Context) {
         const val KEY_TOTAL_BATTLES_WON = "total_battles_won"
         const val KEY_INVENTORY = "inventory"
         const val KEY_LAST_PLAYED_TIMESTAMP = "last_played_timestamp"
-        const val KEY_LAST_SYNCED_MAIN_SPARKS = "last_synced_main_sparks"
         const val KEY_TOTAL_YOGA_XP = "total_yoga_xp"
         const val KEY_DEFEATED_MONSTER_IDS = "defeated_monster_ids"
     }
@@ -87,7 +86,6 @@ class GameSaveManager(private val context: Context) {
             totalBattlesWon = prefs.getInt(KEY_TOTAL_BATTLES_WON, 0),
             inventory = readJsonList(KEY_INVENTORY, emptyList<String>()),
             lastPlayedTimestamp = prefs.getLong(KEY_LAST_PLAYED_TIMESTAMP, 0L),
-            lastSyncedMainSparks = prefs.getInt(KEY_LAST_SYNCED_MAIN_SPARKS, 0),
             totalYogaXp = xp,
             gold = xp / 10,
             defeatedMonsterIds = readJsonStringSet(KEY_DEFEATED_MONSTER_IDS)

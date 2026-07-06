@@ -87,6 +87,7 @@ fun YogaNavHost(
             when {
                 isCompleted -> SessionCompleteScreen(
                     viewModel = viewModel,
+                    gameViewModel = gameViewModel,
                     onDone = {
                         viewModel.resetForDashboard()
                         navController.popBackStack(Screen.Dashboard.route, inclusive = false)

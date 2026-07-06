@@ -10,7 +10,6 @@ data class GameProgress(
     val yogaLevel: Int = 1,
     val totalYogaXp: Int = 0,
     val gold: Int = 0,
-    val lastSyncedMainSparks: Int = 0,
     val totalBattlesWon: Int = 0,
     val earnedTrophyIds: Set<String> = emptySet(),
     val lastPlayedTimestamp: Long = 0L,

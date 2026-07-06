@@ -47,7 +47,6 @@ class GameSaveManagerTest {
             totalBattlesWon = 12,
             inventory = listOf("training_blade", "crystal_sword"),
             lastPlayedTimestamp = 1000000L,
-            lastSyncedMainSparks = 10,
             totalYogaXp = 5200,
             gold = 400,
             defeatedMonsterIds = setOf("bhaya", "tandra", "chinta")

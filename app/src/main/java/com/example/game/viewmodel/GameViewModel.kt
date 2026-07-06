@@ -57,6 +57,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedCardId = MutableStateFlow<String?>(null)
     val selectedCardId: StateFlow<String?> = _selectedCardId.asStateFlow()
 
+    private var lastSyncedMainSparks: Int = 0
+
     fun selectCard(cardId: String?) {
         _selectedCardId.value = cardId
     }
@@ -97,18 +99,17 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         if (data.yogaLevel != computedLevel) {
             updated = updated.copy(yogaLevel = computedLevel)
         }
-        val delta = mainSparks - data.lastSyncedMainSparks
+        val delta = mainSparks - lastSyncedMainSparks
         if (delta > 0) {
             updated = updated.copy(sparks = updated.sparks + delta)
         }
-        if (updated.lastSyncedMainSparks != mainSparks) {
-            updated = updated.copy(lastSyncedMainSparks = mainSparks)
-        }
+        lastSyncedMainSparks = mainSparks
         updated = updated.copy(totalYogaXp = xpSum)
-        val previousGold = data.gold
-        val expectedGold = xpSum / 10
-        if (expectedGold > previousGold) {
-            updated = updated.copy(gold = expectedGold)
+        if (xpSum > data.totalYogaXp) {
+            val newGoldEarned = (xpSum - data.totalYogaXp) / 10
+            if (newGoldEarned > 0) {
+                updated = updated.copy(gold = updated.gold + newGoldEarned)
+            }
         }
         if (updated != data) {
             _saveData.value = updated

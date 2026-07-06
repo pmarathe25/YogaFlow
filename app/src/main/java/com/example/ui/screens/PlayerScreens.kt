@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.game.viewmodel.GameViewModel
 import com.example.ui.components.*
 import com.example.ui.theme.*
 import com.example.model.XpCalculator
@@ -344,6 +345,7 @@ fun YogaPlayerScreen(
 @Composable
 fun SessionCompleteScreen(
     viewModel: YogaViewModel,
+    gameViewModel: GameViewModel,
     onDone: () -> Unit
 ) {
     val flow by viewModel.flow.collectAsState()
@@ -353,13 +355,21 @@ fun SessionCompleteScreen(
     val currentLevel by statsManager.currentLevel.collectAsState()
     val levelName by statsManager.currentLevelName.collectAsState()
     val levelProgress by statsManager.levelProgress.collectAsState()
-    val totalSparks by statsManager.totalSparks.collectAsState()
+
+    val gameSaveData by gameViewModel.saveData.collectAsState()
+
+    var previousSparkCount by remember { mutableIntStateOf(gameSaveData.sparks) }
+
+    LaunchedEffect(Unit) {
+        previousSparkCount = gameSaveData.sparks
+        gameViewModel.refreshSync()
+    }
+
+    val sparkDelta = gameSaveData.sparks - previousSparkCount
 
     val sessionXp = remember(flow) {
         XpCalculator.calculateSessionXp(flow.totalDurationMinutes, flow.id)
     }
-
-    val gold = totalXp / 10
 
     Column(
         modifier = Modifier
@@ -448,8 +458,31 @@ fun SessionCompleteScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    RewardItem(value = "$totalSparks", label = "Zen Sparks", color = Color(0xFF00BCD4))
-                    RewardItem(value = "$gold", label = "Gold", color = Color(0xFFFFD600))
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "${gameSaveData.sparks}",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color(0xFF00BCD4)
+                            )
+                            if (sparkDelta > 0) {
+                                Text(
+                                    text = " +${sparkDelta} new",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(start = 4.dp)
+                                )
+                            }
+                        }
+                        Text(
+                            text = "Zen Sparks",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
+                    RewardItem(value = "${gameSaveData.gold}", label = "Gold", color = Color(0xFFFFD600))
                 }
             }
         }
