@@ -147,6 +147,12 @@ private fun HandOfCards(
     val thresholdPx = with(density) { 200.dp.toPx() }
     val tapPopPositionPx = with(density) { 130.dp.toPx() }
     var scrollOffset by remember { mutableStateOf(0f) }
+    val (minScrollOffset, maxScrollOffset) = remember(cardCount) {
+        val center = (cardCount - 1) / 2f
+        val maxOff = center * 150f
+        val minOff = -(cardCount - 1 - center) * 150f
+        minOff to maxOff
+    }
     var poppedCardIndex by remember { mutableIntStateOf(-1) }
     var dragActiveIndex by remember { mutableIntStateOf(-1) }
     var rawDragY by remember { mutableStateOf(0f) }
@@ -168,24 +174,14 @@ private fun HandOfCards(
         animationSpec = spring(dampingRatio = 0.65f, stiffness = 300f)
     )
 
-    BoxWithConstraints(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(280.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
-        val containerWidth = maxWidth.value
-
-        val (minOffset, maxOffset) = remember(cardCount, containerWidth) {
-            val centerIndex = (cardCount - 1) / 2f
-            val centerX = containerWidth / 2f
-            val maxOff = 150f * (centerIndex + (75f - centerX) / 85f)
-            val minOff = 150f * ((centerX - 75f - containerWidth) / 85f + (cardCount - 1 - centerIndex))
-            Pair(minOff, maxOff)
-        }
-
         val draggableState = rememberDraggableState { delta ->
-            scrollOffset = (scrollOffset + delta).coerceIn(minOffset, maxOffset)
+            scrollOffset = (scrollOffset + delta).coerceIn(minScrollOffset, maxScrollOffset)
         }
 
         Box(
