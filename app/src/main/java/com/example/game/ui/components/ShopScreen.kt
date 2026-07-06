@@ -80,15 +80,15 @@ fun ShopScreen(viewModel: GameViewModel) {
             Spacer(Modifier.height(16.dp))
 
             // Filter tabs
-            var selectedCategory by remember { mutableStateOf(EquipmentSlot.WEAPON) }
+            var selectedCategory by remember { mutableStateOf<EquipmentSlot?>(null) }
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(EquipmentSlot.values()) { slot ->
+                items(listOf(null) + EquipmentSlot.values()) { slot ->
                     FilterChip(
-                        selected = slot == selectedCategory,
+                        selected = selectedCategory == slot,
                         onClick = { selectedCategory = slot },
                         label = {
                             Text(
-                                slot.name,
+                                slot?.name ?: "All",
                                 style = MaterialTheme.typography.labelSmall
                             )
                         },
@@ -102,12 +102,16 @@ fun ShopScreen(viewModel: GameViewModel) {
             Spacer(Modifier.height(8.dp))
 
             // Hero filter
-            var selectedHeroFilter by remember { mutableStateOf<Int?>(null) } // null = "All"
-            val unlockedHeroes = viewModel.getUnlockedHeroes()
+            var selectedHeroFilter by remember { mutableStateOf<Int?>(null) }
 
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(listOf(null) + unlockedHeroes.map { it.id }) { heroId ->
-                    val label = if (heroId == null) "All" else DataLoader.heroes.find { it.id == heroId }?.name?.split(" ")?.first() ?: "#$heroId"
+                items(listOf(null) + DataLoader.heroes.map { it.id }) { heroId ->
+                    val hero = heroId?.let { DataLoader.heroes.find { h -> h.id == it } }
+                    val label = when {
+                        heroId == null -> "All"
+                        hero != null -> hero.name.split(" ").first()
+                        else -> "#$heroId"
+                    }
                     FilterChip(
                         selected = selectedHeroFilter == heroId,
                         onClick = { selectedHeroFilter = heroId },
@@ -127,7 +131,7 @@ fun ShopScreen(viewModel: GameViewModel) {
 
             LazyColumn(modifier = Modifier.weight(1f)) {
                 val available = DataLoader.equipment.filter { eq ->
-                    eq.slot == selectedCategory && eq.id !in battleRewardItemIds &&
+                    (selectedCategory == null || eq.slot == selectedCategory) && eq.id !in battleRewardItemIds &&
                     (selectedHeroFilter == null ||
                      eq.tier == EquipmentTier.GENERIC ||
                      eq.heroId == selectedHeroFilter)
