@@ -36,8 +36,19 @@ import com.example.viewmodel.YogaViewModel
 
 import androidx.compose.ui.graphics.Color
 import com.example.game.ui.components.TrophyModal
+import com.example.game.ui.components.MonsterRoadSelection
+import com.example.game.ui.components.elementToColor
+import com.example.game.ui.components.drawMonsterShape
+import com.example.game.model.Monster
+import com.example.game.persistence.DataLoader
 import com.example.game.viewmodel.GameViewModel
 import com.example.game.viewmodel.GameScreen
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import kotlin.math.sin
 
 @Composable
 fun ExpandedDashboardScreen(
@@ -61,9 +72,23 @@ fun ExpandedDashboardScreen(
         )
     }
 
-    Column(
-        modifier = modifier.fillMaxSize()
-    ) {
+    var showMonsterRoad by remember { mutableStateOf(false) }
+
+    if (showMonsterRoad) {
+        MonsterRoadSelection(
+            monsters = DataLoader.monsters,
+            defeatedIds = gameSaveData.defeatedMonsterIds,
+            onMonsterSelected = { monster ->
+                gameViewModel.startBattle(monster.id)
+                onNavigateToBattle()
+                showMonsterRoad = false
+            },
+            onBack = { showMonsterRoad = false }
+        )
+    } else {
+        Column(
+            modifier = modifier.fillMaxSize()
+        ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -105,11 +130,13 @@ fun ExpandedDashboardScreen(
             StatisticsPanel(
                 viewModel = viewModel, 
                 gameViewModel = gameViewModel,
-                onNavigateToBattle = onNavigateToBattle
+                onNavigateToBattle = onNavigateToBattle,
+                onEnterPath = { showMonsterRoad = true }
             )
             
             Spacer(modifier = Modifier.height(16.dp))
         }
+    }
     }
 }
 
@@ -118,6 +145,7 @@ fun StatisticsPanel(
     viewModel: YogaViewModel,
     gameViewModel: GameViewModel,
     onNavigateToBattle: () -> Unit,
+    onEnterPath: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val totalSessions by viewModel.totalSessions.collectAsState()
@@ -425,24 +453,126 @@ fun StatisticsPanel(
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        // ── Inline Path of Zen Portal ──
+        val infiniteTransition = rememberInfiniteTransition()
+        val pulse by infiniteTransition.animateFloat(
+            initialValue = 0f, targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(1500), RepeatMode.Reverse)
+        )
+        val glow by infiniteTransition.animateFloat(
+            initialValue = 0f, targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(3000), RepeatMode.Reverse)
+        )
+        val previewMonsters = remember { DataLoader.monsters.take(3) }
 
-        Button(
-            onClick = { 
-                gameViewModel.navigateTo(GameScreen.HUB) 
-                onNavigateToBattle()
-            },
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
+        Spacer(Modifier.height(16.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color(0xFF0D1B2A))
         ) {
-            Text(
-                text = "Enter Battle",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val w = size.width
+                val h = size.height
+                val cx = w / 2f
+                val cy = h / 2f
+                drawCircle(Color(0xFF4CAF50).copy(alpha = 0.08f + 0.04f * sin(pulse * 3f)), w * 0.5f, Offset(cx, cy))
+                drawCircle(Color(0xFF81C784).copy(alpha = 0.05f + 0.03f * sin(glow * 2f)), w * 0.65f, Offset(cx, cy))
+                for (i in 0..25) {
+                    val sx = (i * 137.5f) % w
+                    val sy = (i * 97.3f) % (h * 0.7f)
+                    val twinkle = 0.3f + 0.4f * sin(i * 1.3f + glow * 4f)
+                    drawCircle(Color.White.copy(alpha = twinkle * 0.4f), 1.2f, Offset(sx, sy))
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Canvas(modifier = Modifier.size(120.dp)) {
+                        val c = size.width / 2f
+                        val outerR = size.width * 0.45f
+                        val innerR = size.width * 0.25f
+                        drawCircle(Color(0xFF4CAF50).copy(alpha = 0.2f + 0.1f * sin(pulse * 2f)), outerR * 1.2f, Offset(c, c))
+                        drawCircle(Color(0xFF66BB6A).copy(alpha = 0.15f), outerR * 1.0f, Offset(c, c), style = Stroke(width = 4f))
+                        drawCircle(Color(0xFF388E3C).copy(alpha = 0.2f), innerR, Offset(c, c), style = Stroke(width = 2f))
+                        val path = Path()
+                        for (i in 0..359) {
+                            val a = i * 0.01745f
+                            val r = innerR * (0.3f + 0.7f * (i / 360f))
+                            val px = c + r * kotlin.math.cos(a)
+                            val py = c + r * kotlin.math.sin(a)
+                            if (i == 0) path.moveTo(px, py) else path.lineTo(px, py)
+                        }
+                        drawPath(path, Color(0xFFA5D6A7).copy(alpha = 0.5f), style = Stroke(width = 2f))
+                        val orbPulse = 0.6f + 0.4f * sin(pulse * 3f)
+                        drawCircle(Color(0xFFE8F5E9).copy(alpha = orbPulse * 0.8f), innerR * 0.35f, Offset(c, c))
+                        drawCircle(Color.White.copy(alpha = orbPulse * 0.3f), innerR * 0.5f, Offset(c, c))
+                    }
+                }
+
+                Spacer(Modifier.height(20.dp))
+
+                Text(
+                    "Path of Zen",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFE8F5E9)
+                )
+                Text(
+                    "Walk the path of enlightenment",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFFA5D6A7),
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+
+                Spacer(Modifier.height(24.dp))
+
+                Text(
+                    "Encounters ahead:",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color(0xFF81C784)
+                )
+                Spacer(Modifier.height(8.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    previewMonsters.forEach { monster ->
+                        MonsterPreviewCircle(monster)
+                    }
+                    Text("...", color = Color(0xFF81C784), fontSize = 20.sp)
+                }
+
+                Spacer(Modifier.height(32.dp))
+
+                Button(
+                    onClick = onEnterPath,
+                    modifier = Modifier
+                        .width(220.dp)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF388E3C).copy(alpha = 0.9f)
+                    )
+                ) {
+                    Text(
+                        "ENTER THE PATH",
+                        fontWeight = FontWeight.Black,
+                        fontSize = 16.sp,
+                        letterSpacing = 2.sp
+                    )
+                }
+
+                Spacer(Modifier.height(8.dp))
+            }
         }
     }
 }
@@ -479,6 +609,22 @@ fun NavCard(
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
+        }
+    }
+}
+
+@Composable
+private fun MonsterPreviewCircle(monster: Monster) {
+    val elColor = elementToColor(monster.element)
+    Box(
+        modifier = Modifier.size(44.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val c = size.width / 2f
+            drawCircle(elColor.copy(alpha = 0.2f), c, Offset(c, c))
+            drawCircle(elColor.copy(alpha = 0.5f), c * 0.6f, Offset(c, c), style = Stroke(width = 2f))
+            drawMonsterShape(c * 0.5f, c * 0.6f, c * 0.7f, monster.name, elColor)
         }
     }
 }
