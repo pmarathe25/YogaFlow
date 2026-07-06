@@ -78,6 +78,7 @@ fun ExpandedDashboardScreen(
         MonsterRoadSelection(
             monsters = DataLoader.monsters,
             defeatedIds = gameSaveData.defeatedMonsterIds,
+            partyMembers = gameSaveData.party,
             onMonsterSelected = { monster ->
                 gameViewModel.startBattle(monster.id)
                 onNavigateToBattle()

@@ -24,6 +24,7 @@ fun HubScreen(
         MonsterRoadSelection(
             monsters = DataLoader.monsters,
             defeatedIds = saveData.defeatedMonsterIds,
+            partyMembers = saveData.party,
             onMonsterSelected = { onNavigateToBattle(it.id) },
             onBack = onExitHub
         )

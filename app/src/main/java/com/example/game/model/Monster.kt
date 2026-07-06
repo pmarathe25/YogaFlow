@@ -10,6 +10,7 @@ data class Monster(
     val baseSpd: Int,
     val specialAttack: Skill,
     val mechanicDescription: String,
+    val flavorText: String = "",
     val aiBehavior: AIBehavior,
     val difficultyTier: DifficultyTier,
     val phases: List<MonsterPhase> = listOf(MonsterPhase(1f, emptyList())),

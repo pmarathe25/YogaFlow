@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.game.model.*
+import com.example.game.persistence.DataLoader
+import androidx.compose.ui.window.Dialog
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -41,6 +43,7 @@ private val PATH_AMPLITUDE = 70.dp
 fun MonsterRoadSelection(
     monsters: List<Monster>,
     defeatedIds: Set<String>,
+    partyMembers: List<PartyMemberData>,
     onMonsterSelected: (Monster) -> Unit,
     onBack: () -> Unit
 ) {
@@ -54,6 +57,8 @@ fun MonsterRoadSelection(
     val topSpacer = 0.dp
     val bottomSpacer = 0.dp
     val totalContentHeight = topSpacer + HEADER_AREA_HEIGHT + SEGMENT_HEIGHT * totalCount.toFloat() + bottomSpacer
+
+    var selectedMonster by remember { mutableStateOf<Monster?>(null) }
 
     val normDefeated = remember(defeatedIds) {
         defeatedIds.map { it.lowercase() }.toSet()
@@ -146,11 +151,23 @@ fun MonsterRoadSelection(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                             enabled = isUnlocked
-                        ) { onMonsterSelected(monster) }
+                        ) { selectedMonster = monster }
                         .zIndex(1f)
                 )
             }
         }
+    }
+
+    if (selectedMonster != null) {
+        MonsterConfirmDialog(
+            monster = selectedMonster!!,
+            partyMembers = partyMembers,
+            onConfirm = {
+                onMonsterSelected(selectedMonster!!)
+                selectedMonster = null
+            },
+            onDismiss = { selectedMonster = null }
+        )
     }
 }
 
@@ -555,6 +572,29 @@ private fun DrawScope.drawNodes(
             }
         }
 
+        // Monster name label
+        if (!isLocked) {
+            val namePaint = android.graphics.Paint().apply {
+                color = android.graphics.Color.WHITE
+                textSize = 11f * dpScale
+                textAlign = android.graphics.Paint.Align.CENTER
+                isAntiAlias = true
+                isFakeBoldText = true
+            }
+            val defeatedPaint = android.graphics.Paint().apply {
+                color = android.graphics.Color.GRAY
+                textSize = 10f * dpScale
+                textAlign = android.graphics.Paint.Align.CENTER
+                isAntiAlias = true
+                isStrikeThruText = isDefeated
+            }
+            val paint = if (isDefeated) defeatedPaint else namePaint
+            val labelY = cy - nodeScale * 1.4f
+            drawContext.canvas.nativeCanvas.drawText(
+                monster.name, cx, labelY, paint
+            )
+        }
+
         // Monster silhouette
         if (!isLocked) {
             val silAlpha = if (isDefeated) 0.35f else 1f
@@ -612,19 +652,13 @@ private fun DrawScope.drawNodes(
             val arrowA = 0.5f + 0.4f * sin(pulseAnim * PI.toFloat() * 2f)
             val arrowY = cy + nodeScale * 1.3f + 6f * dpScale * sin(pulseAnim * PI.toFloat() * 2f)
             val arrPath = Path().apply {
-                moveTo(cx - 8f * dpScale, arrowY)
-                lineTo(cx, arrowY + 10f * dpScale)
-                lineTo(cx + 8f * dpScale, arrowY)
+                moveTo(cx - 8f * dpScale, arrowY + 10f * dpScale)  // bottom-left
+                lineTo(cx, arrowY)                                    // tip (up)
+                lineTo(cx + 8f * dpScale, arrowY + 10f * dpScale)    // bottom-right
                 close()
             }
             drawPath(arrPath, Color(0xFFFFF176).copy(alpha = arrowA))
             drawCircle(Color(0xFFFFF176).copy(alpha = arrowA * 0.15f), 12f * dpScale, Offset(cx, arrowY + 5f * dpScale))
-        }
-
-        // Boss name label
-        if (isBoss && !isLocked) {
-            val nameY = cy + nodeScale * 1.2f + 14f * dpScale
-            drawCircle(Color(0xFFFFD700).copy(alpha = 0.3f), 7f * dpScale, Offset(cx, nameY))
         }
     }
 }
@@ -662,4 +696,153 @@ private fun getNodeSizeDp(tier: DifficultyTier): Dp = when (tier) {
     DifficultyTier.HARD -> 72.dp
     DifficultyTier.BOSS -> 88.dp
     DifficultyTier.SUPERBOSS -> 96.dp
+}
+
+// ─── Confirmation dialog ─────────────────────────────────────────────────
+
+@Composable
+private fun MonsterConfirmDialog(
+    monster: Monster,
+    partyMembers: List<PartyMemberData>,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val elColor = elementToColor(monster.element)
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // ── Header: monster name + tier badge ──
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Box(Modifier.size(12.dp).background(elColor, CircleShape))
+
+                    Text(
+                        monster.englishName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = when (monster.difficultyTier) {
+                            DifficultyTier.BOSS, DifficultyTier.SUPERBOSS -> Color(0xFFFFD700).copy(alpha = 0.2f)
+                            else -> elColor.copy(alpha = 0.15f)
+                        }
+                    ) {
+                        Text(
+                            monster.difficultyTier.name,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = when (monster.difficultyTier) {
+                                DifficultyTier.BOSS, DifficultyTier.SUPERBOSS -> Color(0xFFFFD700)
+                                else -> elColor
+                            },
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+
+                // ── Flavor Text ──
+                val flavor = if (monster.flavorText.isNotBlank()) monster.flavorText else monster.mechanicDescription
+                Text(
+                    flavor,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+
+                // ── Stats ──
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    StatChip("HP", "${monster.baseHp}", Color(0xFF4CAF50))
+                    StatChip("ATK", "${monster.baseAtk}", Color(0xFFF44336))
+                    StatChip("SPD", "${monster.baseSpd}", Color(0xFF2196F3))
+                }
+
+                // ── Party heroes ──
+                Text(
+                    "Active Party",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                if (partyMembers.isEmpty()) {
+                    Text(
+                        "No heroes in party!",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                } else {
+                    partyMembers.forEach { pm ->
+                        val heroDef = DataLoader.heroes.find { it.id == pm.heroId }
+                        if (heroDef != null) {
+                            PartyHeroRow(heroDef = heroDef, pm = pm)
+                        }
+                    }
+                }
+
+                // ── Confirm / Cancel ──
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Cancel") }
+
+                    Button(
+                        onClick = onConfirm,
+                        modifier = Modifier.weight(1f),
+                        enabled = partyMembers.isNotEmpty()
+                    ) { Text("Enter Battle") }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatChip(label: String, value: String, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold, color = color)
+        Text(label, style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+    }
+}
+
+@Composable
+private fun PartyHeroRow(heroDef: Hero, pm: PartyMemberData) {
+    val heroColor = elementToColor(heroDef.element)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Canvas(Modifier.size(28.dp)) {
+            val c = size.width / 2f
+            drawCircle(heroColor.copy(alpha = 0.2f), c, Offset(c, c))
+            drawMonsterShape(
+                cx = c, cy = c * 0.9f, s = c * 0.8f,
+                name = heroDef.name, tint = heroColor.copy(alpha = 0.8f)
+            )
+        }
+
+        Column {
+            Text(heroDef.name, style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium)
+            Text("Lv.${pm.level} ${heroDef.element.name}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+        }
+    }
 }

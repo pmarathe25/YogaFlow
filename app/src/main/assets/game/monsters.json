@@ -27,6 +27,7 @@
       "cooldown": 0
     },
     "mechanicDescription": "Applies ATK- debuff. Fast but fragile.",
+    "flavorText": "The first shadow on the path. It whispers that you are not ready.",
     "aiBehavior": {"specialChance": 0.3, "tauntPreference": true, "targetStrategy": "RANDOM"},
     "difficultyTier": "EASY",
     "phases": [{"hpThreshold": 1, "triggers": []}],
@@ -61,6 +62,7 @@
       "cooldown": 0
     },
     "mechanicDescription": "AOE SPD- debuff. Slow but tanky.",
+    "flavorText": "A heavy fog that seeps into your bones, whispering that rest is all you need.",
     "aiBehavior": {"specialChance": 0.3, "tauntPreference": true, "targetStrategy": "RANDOM"},
     "difficultyTier": "EASY",
     "phases": [{"hpThreshold": 1, "triggers": []}],
@@ -94,6 +96,7 @@
       "cooldown": 0
     },
     "mechanicDescription": "Multi-hit attack. Small SPD- chance per hit.",
+    "flavorText": "A restless swarm of what-ifs, each sting eroding your peace.",
     "aiBehavior": {"specialChance": 0.25, "tauntPreference": true, "targetStrategy": "RANDOM"},
     "difficultyTier": "EASY",
     "phases": [{"hpThreshold": 1, "triggers": []}],
@@ -128,6 +131,7 @@
       "cooldown": 0
     },
     "mechanicDescription": "Skips every other turn to build up, then big hit.",
+    "flavorText": "A comfortable trap that convinces you motion is pointless.",
     "aiBehavior": {"specialChance": 0, "tauntPreference": true, "targetStrategy": "RANDOM"},
     "difficultyTier": "EASY",
     "phases": [{"hpThreshold": 1, "triggers": []}],
@@ -161,6 +165,7 @@
       "cooldown": 0
     },
     "mechanicDescription": "Steals one random buff from target hero.",
+    "flavorText": "A serpent coiled around your heart, feeding on the success of others.",
     "aiBehavior": {"specialChance": 0.3, "tauntPreference": true, "targetStrategy": "MOST_BUFFS"},
     "difficultyTier": "MEDIUM",
     "phases": [{"hpThreshold": 1, "triggers": []}],
@@ -195,6 +200,7 @@
       "cooldown": 0
     },
     "mechanicDescription": "Below 50% HP: Berserk (ATK×2.5, DEF×0.5).",
+    "flavorText": "A wildfire that burns all reason. It strikes hardest when wounded.",
     "aiBehavior": {"specialChance": 0.3, "tauntPreference": true, "targetStrategy": "RANDOM"},
     "difficultyTier": "MEDIUM",
     "phases": [
@@ -231,6 +237,7 @@
       "cooldown": 0
     },
     "mechanicDescription": "Targets highest-HP hero, bonus damage = 15% max HP.",
+    "flavorText": "A relentless force that seeks what it despises and strikes without mercy.",
     "aiBehavior": {"specialChance": 0.3, "tauntPreference": true, "targetStrategy": "HIGHEST_HP"},
     "difficultyTier": "MEDIUM",
     "phases": [{"hpThreshold": 1, "triggers": []}],
@@ -265,6 +272,7 @@
       "cooldown": 0
     },
     "mechanicDescription": "30% confuse chance. Sometimes dodges. Gets one extra action per round.",
+    "flavorText": "Reality bends in its presence. Trust nothing your eyes show you.",
     "aiBehavior": {"specialChance": 0.35, "tauntPreference": true, "targetStrategy": "RANDOM"},
     "difficultyTier": "HARD",
     "phases": [{"hpThreshold": 1, "triggers": [{"type": "EXTRA_ACTION", "value": 0, "summonMonsterId": null}]}],
@@ -298,6 +306,7 @@
       "cooldown": 0
     },
     "mechanicDescription": "Gains shield = 40% damage dealt. Extremely tanky.",
+    "flavorText": "An insatiable hunger that turns even kindness into a possession.",
     "aiBehavior": {"specialChance": 0.3, "tauntPreference": true, "targetStrategy": "RANDOM"},
     "difficultyTier": "HARD",
     "phases": [{"hpThreshold": 1, "triggers": []}],
@@ -332,6 +341,7 @@
       "cooldown": 0
     },
     "mechanicDescription": "Consumes buffs → gains ATK+ per buff. Punishes buffers.",
+    "flavorText": "Tall and unyielding, it feeds on your own reflection.",
     "aiBehavior": {"specialChance": 0.4, "tauntPreference": true, "targetStrategy": "MOST_BUFFS"},
     "difficultyTier": "HARD",
     "phases": [{"hpThreshold": 1, "triggers": []}],
@@ -365,6 +375,7 @@
       "cooldown": 0
     },
     "mechanicDescription": "Heals 20% max HP when heroes heal. Anti-healer.",
+    "flavorText": "A radiant lie that turns healing into harm.",
     "aiBehavior": {"specialChance": 0.3, "tauntPreference": true, "targetStrategy": "RANDOM"},
     "difficultyTier": "HARD",
     "phases": [{"hpThreshold": 1, "triggers": []}],
@@ -398,6 +409,7 @@
       "cooldown": 0
     },
     "mechanicDescription": "Copies last hero action. Gains +5 SPD per copy. Gets faster each turn.",
+    "flavorText": "It watches, learns, and turns your own strength against you.",
     "aiBehavior": {"specialChance": 0.3, "tauntPreference": true, "targetStrategy": "RANDOM"},
     "difficultyTier": "HARD",
     "phases": [{"hpThreshold": 1, "triggers": []}],
@@ -431,6 +443,7 @@
       "cooldown": 0
     },
     "mechanicDescription": "P1: Reflects 35% damage. P2: Summons mirror images.",
+    "flavorText": "The grand illusion of self. It guards the deepest truths with mirrored walls.",
     "aiBehavior": {"specialChance": 0.3, "tauntPreference": true, "targetStrategy": "RANDOM"},
     "difficultyTier": "BOSS",
     "phases": [
@@ -467,6 +480,7 @@
       "cooldown": 0
     },
     "mechanicDescription": "P1: Creates shadow copies of heroes. P2: Untargetable while copies remain.",
+    "flavorText": "Nothing here is real — least of all the enemy you see.",
     "aiBehavior": {"specialChance": 0.3, "tauntPreference": true, "targetStrategy": "RANDOM"},
     "difficultyTier": "BOSS",
     "phases": [
@@ -503,6 +517,7 @@
       "cooldown": 0
     },
     "mechanicDescription": "P1: Random status. P2: Shield + summon. P3: Double actions.",
+    "flavorText": "The root of all suffering given form. It fights with chaos itself.",
     "aiBehavior": {"specialChance": 0.35, "tauntPreference": true, "targetStrategy": "RANDOM"},
     "difficultyTier": "BOSS",
     "phases": [
@@ -540,6 +555,7 @@
       "cooldown": 0
     },
     "mechanicDescription": "5 phases, each nullifies one element. P5: Only Strike works.",
+    "flavorText": "The endless wheel. Every victory is a beginning, every defeat a lesson.",
     "aiBehavior": {"specialChance": 0.4, "tauntPreference": true, "targetStrategy": "RANDOM"},
     "difficultyTier": "SUPERBOSS",
     "phases": [
