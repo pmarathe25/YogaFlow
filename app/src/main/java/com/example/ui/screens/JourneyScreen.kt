@@ -354,7 +354,7 @@ private fun MonsterPreviewCircle(monster: Monster, size: Dp = 44.dp) {
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val c = size.width / 2f
+            val c = this.size.width / 2f
             drawCircle(elColor.copy(alpha = 0.2f), c, Offset(c, c))
             drawCircle(elColor.copy(alpha = 0.5f), c * 0.6f, Offset(c, c), style = Stroke(width = 2f))
             drawMonsterShape(c * 0.5f, c * 0.6f, c * 0.7f, monster.name, elColor)
