@@ -13,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.SettingsScreen
 import com.example.game.ui.components.GameApp
+import com.example.game.viewmodel.GameScreen
 import com.example.game.viewmodel.GameViewModel
 import com.example.model.FlowLoader
 import com.example.ui.screens.*
@@ -127,7 +128,19 @@ fun YogaNavHost(
                     navController.navigate(Screen.ZenBattle.route) {
                         launchSingleTop = true
                     }
-                }
+                },
+                onNavigateToParty = {
+                    gameViewModel.navigateTo(GameScreen.PARTY)
+                    navController.navigate(Screen.ZenBattle.route) { launchSingleTop = true }
+                },
+                onNavigateToShop = {
+                    gameViewModel.navigateTo(GameScreen.SHOP)
+                    navController.navigate(Screen.ZenBattle.route) { launchSingleTop = true }
+                },
+                onNavigateToTrophies = {
+                    gameViewModel.navigateTo(GameScreen.TROPHIES)
+                    navController.navigate(Screen.ZenBattle.route) { launchSingleTop = true }
+                },
             )
         }
 
