@@ -26,7 +26,7 @@ import com.example.game.viewmodel.GameViewModel
 import com.example.ui.components.GlassCard
 
 @Composable
-fun ShopScreen(viewModel: GameViewModel) {
+fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.navigateBack() }) {
     val saveData by viewModel.saveData.collectAsState()
     val party by viewModel.party.collectAsState()
     
@@ -42,7 +42,7 @@ fun ShopScreen(viewModel: GameViewModel) {
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { viewModel.navigateBack() }) {
+                IconButton(onClick = onBack) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back",
                          tint = MaterialTheme.colorScheme.onBackground)
                 }

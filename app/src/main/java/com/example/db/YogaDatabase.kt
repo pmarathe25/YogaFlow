@@ -23,7 +23,7 @@ abstract class YogaDatabase : RoomDatabase() {
                     YogaDatabase::class.java,
                     "yoga_database"
                 )
-                .fallbackToDestructiveMigration()
+                .fallbackToDestructiveMigration(false)
                 .build()
                 INSTANCE = instance
                 instance

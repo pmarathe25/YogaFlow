@@ -227,7 +227,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 SINGLE_ALLY -> if (state.aliveHeroes.size == 1) hero.id else null
                 SELF -> hero.id
                 ALL_ALLIES, ALL_ENEMIES, ALL -> "ALL"
-                else -> null
             }
 
             if (autoTarget == "ALL") {

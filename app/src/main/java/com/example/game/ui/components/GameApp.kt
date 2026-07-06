@@ -40,10 +40,10 @@ fun GameApp(
                 onExitHub = onExitHub
             )
             GameScreen.BATTLE -> BattleScene(viewModel = viewModel)
-            GameScreen.PARTY -> PartyScreen(viewModel = viewModel)
-            GameScreen.EQUIPMENT -> PartyScreen(viewModel = viewModel)
-            GameScreen.TROPHIES -> TrophyScreen(viewModel = viewModel)
-            GameScreen.SHOP -> ShopScreen(viewModel = viewModel)
+            GameScreen.PARTY -> PartyScreen(viewModel = viewModel, onBack = onExitHub)
+            GameScreen.EQUIPMENT -> PartyScreen(viewModel = viewModel, onBack = onExitHub)
+            GameScreen.TROPHIES -> TrophyScreen(viewModel = viewModel, onBack = onExitHub)
+            GameScreen.SHOP -> ShopScreen(viewModel = viewModel, onBack = onExitHub)
             GameScreen.BATTLE_RESULT -> BattleResultScreen(viewModel = viewModel)
             GameScreen.SETTINGS -> HubScreen(
                 model = viewModel,

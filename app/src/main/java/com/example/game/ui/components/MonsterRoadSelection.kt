@@ -200,6 +200,7 @@ private fun getBiome(ratio: Float): BiomePalette = when {
         Color(0xFF3E2723), Color(0xFF4E342E), Color(0xFF2C0E00), Color(0xFF5D4037), Color(0xFFFF6F00))
 }
 
+@Suppress("DEPRECATION")
 private fun DrawScope.drawBiomeBackground(
     totalCount: Int, dpScale: Float, sh: Float,
     topSp: Float, headerH: Float, segH: Float
@@ -314,8 +315,8 @@ private fun DrawScope.drawVolcanicBand(yOff: Float, sH: Float, w: Float, rng: Ra
         val lcy = yOff + sH * 0.4f + rng.nextFloat() * sH * 0.3f
         val crack = Path().apply {
             moveTo(lcx, lcy)
-            quadraticBezierTo(lcx + 12f * s, lcy - 12f * s, lcx + 28f * s, lcy + 8f * s)
-            quadraticBezierTo(lcx + 40f * s, lcy - 4f * s, lcx + 55f * s, lcy + 4f * s)
+            quadraticTo(lcx + 12f * s, lcy - 12f * s, lcx + 28f * s, lcy + 8f * s)
+            quadraticTo(lcx + 40f * s, lcy - 4f * s, lcx + 55f * s, lcy + 4f * s)
         }
         drawPath(crack, lavaGlow, style = Stroke(width = 3f * s, cap = StrokeCap.Round))
     }
@@ -487,9 +488,9 @@ private fun DrawScope.drawNodes(
         // Platform
         val platPath = Path().apply {
             moveTo(cx - nodeScale * 1.1f, cy + nodeScale * 0.55f)
-            quadraticBezierTo(cx - nodeScale * 1.3f, cy + nodeScale * 0.95f, cx, cy + nodeScale * 1.05f)
-            quadraticBezierTo(cx + nodeScale * 1.3f, cy + nodeScale * 0.95f, cx + nodeScale * 1.1f, cy + nodeScale * 0.55f)
-            quadraticBezierTo(cx, cy + nodeScale * 0.65f, cx - nodeScale * 1.1f, cy + nodeScale * 0.55f)
+            quadraticTo(cx - nodeScale * 1.3f, cy + nodeScale * 0.95f, cx, cy + nodeScale * 1.05f)
+            quadraticTo(cx + nodeScale * 1.3f, cy + nodeScale * 0.95f, cx + nodeScale * 1.1f, cy + nodeScale * 0.55f)
+            quadraticTo(cx, cy + nodeScale * 0.65f, cx - nodeScale * 1.1f, cy + nodeScale * 0.55f)
             close()
         }
         drawPath(platPath, Color(0xFF5D4037).copy(alpha = 0.75f))
@@ -541,9 +542,9 @@ private fun DrawScope.drawNodes(
 
                 val borderP = Path().apply {
                     moveTo(cx - nodeScale * 1.2f, cy + nodeScale * 0.7f)
-                    quadraticBezierTo(cx - nodeScale * 1.6f, cy - nodeScale * 0.15f, cx - nodeScale * 0.9f, cy - nodeScale * 0.7f)
-                    quadraticBezierTo(cx, cy - nodeScale * 1.5f, cx + nodeScale * 0.9f, cy - nodeScale * 0.7f)
-                    quadraticBezierTo(cx + nodeScale * 1.6f, cy - nodeScale * 0.15f, cx + nodeScale * 1.2f, cy + nodeScale * 0.7f)
+                    quadraticTo(cx - nodeScale * 1.6f, cy - nodeScale * 0.15f, cx - nodeScale * 0.9f, cy - nodeScale * 0.7f)
+                    quadraticTo(cx, cy - nodeScale * 1.5f, cx + nodeScale * 0.9f, cy - nodeScale * 0.7f)
+                    quadraticTo(cx + nodeScale * 1.6f, cy - nodeScale * 0.15f, cx + nodeScale * 1.2f, cy + nodeScale * 0.7f)
                 }
                 drawPath(borderP, Color(0xFFFFD700).copy(alpha = 0.5f), style = Stroke(width = 2f * dpScale))
 
@@ -593,8 +594,8 @@ private fun DrawScope.drawNodes(
 
             val lockPath = Path().apply {
                 moveTo(cx - nodeScale * 0.22f, cy - nodeScale * 0.1f)
-                quadraticBezierTo(cx - nodeScale * 0.22f, cy - nodeScale * 0.45f, cx, cy - nodeScale * 0.45f)
-                quadraticBezierTo(cx + nodeScale * 0.22f, cy - nodeScale * 0.45f, cx + nodeScale * 0.22f, cy - nodeScale * 0.1f)
+                quadraticTo(cx - nodeScale * 0.22f, cy - nodeScale * 0.45f, cx, cy - nodeScale * 0.45f)
+                quadraticTo(cx + nodeScale * 0.22f, cy - nodeScale * 0.45f, cx + nodeScale * 0.22f, cy - nodeScale * 0.1f)
                 // lock body
                 moveTo(cx - nodeScale * 0.25f, cy - nodeScale * 0.1f)
                 lineTo(cx - nodeScale * 0.25f, cy + nodeScale * 0.2f)
@@ -630,6 +631,7 @@ private fun DrawScope.drawNodes(
 
 // ─── Fog of War ─────────────────────────────────────────────────────────
 
+@Suppress("DEPRECATION")
 private fun DrawScope.drawFogOfWar(
     activeIndex: Int, dpScale: Float, sh: Float,
     topSp: Dp, headerH: Dp, segH: Dp

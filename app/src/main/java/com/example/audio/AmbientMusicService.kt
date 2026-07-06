@@ -65,7 +65,8 @@ class AmbientMusicService : Service() {
                         Log.e(tag, "Error stopping player: ${e.message}")
                     }
                     mediaPlayer = null
-                    stopForeground(true)
+                    @Suppress("DEPRECATION")
+                    stopForeground(STOP_FOREGROUND_REMOVE)
                 }
                 ACTION_SET_TRACK -> {
                     val index = intent.getIntExtra(EXTRA_TRACK_INDEX, 0)
@@ -150,9 +151,10 @@ class AmbientMusicService : Service() {
 
     private fun pause() {
         loopMonitorJob?.cancel()
-        fadeOut { 
+            fadeOut { 
             mediaPlayer?.pause() 
-            stopForeground(false)
+            @Suppress("DEPRECATION")
+            stopForeground(STOP_FOREGROUND_DETACH)
             updateNotification()
         }
     }
@@ -236,7 +238,8 @@ class AmbientMusicService : Service() {
     private fun cleanup() {
         stopPlayer()
         scope.cancel()
-        stopForeground(true)
+        @Suppress("DEPRECATION")
+        stopForeground(STOP_FOREGROUND_REMOVE)
     }
 
     private fun createNotificationChannel() {

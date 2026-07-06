@@ -18,7 +18,7 @@ import com.example.game.persistence.DataLoader
 import com.example.game.viewmodel.GameViewModel
 
 @Composable
-fun TrophyScreen(viewModel: GameViewModel) {
+fun TrophyScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.navigateBack() }) {
     val saveData by viewModel.saveData.collectAsState()
     val earnedTrophies = saveData.earnedTrophyIds
     val totalTrophies = DataLoader.trophies.size
@@ -67,7 +67,7 @@ fun TrophyScreen(viewModel: GameViewModel) {
 
             Spacer(Modifier.height(16.dp))
             Button(
-                onClick = { viewModel.navigateBack() },
+                onClick = onBack,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
                 ),

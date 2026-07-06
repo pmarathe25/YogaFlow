@@ -325,8 +325,10 @@ fun YogaPlayerScreen(
             TextButton(
                 onClick = { viewModel.setIsMusicMuted(!isMusicMuted) }
             ) {
+                @Suppress("DEPRECATION")
+                val volIcon = if (isMusicMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp
                 Icon(
-                    imageVector = if (isMusicMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                    imageVector = volIcon,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp)
                 )
@@ -496,7 +498,7 @@ fun SessionCompleteScreen(
             )
             Spacer(modifier = Modifier.height(4.dp))
             LinearProgressIndicator(
-                progress = levelProgress,
+                progress = { levelProgress },
                 modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant

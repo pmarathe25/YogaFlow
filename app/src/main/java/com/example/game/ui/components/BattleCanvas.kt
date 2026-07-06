@@ -484,9 +484,9 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: 
             path.reset()
             path.moveTo(cx - s * 0.55f, cy - s * 0.4f)
             path.lineTo(cx - s * 0.45f, cy + s * 0.5f)
-            path.quadraticBezierTo(cx, cy + s * 0.75f, cx + s * 0.45f, cy + s * 0.5f)
+            path.quadraticTo(cx, cy + s * 0.75f, cx + s * 0.45f, cy + s * 0.5f)
             path.lineTo(cx + s * 0.55f, cy - s * 0.4f)
-            path.quadraticBezierTo(cx, cy - s * 0.55f, cx - s * 0.55f, cy - s * 0.4f)
+            path.quadraticTo(cx, cy - s * 0.55f, cx - s * 0.55f, cy - s * 0.4f)
             path.close()
             drawPath(path, tint.copy(alpha = 0.7f))
 
@@ -533,8 +533,8 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: 
             // 3. Flame Hair
             val firePath = Path()
             firePath.moveTo(cx - s * 0.15f, cy - s * 0.5f)
-            firePath.quadraticBezierTo(cx - s * 0.3f, cy - s * 0.9f, cx, cy - s * 1.1f)
-            firePath.quadraticBezierTo(cx + s * 0.3f, cy - s * 0.9f, cx + s * 0.15f, cy - s * 0.5f)
+            firePath.quadraticTo(cx - s * 0.3f, cy - s * 0.9f, cx, cy - s * 1.1f)
+            firePath.quadraticTo(cx + s * 0.3f, cy - s * 0.9f, cx + s * 0.15f, cy - s * 0.5f)
             drawPath(firePath, tint)
 
             // 4. Glowing Core
@@ -545,7 +545,7 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: 
             path.reset()
             path.moveTo(cx - s * 0.1f, cy - s * 0.6f)
             path.lineTo(cx - s * 0.5f, cy + s * 0.5f)
-            path.quadraticBezierTo(cx, cy + s * 0.65f, cx + s * 0.5f, cy + s * 0.5f)
+            path.quadraticTo(cx, cy + s * 0.65f, cx + s * 0.5f, cy + s * 0.5f)
             path.lineTo(cx + s * 0.1f, cy - s * 0.6f)
             path.close()
             drawPath(path, tint.copy(alpha = 0.4f))
@@ -577,16 +577,16 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: 
                 val windPath = Path()
                 val offset = i * 40f
                 windPath.moveTo(cx - s * 0.6f, cy - s * 0.3f + offset)
-                windPath.quadraticBezierTo(cx, cy - s * 0.8f + offset, cx + s * 0.6f, cy - s * 0.3f + offset)
+                windPath.quadraticTo(cx, cy - s * 0.8f + offset, cx + s * 0.6f, cy - s * 0.3f + offset)
                 drawPath(windPath, tint.copy(alpha = 0.2f), style = Stroke(width = 4f, cap = StrokeCap.Round))
             }
 
             // 2. Ascended Form
             path.reset()
             path.moveTo(cx - s * 0.3f, cy)
-            path.quadraticBezierTo(cx, cy - s * 0.9f, cx + s * 0.3f, cy)
+            path.quadraticTo(cx, cy - s * 0.9f, cx + s * 0.3f, cy)
             path.lineTo(cx + s * 0.2f, cy + s * 0.5f)
-            path.quadraticBezierTo(cx, cy + s * 0.7f, cx - s * 0.2f, cy + s * 0.5f)
+            path.quadraticTo(cx, cy + s * 0.7f, cx - s * 0.2f, cy + s * 0.5f)
             path.close()
             drawPath(path, tint.copy(alpha = 0.8f))
 
@@ -608,7 +608,7 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: 
         else -> {
             path.moveTo(cx - s * 0.3f, cy + s * 0.5f)
             path.lineTo(cx - s * 0.2f, cy - s * 0.3f)
-            path.quadraticBezierTo(cx, cy - s * 0.8f, cx + s * 0.2f, cy - s * 0.3f)
+            path.quadraticTo(cx, cy - s * 0.8f, cx + s * 0.2f, cy - s * 0.3f)
             path.lineTo(cx + s * 0.3f, cy + s * 0.5f)
             path.close()
             drawPath(path, tint)
@@ -624,18 +624,18 @@ internal fun DrawScope.drawMonsterShape(cx: Float, cy: Float, s: Float, name: St
             // 1. Shifting Shadow Mass
             path.reset()
             path.moveTo(cx - s * 0.4f, cy + s * 0.3f)
-            path.quadraticBezierTo(cx - s * 0.6f, cy - s * 0.1f, cx - s * 0.3f, cy - s * 0.5f)
-            path.quadraticBezierTo(cx, cy - s * 0.8f, cx + s * 0.3f, cy - s * 0.5f)
-            path.quadraticBezierTo(cx + s * 0.6f, cy - s * 0.1f, cx + s * 0.4f, cy + s * 0.3f)
+            path.quadraticTo(cx - s * 0.6f, cy - s * 0.1f, cx - s * 0.3f, cy - s * 0.5f)
+            path.quadraticTo(cx, cy - s * 0.8f, cx + s * 0.3f, cy - s * 0.5f)
+            path.quadraticTo(cx + s * 0.6f, cy - s * 0.1f, cx + s * 0.4f, cy + s * 0.3f)
             path.close()
             drawPath(path, tint.copy(alpha = 0.7f))
 
             // 2. Chaotic Tendrils
             val tendrilPath = Path()
             tendrilPath.moveTo(cx - s * 0.2f, cy - s * 0.6f)
-            tendrilPath.quadraticBezierTo(cx - s * 0.5f, cy - s * 0.9f, cx - s * 0.1f, cy - s * 1.1f)
+            tendrilPath.quadraticTo(cx - s * 0.5f, cy - s * 0.9f, cx - s * 0.1f, cy - s * 1.1f)
             tendrilPath.moveTo(cx + s * 0.2f, cy - s * 0.6f)
-            tendrilPath.quadraticBezierTo(cx + s * 0.5f, cy - s * 0.9f, cx + s * 0.1f, cy - s * 1.1f)
+            tendrilPath.quadraticTo(cx + s * 0.5f, cy - s * 0.9f, cx + s * 0.1f, cy - s * 1.1f)
             drawPath(tendrilPath, tint, style = Stroke(width = 2f))
 
             // 3. Glowing Eyes
@@ -646,18 +646,18 @@ internal fun DrawScope.drawMonsterShape(cx: Float, cy: Float, s: Float, name: St
             // 1. Slumped, Heavy Form
             path.reset()
             path.moveTo(cx - s * 0.6f, cy + s * 0.5f)
-            path.quadraticBezierTo(cx - s * 0.7f, cy - s * 0.1f, cx - s * 0.3f, cy - s * 0.3f)
-            path.quadraticBezierTo(cx, cy - s * 0.4f, cx + s * 0.3f, cy - s * 0.3f)
-            path.quadraticBezierTo(cx + s * 0.7f, cy - s * 0.1f, cx + s * 0.6f, cy + s * 0.5f)
+            path.quadraticTo(cx - s * 0.7f, cy - s * 0.1f, cx - s * 0.3f, cy - s * 0.3f)
+            path.quadraticTo(cx, cy - s * 0.4f, cx + s * 0.3f, cy - s * 0.3f)
+            path.quadraticTo(cx + s * 0.7f, cy - s * 0.1f, cx + s * 0.6f, cy + s * 0.5f)
             path.close()
             drawPath(path, tint.copy(alpha = 0.8f))
 
             // 2. Heavy Eyelids (Sleepy eyes)
             val eyePath = Path()
             eyePath.moveTo(cx - s * 0.25f, cy - s * 0.15f)
-            eyePath.quadraticBezierTo(cx - s * 0.15f, cy - s * 0.1f, cx - s * 0.05f, cy - s * 0.15f)
+            eyePath.quadraticTo(cx - s * 0.15f, cy - s * 0.1f, cx - s * 0.05f, cy - s * 0.15f)
             eyePath.moveTo(cx + s * 0.05f, cy - s * 0.15f)
-            eyePath.quadraticBezierTo(cx + s * 0.15f, cy - s * 0.1f, cx + s * 0.25f, cy - s * 0.15f)
+            eyePath.quadraticTo(cx + s * 0.15f, cy - s * 0.1f, cx + s * 0.25f, cy - s * 0.15f)
             drawPath(eyePath, Color.Black.copy(alpha = 0.5f), style = Stroke(width = 3f))
         }
         name.contains("Chinta") || name.contains("Anxiety") -> {
@@ -701,7 +701,7 @@ internal fun DrawScope.drawMonsterShape(cx: Float, cy: Float, s: Float, name: St
             // 2. Narrowed Eye
             val eyePath = Path()
             eyePath.moveTo(cx - s * 0.1f, cy - s * 0.3f)
-            eyePath.quadraticBezierTo(cx, cy - s * 0.4f, cx + s * 0.1f, cy - s * 0.3f)
+            eyePath.quadraticTo(cx, cy - s * 0.4f, cx + s * 0.1f, cy - s * 0.3f)
             drawPath(eyePath, Color.Green.copy(alpha = 0.7f), style = Stroke(width = 4f))
         }
         name.contains("Krodha") || name.contains("Anger") -> {
@@ -725,7 +725,7 @@ internal fun DrawScope.drawMonsterShape(cx: Float, cy: Float, s: Float, name: St
             path.reset()
             path.moveTo(cx - s * 0.35f, cy + s * 0.6f)
             path.lineTo(cx - s * 0.45f, cy - s * 0.4f)
-            path.quadraticBezierTo(cx, cy - s * 1.1f, cx + s * 0.45f, cy - s * 0.4f)
+            path.quadraticTo(cx, cy - s * 1.1f, cx + s * 0.45f, cy - s * 0.4f)
             path.lineTo(cx + s * 0.35f, cy + s * 0.6f)
             path.close()
             drawPath(path, tint.copy(alpha = 0.85f))
@@ -759,9 +759,9 @@ internal fun DrawScope.drawMonsterShape(cx: Float, cy: Float, s: Float, name: St
         else -> {
             path.reset()
             path.moveTo(cx - s * 0.4f, cy + s * 0.3f)
-            path.quadraticBezierTo(cx - s * 0.5f, cy - s * 0.3f, cx - s * 0.1f, cy - s * 0.5f)
-            path.quadraticBezierTo(cx, cy - s * 0.7f, cx + s * 0.1f, cy - s * 0.5f)
-            path.quadraticBezierTo(cx + s * 0.5f, cy - s * 0.3f, cx + s * 0.4f, cy + s * 0.3f)
+            path.quadraticTo(cx - s * 0.5f, cy - s * 0.3f, cx - s * 0.1f, cy - s * 0.5f)
+            path.quadraticTo(cx, cy - s * 0.7f, cx + s * 0.1f, cy - s * 0.5f)
+            path.quadraticTo(cx + s * 0.5f, cy - s * 0.3f, cx + s * 0.4f, cy + s * 0.3f)
             path.close()
             drawPath(path, tint)
         }

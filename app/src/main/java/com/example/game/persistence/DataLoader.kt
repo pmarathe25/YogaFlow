@@ -15,6 +15,7 @@ object DataLoader {
     val equipment: List<Equipment> by lazy {
         val text = context.assets.open("game/equipment.json").bufferedReader().use { it.readText() }
         val map = gson.fromJson(text, Map::class.java)
+        @Suppress("UNCHECKED_CAST")
         val items = map["items"] as? List<Map<String, Any>> ?: emptyList()
         gson.fromJson(gson.toJson(items), object : TypeToken<List<Equipment>>() {}.type)
     }
@@ -25,6 +26,7 @@ object DataLoader {
         val text = context.assets.open("game/equipment.json")
             .bufferedReader().use { it.readText() }
         val map = gson.fromJson(text, Map::class.java)
+        @Suppress("UNCHECKED_CAST")
         val bonuses = map["setBonuses"] as? List<Map<String, Any>> ?: emptyList()
         gson.fromJson(gson.toJson(bonuses), object : TypeToken<List<SetBonus>>() {}.type)
     }

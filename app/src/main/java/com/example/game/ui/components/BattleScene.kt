@@ -462,7 +462,7 @@ fun BattleScene(viewModel: GameViewModel) {
         // Turn indicator banner (animated popup like intro text)
         TurnBanner(
             actorName = state.turnOrder.find { it.id == state.currentActorId }?.name,
-            visible = state.phase != BattlePhase.INTRO && state.currentActorId != null,
+            visible = state.phase != BattlePhase.INTRO,
             modifier = Modifier.align(Alignment.Center)
         )
 

@@ -68,7 +68,8 @@ fun TrophyModal(
                     containerColor = Color.Transparent,
                     contentColor = MaterialTheme.colorScheme.primary,
                     indicator = { tabPositions ->
-                        TabRowDefaults.Indicator(
+                        @Suppress("DEPRECATION")
+                        TabRowDefaults.SecondaryIndicator(
                             Modifier.tabIndicatorOffset(tabPositions[0]),
                             color = MaterialTheme.colorScheme.primary
                         )
