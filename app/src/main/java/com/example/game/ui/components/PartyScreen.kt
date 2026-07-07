@@ -427,9 +427,9 @@ private fun SkillCard(skill: Skill, hero: Hero, level: Int, isUltimate: Boolean 
         else -> "Physical"
     }
 
-    val damage = skill.baseDamage + skill.damagePerLevel * (level - 1)
+    val damage = skill.baseDamage + skill.damagePerLevel * level
     val healAmount = skill.healScaling?.let {
-        if (it.isPercentage) "${it.baseHeal}%" else "${it.baseHeal + it.healPerLevel * (level - 1)}"
+        if (it.isPercentage) "${it.baseHeal}%" else "${it.baseHeal + it.healPerLevel * level}"
     }
 
     Surface(
@@ -641,15 +641,15 @@ private fun StatComparisonRow(label: String, current: Int, next: Int, color: Col
 
 @Composable
 private fun SkillComparisonRow(skill: Skill, currentLevel: Int) {
-    val current = skill.baseDamage + skill.damagePerLevel * (currentLevel - 1)
-    val next = skill.baseDamage + skill.damagePerLevel * currentLevel
+    val current = skill.baseDamage + skill.damagePerLevel * currentLevel
+    val next = skill.baseDamage + skill.damagePerLevel * (currentLevel + 1)
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp)) {
         Text(skill.name, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
         if (skill.damagePerLevel > 0) {
             Text("$current \u2192 $next dmg", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
         } else if (skill.healScaling != null) {
-            val curHeal = skill.healScaling.baseHeal + skill.healScaling.healPerLevel * (currentLevel - 1)
-            val nxtHeal = skill.healScaling.baseHeal + skill.healScaling.healPerLevel * currentLevel
+            val curHeal = skill.healScaling.baseHeal + skill.healScaling.healPerLevel * currentLevel
+            val nxtHeal = skill.healScaling.baseHeal + skill.healScaling.healPerLevel * (currentLevel + 1)
             if (skill.healScaling.healPerLevel > 0) {
                 Text("$curHeal \u2192 $nxtHeal heal", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
             } else {

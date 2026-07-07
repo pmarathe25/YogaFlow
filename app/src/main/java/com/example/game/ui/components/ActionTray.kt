@@ -302,6 +302,7 @@ private fun HandOfCards(
                             skill = item,
                             isUltimate = isUlt,
                             ultReady = ultReady,
+                            heroLevel = currentHero.level,
                             baseCooldown = item.cooldown,
                             cooldownRemaining = cooldown,
                             modifier = Modifier.width(150.dp).height(220.dp).then(cardMod).then(dragMod).then(tapMod)
@@ -393,6 +394,7 @@ internal fun SkillCard(
     skill: com.example.game.model.Skill,
     isUltimate: Boolean,
     ultReady: Boolean,
+    heroLevel: Int,
     baseCooldown: Int = 0,
     cooldownRemaining: Int = 0,
     modifier: Modifier = Modifier
@@ -482,7 +484,7 @@ internal fun SkillCard(
                     Spacer(Modifier.height(4.dp))
 
                     Text(
-                        text = skill.getMechanicsDescription(),
+                        text = skill.getMechanicsDescription(heroLevel),
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 10.sp,
                         color = if (isOnCooldown) Color.LightGray else Color.DarkGray,
