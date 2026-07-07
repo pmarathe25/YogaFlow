@@ -59,15 +59,17 @@ fun PartyScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.navig
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
+                Spacer(Modifier.weight(1f))
+
+                Text("\u26A1", fontSize = 14.sp)
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    "${saveData.sparks}",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
             
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "Yoga Level: ${saveData.yogaLevel} | Sparks: ${saveData.sparks} \u2726",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                modifier = Modifier.padding(start = 12.dp)
-            )
             Spacer(Modifier.height(16.dp))
 
             LazyColumn(modifier = Modifier.weight(1f)) {
