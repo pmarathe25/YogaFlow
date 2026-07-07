@@ -1,6 +1,7 @@
 package com.example.game.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -388,16 +389,49 @@ fun HeroDetailsDialog(
                 }
 
                 // Skills section
+                var selectedSkill by remember { mutableStateOf<Skill?>(null) }
+
+                selectedSkill?.let { skill ->
+                    val isUltimateSkill = skill == hero.ultimate
+                    Dialog(onDismissRequest = { selectedSkill = null }) {
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = MaterialTheme.colorScheme.surface
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                SkillCard(
+                                    skill = skill,
+                                    isUltimate = isUltimateSkill,
+                                    ultReady = true,
+                                    heroLevel = partyMember.level,
+                                    modifier = Modifier.size(250.dp, 320.dp)
+                                )
+                                Spacer(Modifier.height(12.dp))
+                                Button(
+                                    onClick = { selectedSkill = null },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) { Text("Close") }
+                            }
+                        }
+                    }
+                }
+
                 Text("Skills", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
 
                 hero.skills.forEach { skill ->
-                    SkillCard(skill = skill, hero = hero, level = partyMember.level, heroColor = heroColor)
+                    HeroDetailSkillCard(
+                        skill = skill, hero = hero, level = partyMember.level, heroColor = heroColor,
+                        modifier = Modifier.clickable { selectedSkill = skill }
+                    )
                 }
 
                 // Ultimate
                 Spacer(Modifier.height(12.dp))
-                SkillCard(skill = hero.ultimate, hero = hero, level = partyMember.level, isUltimate = true, heroColor = heroColor)
+                HeroDetailSkillCard(
+                    skill = hero.ultimate, hero = hero, level = partyMember.level, isUltimate = true, heroColor = heroColor,
+                    modifier = Modifier.clickable { selectedSkill = hero.ultimate }
+                )
 
                 Spacer(Modifier.height(20.dp))
             }
@@ -406,14 +440,22 @@ fun HeroDetailsDialog(
 }
 
 @Composable
-private fun SkillCard(skill: Skill, hero: Hero, level: Int, isUltimate: Boolean = false, heroColor: Color = Color.Gray) {
+private fun HeroDetailSkillCard(skill: Skill, hero: Hero, level: Int, isUltimate: Boolean = false, heroColor: Color = Color.Gray, modifier: Modifier = Modifier) {
     val typeColor = when {
         isUltimate -> heroColor
-        skill.healScaling != null -> Color(0xFF4CAF50)
-        skill.shieldScaling != null -> Color(0xFF2196F3)
+        skill.healScaling != null -> Color(0xFF66BB6A)
+        skill.shieldScaling != null -> Color(0xFF42A5F5)
+        skill.damageComponents.any { it.element == Element.FIRE } -> Color(0xFFE53935)
+        skill.damageComponents.any { it.element == Element.WATER } -> Color(0xFF1E88E5)
+        skill.damageComponents.any { it.element == Element.AIR } -> Color(0xFFB0BEC5)
+        skill.damageComponents.any { it.element == Element.EARTH } -> Color(0xFF795548)
+        skill.damageComponents.any { it.element == Element.LIGHT } -> Color(0xFFFFF176)
+        skill.damageComponents.any { it.element == Element.DARK || it.element == Element.SHADOW } -> Color(0xFF7B1FA2)
+        skill.damageComponents.any { it.type == DamageType.ELEMENTAL } -> elementToColor(
+            skill.damageComponents.firstNotNullOfOrNull { it.element } ?: Element.NEUTRAL)
         skill.buffs.isNotEmpty() -> Color(0xFFFFD740)
-        skill.damageComponents.any { it.type == DamageType.PHYSICAL } -> MaterialTheme.colorScheme.onSurface
-        skill.damageComponents.any { it.type == DamageType.ELEMENTAL } -> elementToColor(skill.damageComponents.firstNotNullOfOrNull { it.element } ?: Element.NEUTRAL)
+        skill.cleanse -> Color(0xFF7E57C2)
+        skill.statusEffects.isNotEmpty() -> Color(0xFFFF7043)
         else -> MaterialTheme.colorScheme.onSurface
     }
 
@@ -437,7 +479,8 @@ private fun SkillCard(skill: Skill, hero: Hero, level: Int, isUltimate: Boolean 
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = typeColor.copy(alpha = 0.08f),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp)
+        border = BorderStroke(1.dp, typeColor.copy(alpha = 0.3f)),
+        modifier = modifier.fillMaxWidth().padding(vertical = 3.dp)
     ) {
         Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.Top) {
             // Type indicator
