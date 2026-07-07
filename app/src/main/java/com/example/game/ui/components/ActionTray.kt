@@ -186,6 +186,12 @@ private fun HandOfCards(
         contentAlignment = Alignment.BottomCenter
     ) {
         val draggableState = rememberDraggableState { delta ->
+            if (poppedCardIndex >= 0) {
+                poppedCardIndex = -1
+                dragActiveIndex = -1
+                isPopped = false
+                rawDragY = 0f
+            }
             scrollOffset = (scrollOffset + delta).coerceIn(minScrollOffset, maxScrollOffset)
         }
 
@@ -243,6 +249,9 @@ private fun HandOfCards(
                                 }
                             },
                             onVerticalDrag = { change: PointerInputChange, dragAmountY: Float ->
+                                if (poppedCardIndex >= 0 && poppedCardIndex != index) {
+                                    return@onVerticalDrag
+                                }
                                 rawDragY += dragAmountY
                                 if (!isPopped) {
                                     if (rawDragY < -popThresholdPx) {
@@ -255,6 +264,7 @@ private fun HandOfCards(
                                     val currentX = change.position.x
                                     rawDragX += currentX - lastDragX
                                     lastDragX = currentX
+                                    change.consume()
                                 }
                             },
                             onDragEnd = {
