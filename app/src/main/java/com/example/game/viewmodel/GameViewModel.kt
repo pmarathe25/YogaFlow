@@ -250,7 +250,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             _battleState.value = updateComboAvailability(result.newState)
             result.logMessages.forEach { addBattleLog(it) }
 
-            delay(1000)
+            delay(1300)
             advanceToNextTurn()
             _isProcessingTurn.value = false
         }
@@ -269,7 +269,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             _battleState.value = updateComboAvailability(result.newState)
             result.logMessages.forEach { addBattleLog(it) }
 
-            delay(1500)
+            delay(1800)
             advanceToNextTurn()
             _isProcessingTurn.value = false
         }
@@ -289,7 +289,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             _battleState.value = updateComboAvailability(result.newState)
             result.logMessages.forEach { addBattleLog(it) }
 
-            delay(2000)
+            delay(2300)
             advanceToNextTurn()
             _isProcessingTurn.value = false
         }
@@ -313,13 +313,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         result.logMessages.forEach { addBattleLog(it) }
 
         if (result.victory) {
-            delay(1000)
+            delay(2500)
             _currentScreen.value = GameScreen.BATTLE_RESULT
             onBattleWon()
             return
         }
         if (result.defeat) {
-            delay(1000)
+            delay(2500)
             _currentScreen.value = GameScreen.BATTLE_RESULT
             return
         }

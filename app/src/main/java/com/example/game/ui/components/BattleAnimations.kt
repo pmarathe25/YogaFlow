@@ -109,9 +109,11 @@ fun rememberSpriteAnimations(
             }
             is BattleEvent.MonsterDown -> {
                 monsterAnimState.value = SpriteAnimState(state = SpriteState.DYING, stateTime = 0f, alpha = 0f, offsetY = 30f)
+                delay(1200)
             }
             is BattleEvent.HeroDown -> {
                 heroAnimStates[event.heroId] = SpriteAnimState(state = SpriteState.DYING, stateTime = 0f, alpha = 0f, offsetY = 30f)
+                delay(1200)
             }
             else -> {}
         }
