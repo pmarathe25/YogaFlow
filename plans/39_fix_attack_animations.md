@@ -2,78 +2,66 @@
 
 ## Problem
 
-Attack animations use hardcoded `offsetX`/`offsetY` values (e.g., `offsetX = 80f, offsetY = -10f` for heroes). These fixed offsets don't account for the actual screen positions of the attacker and target. As a result:
+Attack animations partially compute direction-to-target, but the vertical component is zeroed out (`offsetY = 0f`), making the lunge purely horizontal. Since heroes and monsters are vertically separated on screen, the lunge should move diagonally toward the actual target position for a natural look.
 
-1. The direction of movement may not point toward the actual target (especially with varying hero count or screen sizes).
-2. With multiple heroes, the offset is the same regardless of which hero attacks or where the target is, making the animation feel mechanical.
-3. The hardcoded values were tuned for a specific screen layout and may look wrong on different devices.
+Hit reactions also still use hardcoded offsets instead of the inverse lunge direction.
 
-## Fix
+## Current State
 
-### 1. Compute direction vector from attacker to target
+Looking at `BattleAnimations.kt`:
 
-**`BattleAnimations.kt`** — in `rememberSpriteAnimations()`, instead of hardcoded `offsetX`/`offsetY`, calculate the direction from the attacker's position to the target's position.
+- **Hero attacking monster** (lines 73-94): Computes `dx`, `dy`, `distance`, `normalizedDx` from positions, but sets `offsetY = 0f` (line 84). Monster hit reaction uses hardcoded `offsetX = -25f, offsetY = 5f` (line 91).
+- **Monster attacking hero** (lines 104-129): Same horizontal-only lunge (`offsetY = 0f`, line 115). Hero hit reaction uses hardcoded `offsetX = -15f, offsetY = 10f` (line 122).
+- **Non-damaging skills** (lines 96-101): Hardcoded `offsetX = 0f, offsetY = -30f` (vertical hop).
 
-The function already receives screen positions (`heroPositions: Map<String, Offset>`, `monsterPos: Offset`). Use these to compute the lunge direction.
+## Remaining Changes
 
-For hero attacking monster:
+### 1. Use full 2D direction for attacker lunge
+
+**Line 84** — replace `offsetY = 0f` with computed vertical component:
 ```kotlin
-val attackerPos = heroPositions[event.heroId] ?: return@launch
-val targetPos = monsterPos
-val dx = targetPos.x - attackerPos.x
-val dy = targetPos.y - attackerPos.y
-val distance = sqrt(dx * dx + dy * dy)
-val normalizedDx = dx / distance
-val normalizedDy = dy / distance
-
-val lungeDistance = 80f  // pixels to lunge toward target
-
-heroAnimStates[event.heroId] = SpriteAnimState(
-    state = SpriteState.ATTACKING, stateTime = 0f,
-    offsetX = normalizedDx * lungeDistance,
-    offsetY = normalizedDy * lungeDistance
-)
+offsetX = normalizedDx * lungeDistance,
+offsetY = normalizedDy * lungeDistance   // was 0f
 ```
 
-For monster attacking hero:
+**Line 115** — same change for monster attacks:
 ```kotlin
-val targetPos = heroPositions[targetHeroId] ?: return@launch
-val monsterPos = monsterPos
-val dx = targetPos.x - monsterPos.x
-val dy = targetPos.y - monsterPos.y
-val distance = sqrt(dx * dx + dy * dy)
-val normalizedDx = dx / distance
-val normalizedDy = dy / distance
+offsetX = normalizedDx * lungeDistance,
+offsetY = normalizedDy * lungeDistance   // was 0f
+```
 
+### 2. Use inverse direction for target hit recoil
+
+**Lines 89-92** — monster hit reaction uses computed inverse direction instead of hardcoded `-25f, 5f`:
+```kotlin
 monsterAnimState.value = SpriteAnimState(
-    state = SpriteState.ATTACKING, stateTime = 0f,
-    offsetX = normalizedDx * lungeDistance,
-    offsetY = normalizedDy * lungeDistance
+    state = SpriteState.HIT, stateTime = 0f,
+    offsetX = -normalizedDx * 25f,
+    offsetY = -normalizedDy * 25f       // recoil away from attacker
 )
 ```
 
-For the hit reaction on the target, use the inverse direction (target recoils away from attacker):
+**Lines 119-123** — hero hit reaction uses computed inverse direction instead of hardcoded `-15f, 10f`:
 ```kotlin
-val recoilDistance = 25f
 event.targets.forEach { targetHeroId ->
     heroAnimStates[targetHeroId] = SpriteAnimState(
         state = SpriteState.HIT, stateTime = 0f,
-        offsetX = -normalizedDx * recoilDistance,
-        offsetY = -normalizedDy * recoilDistance
+        offsetX = -normalizedDx * 25f,
+        offsetY = -normalizedDy * 25f   // recoil away from monster
     )
 }
 ```
 
-### 2. Use spring animation for smooth return
+### 3. Non-damaging skills (optional)
 
-The existing spring-based `animateFloatAsState` in `CombatantSprite.kt` already handles smooth return to position when `SpriteAnimState` resets to IDLE with `offsetX = 0f, offsetY = 0f`. No changes needed there.
+The hardcoded vertical hop (`offsetX = 0f, offsetY = -30f`) for heals/buffs at lines 96-101 can remain as-is, since there's no target to lunge toward. Alternatively, if a hero element is available, it could lunge toward the target hero (self or ally). This is low priority.
 
 ## Files to modify
 
 | File | Changes |
 |---|---|
-| `BattleAnimations.kt` | Replace hardcoded offset values with direction-to-target calculation using `heroPositions` and `monsterPos`; compute lunge vector from actual positions; apply inverse vector for target hit recoil |
+| `BattleAnimations.kt` | Use `normalizedDy * lungeDistance` for Y offset on lines 84, 115; use computed inverse direction for hit recoil on lines 89-92, 119-123 |
 
 ## Dependencies
 
-- None. Standalone animation fix.
+- None. Completes the partially-implemented change.
