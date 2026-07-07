@@ -9,7 +9,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Checkroom
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -43,12 +46,21 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
     val party by viewModel.party.collectAsState()
     
     var selectedItemForDetail by remember { mutableStateOf<Equipment?>(null) }
+    var selectedCategory by remember { mutableStateOf(EquipmentSlot.WEAPON) }
 
     Box(
         modifier = Modifier.fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        Column(modifier = Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
+        Scaffold(
+            bottomBar = {
+                SlotNavigationBar(
+                    selectedSlot = selectedCategory,
+                    onSlotSelected = { selectedCategory = it }
+                )
+            }
+        ) { padding ->
+            Column(modifier = Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp).padding(padding)) {
             // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -90,28 +102,6 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
-
-            // Filter tabs
-            var selectedCategory by remember { mutableStateOf<EquipmentSlot?>(null) }
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(listOf(null) + EquipmentSlot.values()) { slot ->
-                    FilterChip(
-                        selected = selectedCategory == slot,
-                        onClick = { selectedCategory = slot },
-                        label = {
-                            Text(
-                                slot?.name ?: "All",
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
-                    )
-                }
-            }
-
             Spacer(Modifier.height(8.dp))
 
             // Tier filter
@@ -138,7 +128,7 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
                 .toSet()
 
             val available = DataLoader.equipment.filter { eq ->
-                (selectedCategory == null || eq.slot == selectedCategory) && eq.id !in battleRewardItemIds &&
+                eq.slot == selectedCategory && eq.id !in battleRewardItemIds &&
                 (selectedTierFilter == null || eq.tier == selectedTierFilter)
             }
 
@@ -197,11 +187,63 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
                 }
             }
         }
+        }
         
         selectedItemForDetail?.let { item ->
             GearDetailsDialog(
                 item = item,
                 onDismiss = { selectedItemForDetail = null }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SlotNavigationBar(
+    selectedSlot: EquipmentSlot,
+    onSlotSelected: (EquipmentSlot) -> Unit
+) {
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 4.dp
+    ) {
+        EquipmentSlot.WEAPON.let { slot ->
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Shield, contentDescription = null) },
+                label = { Text("Weapon") },
+                selected = selectedSlot == slot,
+                onClick = { onSlotSelected(slot) },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color(0xFFF44336),
+                    selectedTextColor = Color(0xFFF44336),
+                    indicatorColor = Color(0xFFF44336).copy(alpha = 0.12f)
+                )
+            )
+        }
+        EquipmentSlot.ARMOR.let { slot ->
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Checkroom, contentDescription = null) },
+                label = { Text("Armor") },
+                selected = selectedSlot == slot,
+                onClick = { onSlotSelected(slot) },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color(0xFF4CAF50),
+                    selectedTextColor = Color(0xFF4CAF50),
+                    indicatorColor = Color(0xFF4CAF50).copy(alpha = 0.12f)
+                )
+            )
+        }
+        EquipmentSlot.ACCESSORY.let { slot ->
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Watch, contentDescription = null) },
+                label = { Text("Accessory") },
+                selected = selectedSlot == slot,
+                onClick = { onSlotSelected(slot) },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color(0xFF2196F3),
+                    selectedTextColor = Color(0xFF2196F3),
+                    indicatorColor = Color(0xFF2196F3).copy(alpha = 0.12f)
+                )
             )
         }
     }
