@@ -20,6 +20,14 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.foundation.border
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -209,25 +217,37 @@ private fun ShopItemCard(
     onPurchase: () -> Unit,
     onShowDetail: () -> Unit
 ) {
+    val isUnique = item.tier == EquipmentTier.UNIQUE
+    val shimmerTransition = rememberInfiniteTransition()
+    val shimmerAlpha by shimmerTransition.animateFloat(
+        initialValue = 0f, targetValue = 0.5f,
+        animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse)
+    )
+
     GlassCard(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).alpha(if (levelLocked) 0.6f else 1f).clickable { onShowDetail() },
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).alpha(if (levelLocked) 0.6f else 1f).clickable { onShowDetail() }
+            .then(
+                if (isUnique) Modifier
+                    .drawBehind {
+                        val shimmerWidth = size.width * 0.4f
+                        val shimmerX = (size.width * (shimmerAlpha * 2f)) % (size.width * 1.5f) - shimmerWidth
+                        drawRect(
+                            brush = Brush.linearGradient(
+                                colors = listOf(Color.Transparent, Color.White.copy(alpha = 0.15f), Color.Transparent),
+                                start = Offset(shimmerX, 0f),
+                                end = Offset(shimmerX + shimmerWidth, size.height)
+                            )
+                        )
+                    }
+                    .border(width = 2.dp, color = item.getThemeColor().copy(alpha = 0.8f), shape = RoundedCornerShape(16.dp))
+                else Modifier
+            ),
         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
         elevation = 2.dp,
         useDefaultPadding = false
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp)
-                .then(
-                    if (item.tier == EquipmentTier.UNIQUE && item.heroId != null)
-                        Modifier.drawBehind {
-                            drawRoundRect(
-                                color = item.getThemeColor().copy(alpha = 0.8f),
-                                cornerRadius = CornerRadius(16.dp.toPx()),
-                                style = Stroke(width = 2.dp.toPx())
-                            )
-                        }
-                    else Modifier
-                ),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Icon
@@ -245,7 +265,10 @@ private fun ShopItemCard(
                         item.name,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = item.getThemeColor()
+                        color = item.getThemeColor(),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
                     Surface(
                         shape = RoundedCornerShape(4.dp),
