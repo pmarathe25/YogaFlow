@@ -346,21 +346,18 @@ fun HeroDetailsDialog(
                             slot = EquipmentSlot.WEAPON,
                             item = weaponItem,
                             heroColor = heroColor,
-                            onUnequip = { viewModel.unequipItem(hero.id, it) },
                             onEquip = { equipSlot = EquipmentSlot.WEAPON }
                         )
                         EquipmentSlotCard(
                             slot = EquipmentSlot.ARMOR,
                             item = armorItem,
                             heroColor = heroColor,
-                            onUnequip = { viewModel.unequipItem(hero.id, it) },
                             onEquip = { equipSlot = EquipmentSlot.ARMOR }
                         )
                         EquipmentSlotCard(
                             slot = EquipmentSlot.ACCESSORY,
                             item = accessoryItem,
                             heroColor = heroColor,
-                            onUnequip = { viewModel.unequipItem(hero.id, it) },
                             onEquip = { equipSlot = EquipmentSlot.ACCESSORY }
                         )
                     }
@@ -371,14 +368,19 @@ fun HeroDetailsDialog(
                         eq.id in saveData.inventory && eq.slot == slot &&
                         (eq.heroId == null || eq.heroId == hero.id)
                     }
+                    val currentlyEquipped = equipped.find { it.slot == slot }
 
                     EquipItemDialog(
                         slot = slot,
                         items = availableItems,
-                        currentlyEquipped = equipped.find { it.slot == slot },
+                        currentlyEquipped = currentlyEquipped,
                         heroColor = heroColor,
                         onEquip = { itemId ->
-                            viewModel.equipItem(hero.id, itemId)
+                            if (itemId != null) {
+                                viewModel.equipItem(hero.id, itemId)
+                            } else {
+                                currentlyEquipped?.let { viewModel.unequipItem(hero.id, it.id) }
+                            }
                             equipSlot = null
                         },
                         onDismiss = { equipSlot = null }
@@ -506,7 +508,6 @@ private fun EquipmentSlotCard(
     slot: EquipmentSlot,
     item: Equipment?,
     heroColor: Color,
-    onUnequip: (String) -> Unit,
     onEquip: () -> Unit
 ) {
     Surface(
@@ -517,7 +518,7 @@ private fun EquipmentSlotCard(
             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { if (item != null) onUnequip(item.id) else onEquip() }
+            .clickable { onEquip() }
     ) {
         Row(
             modifier = Modifier.padding(8.dp),
@@ -548,11 +549,6 @@ private fun EquipmentSlotCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                }
-            }
-            if (item != null) {
-                IconButton(onClick = { onUnequip(item.id) }, modifier = Modifier.size(24.dp)) {
-                    Icon(Icons.Default.LinkOff, contentDescription = "Unequip", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
                 }
             }
         }
@@ -667,7 +663,7 @@ private fun EquipItemDialog(
     items: List<Equipment>,
     currentlyEquipped: Equipment?,
     heroColor: Color,
-    onEquip: (String) -> Unit,
+    onEquip: (String?) -> Unit,
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -689,6 +685,13 @@ private fun EquipItemDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(12.dp))
+
+                EquipItemRow(
+                    item = null,
+                    currentlyEquipped = currentlyEquipped,
+                    heroColor = heroColor,
+                    onEquip = { onEquip(null) }
+                )
 
                 if (items.isEmpty()) {
                     Text(
@@ -719,11 +722,46 @@ private fun EquipItemDialog(
 
 @Composable
 private fun EquipItemRow(
-    item: Equipment,
+    item: Equipment?,
     currentlyEquipped: Equipment?,
     heroColor: Color,
     onEquip: () -> Unit
 ) {
+    if (item == null) {
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("\u274C", fontSize = 24.sp, modifier = Modifier.padding(end = 12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "None (empty slot)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    )
+                }
+                if (currentlyEquipped != null) {
+                    Spacer(Modifier.width(8.dp))
+                    FilledTonalButton(
+                        onClick = onEquip,
+                        modifier = Modifier.height(36.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = heroColor.copy(alpha = 0.3f)
+                        )
+                    ) {
+                        Text("Equip", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    }
+                }
+            }
+        }
+        return
+    }
+
     val isAlreadyEquipped = item.id == currentlyEquipped?.id
 
     Surface(
