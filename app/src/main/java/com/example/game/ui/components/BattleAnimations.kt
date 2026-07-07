@@ -78,17 +78,19 @@ fun rememberSpriteAnimations(
                     val distance = sqrt(dx * dx + dy * dy)
                     val normalizedDx = dx / distance
                     val lungeDistance = 80f
+                    val normalizedDy = dy / distance
                     heroAnimStates[event.heroId] = SpriteAnimState(
                         state = SpriteState.ATTACKING, stateTime = 0f,
                         offsetX = normalizedDx * lungeDistance,
-                        offsetY = 0f
+                        offsetY = normalizedDy * lungeDistance
                     )
                     delay(300)
                     heroAnimStates[event.heroId] = SpriteAnimState(state = SpriteState.IDLE, stateTime = 0f)
                     
                     monsterAnimState.value = SpriteAnimState(
                         state = SpriteState.HIT, stateTime = 0f,
-                        offsetX = -25f, offsetY = 5f
+                        offsetX = -normalizedDx * 25f,
+                        offsetY = -normalizedDy * 25f
                     )
                     delay(200)
                     monsterAnimState.value = SpriteAnimState(state = SpriteState.IDLE, stateTime = 0f)
@@ -108,18 +110,20 @@ fun rememberSpriteAnimations(
                 val dy = targetPos.y - monsterPos.y
                 val distance = sqrt(dx * dx + dy * dy)
                 val normalizedDx = dx / distance
+                val normalizedDy = dy / distance
                 val lungeDistance = 80f
                 monsterAnimState.value = SpriteAnimState(
                     state = SpriteState.ATTACKING, stateTime = 0f,
                     offsetX = normalizedDx * lungeDistance,
-                    offsetY = 0f
+                    offsetY = normalizedDy * lungeDistance
                 )
                 delay(300)
                 monsterAnimState.value = SpriteAnimState(state = SpriteState.IDLE, stateTime = 0f)
                 event.targets.forEach { targetHeroId ->
                     heroAnimStates[targetHeroId] = SpriteAnimState(
                         state = SpriteState.HIT, stateTime = 0f,
-                        offsetX = -15f, offsetY = 10f
+                        offsetX = -normalizedDx * 25f,
+                        offsetY = -normalizedDy * 25f
                     )
                 }
                 delay(200)
