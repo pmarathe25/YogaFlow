@@ -487,7 +487,8 @@ internal fun SkillCard(
 
                 Column(
                     modifier = Modifier.padding(8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(getSkillIcon(skill), fontSize = 32.sp, modifier = Modifier.alpha(if (isOnCooldown) 0.5f else 1f))
@@ -510,7 +511,7 @@ internal fun SkillCard(
                         color = if (isOnCooldown) Color.LightGray else Color.DarkGray,
                         textAlign = TextAlign.Center,
                         lineHeight = 12.sp,
-                        modifier = Modifier.weight(1f)
+                        // natural height
                     )
 
                     Text(

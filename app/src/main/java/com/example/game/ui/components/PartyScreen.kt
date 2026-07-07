@@ -407,7 +407,7 @@ fun HeroDetailsDialog(
                                     isUltimate = isUltimateSkill,
                                     ultReady = true,
                                     heroLevel = partyMember.level,
-                                    modifier = Modifier.size(250.dp, 320.dp)
+                                    modifier = Modifier.widthIn(min = 250.dp, max = 300.dp)
                                 )
                                 Spacer(Modifier.height(12.dp))
                                 Button(
