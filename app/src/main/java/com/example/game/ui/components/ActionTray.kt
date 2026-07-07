@@ -216,18 +216,26 @@ private fun HandOfCards(
                     Modifier.pointerInput(index) {
                         detectVerticalDragGestures(
                             onDragStart = { startPos ->
-                                if (dragActiveIndex == index && isPopped) {
-                                    poppedCardIndex = -1
-                                    lastDragX = startPos.x
-                                } else {
-                                    poppedCardIndex = -1
-                                    rawDragX = 0f
-                                    rawDragY = 0f
-                                    isPopped = false
-                                    lastDragX = startPos.x
+                                val usable = if (item is com.example.game.model.Skill) {
+                                    val s = item
+                                    val isUlt = s.ultimateGain == 0
+                                    if (isUlt) currentHero.gauge >= 100
+                                    else (skillCooldowns[s.id] ?: 0) <= 0
+                                } else true
+                                if (usable) {
+                                    if (dragActiveIndex == index && isPopped) {
+                                        poppedCardIndex = -1
+                                        lastDragX = startPos.x
+                                    } else {
+                                        poppedCardIndex = -1
+                                        rawDragX = 0f
+                                        rawDragY = 0f
+                                        isPopped = false
+                                        lastDragX = startPos.x
+                                    }
+                                    dragActiveIndex = index
+                                    onCardDragStart?.invoke(cardColor)
                                 }
-                                dragActiveIndex = index
-                                onCardDragStart?.invoke(cardColor)
                             },
                             onVerticalDrag = { change: PointerInputChange, dragAmountY: Float ->
                                 rawDragY += dragAmountY
@@ -276,6 +284,13 @@ private fun HandOfCards(
                 val tapMod = if (item is com.example.game.model.Skill || item is ComboSkill) {
                     Modifier.pointerInput(index) {
                         detectTapGestures {
+                            if (item is com.example.game.model.Skill) {
+                                val skill = item
+                                val isUlt = skill.ultimateGain == 0
+                                val isUsable = if (isUlt) currentHero.gauge >= 100
+                                    else (skillCooldowns[skill.id] ?: 0) <= 0
+                                if (!isUsable) return@detectTapGestures
+                            }
                             if (poppedCardIndex == index) {
                                 poppedCardIndex = -1
                                 dragActiveIndex = -1
@@ -399,24 +414,24 @@ internal fun SkillCard(
     cooldownRemaining: Int = 0,
     modifier: Modifier = Modifier
 ) {
-    val isOnCooldown = cooldownRemaining > 0
+    val isOnCooldown = cooldownRemaining > 0 || (isUltimate && !ultReady)
     val showCooldown = baseCooldown > 1
     val displayText = if (isOnCooldown) "$cooldownRemaining" else "$baseCooldown"
 
     val bgColor = when {
         isOnCooldown -> Color(0xFFE0E0E0)
-        isUltimate -> if (ultReady) Color(0xFFFFF9C4) else Color(0xFFEEEEEE)
+        isUltimate   -> Color(0xFFFFF9C4)
         skill.healScaling != null -> Color(0xFFF1F8E9)
         skill.damageComponents.isNotEmpty() -> Color(0xFFFFF1F0)
-        else -> Color(0xFFE1F5FE)
+        else         -> Color(0xFFE1F5FE)
     }
 
     val borderColor = when {
         isOnCooldown -> Color.Gray
-        isUltimate -> if (ultReady) Color(0xFFFFD700) else Color.Gray
+        isUltimate   -> Color(0xFFFFD700)
         skill.healScaling != null -> Color(0xFF689F38)
         skill.damageComponents.isNotEmpty() -> Color(0xFFD32F2F)
-        else -> Color(0xFF0288D1)
+        else         -> Color(0xFF0288D1)
     }
 
     val infiniteTransition = rememberInfiniteTransition()
