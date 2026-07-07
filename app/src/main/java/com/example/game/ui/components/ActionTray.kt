@@ -166,7 +166,7 @@ private fun HandOfCards(
     val displayDragY by animateFloatAsState(
         targetValue = if (isDragged) rawDragY else 0f,
         animationSpec = if (isDragged)
-            tween(0)
+            snap()
         else
             spring(dampingRatio = 0.5f, stiffness = 500f)
     )
@@ -174,7 +174,7 @@ private fun HandOfCards(
     val displayDragX by animateFloatAsState(
         targetValue = if (isDragged && isPopped) rawDragX else 0f,
         animationSpec = if (isDragged)
-            tween(0)
+            snap()
         else
             spring(dampingRatio = 0.5f, stiffness = 500f)
     )
