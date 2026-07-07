@@ -161,17 +161,22 @@ private fun HandOfCards(
     var lastDragX by remember { mutableStateOf(0f) }
     val popThresholdPx = with(density) { 30.dp.toPx() }
 
-    val targetY = if (dragActiveIndex >= 0) rawDragY else 0f
-    val targetX = if (dragActiveIndex >= 0 && isPopped) rawDragX else 0f
+    val isDragged = dragActiveIndex >= 0
 
     val displayDragY by animateFloatAsState(
-        targetValue = targetY,
-        animationSpec = spring(dampingRatio = 0.65f, stiffness = 300f)
+        targetValue = if (isDragged) rawDragY else 0f,
+        animationSpec = if (isDragged)
+            tween(0)
+        else
+            spring(dampingRatio = 0.5f, stiffness = 500f)
     )
 
     val displayDragX by animateFloatAsState(
-        targetValue = targetX,
-        animationSpec = spring(dampingRatio = 0.65f, stiffness = 300f)
+        targetValue = if (isDragged && isPopped) rawDragX else 0f,
+        animationSpec = if (isDragged)
+            tween(0)
+        else
+            spring(dampingRatio = 0.5f, stiffness = 500f)
     )
 
     Box(
