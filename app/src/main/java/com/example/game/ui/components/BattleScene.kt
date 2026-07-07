@@ -144,7 +144,9 @@ fun BattleScene(viewModel: GameViewModel) {
     }
 
     // ─── Sprite Animations ─────────────────────────────────────────
-    val (heroAnimStates, monsterAnimState) = rememberSpriteAnimations(state.eventLog, state)
+    var monsterPos by remember { mutableStateOf(Offset.Zero) }
+    var heroPositions by remember { mutableStateOf<Map<String, Offset>>(emptyMap()) }
+    val (heroAnimStates, monsterAnimState) = rememberSpriteAnimations(state.eventLog, state, heroPositions, monsterPos)
 
     // Flash states
     var monsterFlashAlpha by remember { mutableStateOf(0f) }
@@ -201,8 +203,6 @@ fun BattleScene(viewModel: GameViewModel) {
     // ─── Effect System ─────────────────────────────────────────────
     val shakeHandle = rememberShakeHandle()
     val pool = rememberParticlePool(300)
-    var monsterPos by remember { mutableStateOf(Offset.Zero) }
-    var heroPositions by remember { mutableStateOf<Map<String, Offset>>(emptyMap()) }
 
     // Current actor for action tray
     val currentHero = state.aliveHeroes.find { it.id == state.currentActorId }

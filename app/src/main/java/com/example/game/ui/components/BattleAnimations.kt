@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.game.model.BattleEvent
@@ -16,6 +17,7 @@ import com.example.game.model.BattleState
 import com.example.game.ui.components.SpriteState
 import com.example.game.ui.components.SpriteAnimState
 import kotlinx.coroutines.delay
+import kotlin.math.sqrt
 
 @Composable
 fun TurnBanner(
@@ -52,7 +54,9 @@ fun TurnBanner(
 @Composable
 fun rememberSpriteAnimations(
     eventLog: List<BattleEvent>,
-    state: BattleState
+    state: BattleState,
+    heroPositions: Map<String, Offset>,
+    monsterPos: Offset
 ): Pair<Map<String, SpriteAnimState>, State<SpriteAnimState>> {
     val heroAnimStates = remember { mutableStateMapOf<String, SpriteAnimState>() }
     val monsterAnimState = remember { mutableStateOf(SpriteAnimState()) }
@@ -67,9 +71,17 @@ fun rememberSpriteAnimations(
             is BattleEvent.SkillUsed -> {
                 val isAttack = event.skill.damageComponents.isNotEmpty() || event.skill.baseDamage > 0
                 if (isAttack) {
+                    val attackerPos = heroPositions[event.heroId] ?: return@LaunchedEffect
+                    val targetPos = monsterPos
+                    val dx = targetPos.x - attackerPos.x
+                    val dy = targetPos.y - attackerPos.y
+                    val distance = sqrt(dx * dx + dy * dy)
+                    val normalizedDx = dx / distance
+                    val lungeDistance = 80f
                     heroAnimStates[event.heroId] = SpriteAnimState(
                         state = SpriteState.ATTACKING, stateTime = 0f,
-                        offsetX = 80f, offsetY = -10f
+                        offsetX = normalizedDx * lungeDistance,
+                        offsetY = 0f
                     )
                     delay(300)
                     heroAnimStates[event.heroId] = SpriteAnimState(state = SpriteState.IDLE, stateTime = 0f)
@@ -90,9 +102,17 @@ fun rememberSpriteAnimations(
                 }
             }
             is BattleEvent.MonsterTurn -> {
+                val targetHeroId = event.targets.firstOrNull() ?: return@LaunchedEffect
+                val targetPos = heroPositions[targetHeroId] ?: return@LaunchedEffect
+                val dx = targetPos.x - monsterPos.x
+                val dy = targetPos.y - monsterPos.y
+                val distance = sqrt(dx * dx + dy * dy)
+                val normalizedDx = dx / distance
+                val lungeDistance = 80f
                 monsterAnimState.value = SpriteAnimState(
                     state = SpriteState.ATTACKING, stateTime = 0f,
-                    offsetX = -80f, offsetY = 10f
+                    offsetX = normalizedDx * lungeDistance,
+                    offsetY = 0f
                 )
                 delay(300)
                 monsterAnimState.value = SpriteAnimState(state = SpriteState.IDLE, stateTime = 0f)
