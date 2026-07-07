@@ -7,6 +7,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -104,7 +107,21 @@ fun ExpandedDashboardScreen(
             initialValue = 0f, targetValue = 1f,
             animationSpec = infiniteRepeatable(tween(3000), RepeatMode.Reverse)
         )
-        val previewMonsters = remember { DataLoader.monsters.take(6) }
+        val listState = rememberLazyListState()
+        val normDefeated = remember(gameSaveData.defeatedMonsterIds) {
+            gameSaveData.defeatedMonsterIds.map { it.lowercase() }.toSet()
+        }
+
+        LaunchedEffect(Unit) {
+            val defeatedIds = gameSaveData.defeatedMonsterIds
+            val furthestIdx = DataLoader.monsters.indexOfLast { m ->
+                m.id.lowercase() in defeatedIds.map { it.lowercase() }
+            }
+            val targetIdx = (furthestIdx + 1).coerceAtMost(DataLoader.monsters.lastIndex)
+            if (targetIdx > 0) {
+                listState.animateScrollToItem(targetIdx)
+            }
+        }
 
         Box(
             modifier = modifier
@@ -196,16 +213,15 @@ fun ExpandedDashboardScreen(
                     color = Color(0xFF81C784)
                 )
                 Spacer(Modifier.height(12.dp))
-                Row(
+                LazyRow(
+                    state = listState,
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val normDefeated = remember(gameSaveData.defeatedMonsterIds) {
-                        gameSaveData.defeatedMonsterIds.map { it.lowercase() }.toSet()
-                    }
-                    previewMonsters.forEachIndexed { index, monster ->
-                        val isUnlocked = index == 0 || normDefeated.contains(
-                            previewMonsters[index - 1].id.lowercase()
+                    items(DataLoader.monsters) { monster ->
+                        val idx = DataLoader.monsters.indexOf(monster)
+                        val isUnlocked = idx == 0 || normDefeated.contains(
+                            DataLoader.monsters[idx - 1].id.lowercase()
                         )
                         val isDefeated = normDefeated.contains(monster.id.lowercase())
                         MonsterPreviewCircle(
@@ -215,7 +231,6 @@ fun ExpandedDashboardScreen(
                             isDefeated = isDefeated
                         )
                     }
-                    Text("...", color = Color(0xFF81C784), fontSize = 24.sp)
                 }
 
                 Spacer(Modifier.height(36.dp))
