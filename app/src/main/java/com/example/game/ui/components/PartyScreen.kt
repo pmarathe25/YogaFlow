@@ -401,6 +401,7 @@ fun HeroDetailsDialog(
                             Column(modifier = Modifier.padding(16.dp)) {
                                 SkillCard(
                                     skill = skill,
+                                    heroColor = elementToColor(hero.element),
                                     isUltimate = isUltimateSkill,
                                     ultReady = true,
                                     heroLevel = partyMember.level,

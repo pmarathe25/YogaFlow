@@ -320,6 +320,7 @@ private fun HandOfCards(
 
                         SkillCard(
                             skill = item,
+                            heroColor = elementToColor(currentHero.element),
                             isUltimate = isUlt,
                             ultReady = ultReady,
                             heroLevel = currentHero.level,
@@ -412,6 +413,7 @@ internal fun ComboCard(
 @Composable
 internal fun SkillCard(
     skill: com.example.game.model.Skill,
+    heroColor: Color,
     isUltimate: Boolean,
     ultReady: Boolean,
     heroLevel: Int,
@@ -434,9 +436,7 @@ internal fun SkillCard(
     val borderColor = when {
         isOnCooldown -> Color.Gray
         isUltimate   -> Color(0xFFFFD700)
-        skill.healScaling != null -> Color(0xFF689F38)
-        skill.damageComponents.isNotEmpty() -> Color(0xFFD32F2F)
-        else         -> Color(0xFF0288D1)
+        else         -> heroColor
     }
 
     val infiniteTransition = rememberInfiniteTransition()
