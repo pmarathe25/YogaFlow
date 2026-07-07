@@ -27,6 +27,8 @@ import androidx.compose.ui.graphics.Color
 import com.example.game.ui.components.MonsterRoadSelection
 import com.example.game.ui.components.elementToColor
 import com.example.game.ui.components.drawMonsterShape
+import com.example.game.ui.components.TrophyModal
+import com.example.db.Achievement
 import com.example.game.model.Monster
 import com.example.game.persistence.DataLoader
 import com.example.game.viewmodel.GameViewModel
@@ -62,12 +64,22 @@ fun ExpandedDashboardScreen(
 
     var showMonsterRoad by remember { mutableStateOf(false) }
     var showLevelsDialog by remember { mutableStateOf(false) }
+    var showTrophies by remember { mutableStateOf(false) }
 
     if (showLevelsDialog) {
         LevelsInfoDialog(
             currentLevel = currentLevel,
             totalXp = totalXp,
             onDismiss = { showLevelsDialog = false }
+        )
+    }
+
+    if (showTrophies) {
+        val achievements by viewModel.achievements.collectAsState()
+        TrophyModal(
+            achievements = achievements,
+            earnedTrophyIds = gameSaveData.earnedTrophyIds,
+            onDismiss = { showTrophies = false }
         )
     }
 
@@ -120,9 +132,14 @@ fun ExpandedDashboardScreen(
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Text(
+                        "Path of Zen",
+                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                        color = Color(0xFFE8F5E9)
+                    )
+                    Spacer(Modifier.weight(1f))
                     Text("⚡", fontSize = 16.sp)
                     Spacer(Modifier.width(4.dp))
                     Text("$sparks",
@@ -138,16 +155,6 @@ fun ExpandedDashboardScreen(
                 }
 
                 Spacer(Modifier.height(24.dp))
-
-                LevelCardCompact(
-                    currentLevel = currentLevel,
-                    currentLevelName = currentLevelName,
-                    totalXp = totalXp,
-                    levelProgress = levelProgress,
-                    onClick = { showLevelsDialog = true }
-                )
-
-                Spacer(Modifier.height(32.dp))
 
                 Box(contentAlignment = Alignment.Center) {
                     Canvas(modifier = Modifier.size(160.dp)) {
@@ -171,18 +178,14 @@ fun ExpandedDashboardScreen(
                     }
                 }
 
-                Spacer(Modifier.height(32.dp))
+                Spacer(Modifier.height(24.dp))
 
-                Text(
-                    "Path of Zen",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold, color = Color(0xFFE8F5E9)
-                )
-                Text(
-                    "Walk the path of enlightenment",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFFA5D6A7),
-                    modifier = Modifier.padding(top = 4.dp)
+                LevelCardCompact(
+                    currentLevel = currentLevel,
+                    currentLevelName = currentLevelName,
+                    totalXp = totalXp,
+                    levelProgress = levelProgress,
+                    onClick = { showLevelsDialog = true }
                 )
 
                 Spacer(Modifier.height(32.dp))
@@ -197,8 +200,20 @@ fun ExpandedDashboardScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    previewMonsters.forEach { monster ->
-                        MonsterPreviewCircle(monster, size = 52.dp)
+                    val normDefeated = remember(gameSaveData.defeatedMonsterIds) {
+                        gameSaveData.defeatedMonsterIds.map { it.lowercase() }.toSet()
+                    }
+                    previewMonsters.forEachIndexed { index, monster ->
+                        val isUnlocked = index == 0 || normDefeated.contains(
+                            previewMonsters[index - 1].id.lowercase()
+                        )
+                        val isDefeated = normDefeated.contains(monster.id.lowercase())
+                        MonsterPreviewCircle(
+                            monster = monster,
+                            size = 52.dp,
+                            isLocked = !isUnlocked,
+                            isDefeated = isDefeated
+                        )
                     }
                     Text("...", color = Color(0xFF81C784), fontSize = 24.sp)
                 }
@@ -235,7 +250,7 @@ fun ExpandedDashboardScreen(
                     NavCard(
                         title = "Trophies", icon = "🏆",
                         subtitle = "Achievements",
-                        onClick = onNavigateToTrophies,
+                        onClick = { showTrophies = true },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -347,7 +362,7 @@ fun NavCard(
 }
 
 @Composable
-private fun MonsterPreviewCircle(monster: Monster, size: Dp = 44.dp) {
+private fun MonsterPreviewCircle(monster: Monster, size: Dp = 44.dp, isLocked: Boolean = false, isDefeated: Boolean = false) {
     val elColor = elementToColor(monster.element)
     Box(
         modifier = Modifier.size(size),
@@ -355,9 +370,18 @@ private fun MonsterPreviewCircle(monster: Monster, size: Dp = 44.dp) {
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val c = this.size.width / 2f
-            drawCircle(elColor.copy(alpha = 0.2f), c, Offset(c, c))
-            drawCircle(elColor.copy(alpha = 0.5f), c * 0.6f, Offset(c, c), style = Stroke(width = 2f))
-            drawMonsterShape(c * 0.5f, c * 0.6f, c * 0.7f, monster.name, elColor)
+            val alpha = if (isLocked) 0.3f else if (isDefeated) 0.5f else 1f
+            drawCircle(elColor.copy(alpha = 0.2f * alpha), c, Offset(c, c))
+            drawCircle(elColor.copy(alpha = 0.5f * alpha), c * 0.6f, Offset(c, c), style = Stroke(width = 2f))
+            drawMonsterShape(c * 0.5f, c * 0.6f, c * 0.7f, monster.name,
+                tint = if (isDefeated) Color.Gray else elColor.copy(alpha = alpha))
+            if (isLocked) {
+                drawCircle(Color(0xFF37474F).copy(alpha = 0.6f), c * 0.7f, Offset(c, c))
+                drawCircle(Color(0xFF455A64).copy(alpha = 0.3f), c * 0.8f, Offset(c, c))
+            }
+        }
+        if (isLocked) {
+            Text("\uD83D\uDD12", fontSize = 24.sp, color = Color.White)
         }
     }
 }
