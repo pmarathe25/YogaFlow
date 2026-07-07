@@ -149,8 +149,8 @@ class GameSaveManager(private val context: Context) {
     private fun readJsonStringSet(key: String): Set<String> =
         readJsonList(key, emptyList<String>()).toSet()
 
-    private fun GameProgress.normalized(): GameProgress =
-        copy(
+    private fun GameProgress.normalized(): GameProgress {
+        var result = copy(
             version = 3,
             party = party.map {
                 it.copy(equippedItemIds = it.equippedItemIds.map(::normalizeItemId))
@@ -158,6 +158,14 @@ class GameSaveManager(private val context: Context) {
             unlockedHeroIds = unlockedHeroIds,
             defeatedMonsterIds = defeatedMonsterIds.map(::normalizeMonsterId).toSet()
         )
+        if (1 !in result.unlockedHeroIds) {
+            result = result.copy(unlockedHeroIds = result.unlockedHeroIds + 1)
+        }
+        if (result.party.none { it.heroId == 1 }) {
+            result = result.copy(party = result.party + PartyMemberData(heroId = 1))
+        }
+        return result
+    }
 
     private fun normalizeItemId(id: String): String = id.trim().lowercase()
     private fun normalizeMonsterId(id: String): String = id.trim().lowercase()
