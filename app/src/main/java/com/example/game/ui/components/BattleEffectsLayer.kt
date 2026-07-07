@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.example.game.battle.BattleSoundManager
 import com.example.game.model.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -33,6 +34,7 @@ fun BattleEffectsLayer(
     monsterPosition: Offset,
     pool: ParticlePool,
     shakeHandle: ShakeHandle,
+    soundManager: BattleSoundManager,
     modifier: Modifier = Modifier
 ) {
     val damageNumbers = remember { mutableStateListOf<FloatingTextEntry>() }
@@ -155,6 +157,24 @@ fun BattleEffectsLayer(
                         }
                     }
 
+                    // Sound effects
+                    when {
+                        event.skill.ultimateGain == 0 && event.skill.damageComponents.isNotEmpty() -> {
+                            soundManager.playUltimate()
+                        }
+                        event.skill.healScaling != null -> {
+                            soundManager.playHeal()
+                        }
+                        event.skill.damageComponents.isNotEmpty() -> {
+                            soundManager.playWhoosh()
+                            scope.launch {
+                                delay(300)
+                                soundManager.playHit()
+                            }
+                        }
+                        else -> soundManager.playWhoosh()
+                    }
+
                     // Ultimate cut-in
                     if (event.skill.ultimateGain == 0 && event.skill.damageComponents.isNotEmpty()) {
                         val heroName = stateHeroName(events, event.heroId)
@@ -223,6 +243,11 @@ fun BattleEffectsLayer(
                             EmitterConfig(colors = listOf(Color.Black, Color.Red), force = 12f),
                             targetPos, 12
                         )
+                    }
+                    soundManager.playWhoosh()
+                    scope.launch {
+                        delay(300)
+                        soundManager.playHit()
                     }
                 }
                 else -> {}

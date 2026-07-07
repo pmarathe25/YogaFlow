@@ -24,12 +24,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.window.Dialog
+import com.example.game.battle.BattleSoundManager
 import com.example.game.model.*
 import com.example.game.model.BattlePhase.*
 import com.example.game.viewmodel.GameViewModel
@@ -37,11 +39,21 @@ import com.example.game.persistence.DataLoader
 import kotlinx.coroutines.delay
 import kotlin.math.*
 
+val LocalBattleSoundManager = staticCompositionLocalOf<BattleSoundManager> {
+    error("No BattleSoundManager provided")
+}
+
 @Composable
 fun BattleScene(viewModel: GameViewModel) {
+    val context = LocalContext.current
     val battleState by viewModel.battleState.collectAsState()
     val state = battleState ?: return
     val battleLog by viewModel.battleLog.collectAsState()
+
+    val soundManager = remember { BattleSoundManager(context) }
+    DisposableEffect(Unit) {
+        onDispose { soundManager.release() }
+    }
 
     val infiniteTransition = rememberInfiniteTransition()
     val parallaxOffset by infiniteTransition.animateFloat(
@@ -207,11 +219,12 @@ fun BattleScene(viewModel: GameViewModel) {
         }
     }
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .shakeOffset(shakeHandle)
-    ) {
+    CompositionLocalProvider(LocalBattleSoundManager provides soundManager) {
+        Box(
+            modifier = Modifier.fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .shakeOffset(shakeHandle)
+        ) {
         BattleBackground(
             parallaxOffset = sin(parallaxOffset),
             bossFight = isBoss,
@@ -424,6 +437,7 @@ fun BattleScene(viewModel: GameViewModel) {
             monsterPosition = monsterPos,
             pool = pool,
             shakeHandle = shakeHandle,
+            soundManager = soundManager,
             modifier = Modifier.fillMaxSize()
         )
 
@@ -472,6 +486,7 @@ fun BattleScene(viewModel: GameViewModel) {
         // Battle Log Dialog
         if (showFullLog) {
             BattleLogDialog(log = battleLog, onDismiss = { showFullLog = false })
+        }
         }
     }
 }
