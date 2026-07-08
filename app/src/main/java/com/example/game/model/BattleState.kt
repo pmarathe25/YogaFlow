@@ -112,7 +112,8 @@ sealed class BattleEvent {
         val monsterId: String,
         val skill: Skill,
         val targets: List<String>,
-        val outcome: ActionOutcome
+        val outcome: ActionOutcome,
+        val element: Element = Element.NEUTRAL
     ) : BattleEvent()
     data class PhaseTriggered(
         val monsterId: String,

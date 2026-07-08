@@ -258,7 +258,7 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
             }
             val outcomeResult = computeMonsterOutcome(state, activeMonster, skill, targets, rng)
             val (applied, applyEvents, updatedOutcome) = applyOutcome(state, outcomeResult.outcome)
-            val turnEvent = BattleEvent.MonsterTurn(monsterId, skill, targets, updatedOutcome)
+            val turnEvent = BattleEvent.MonsterTurn(monsterId, skill, targets, updatedOutcome, activeMonster.element)
             state = applied.copy(eventLog = applied.eventLog + applyEvents + turnEvent)
             events += applyEvents + turnEvent
             logs += "${activeMonster.name} uses ${skill.name}."

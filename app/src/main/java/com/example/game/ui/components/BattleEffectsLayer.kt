@@ -166,7 +166,9 @@ fun BattleEffectsLayer(
                             soundManager.playHeal()
                         }
                         event.skill.damageComponents.isNotEmpty() -> {
-                            soundManager.playWhoosh()
+                            val primaryElement = event.skill.damageComponents
+                                .firstNotNullOfOrNull { it.element } ?: Element.NEUTRAL
+                            soundManager.playElementSound(primaryElement)
                             scope.launch {
                                 delay(300)
                                 soundManager.playHit()
@@ -244,7 +246,7 @@ fun BattleEffectsLayer(
                             targetPos, 12
                         )
                     }
-                    soundManager.playWhoosh()
+                    soundManager.playElementSound(event.element)
                     scope.launch {
                         delay(300)
                         soundManager.playHit()
