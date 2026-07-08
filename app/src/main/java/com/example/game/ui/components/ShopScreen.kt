@@ -53,9 +53,10 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
             )
         },
         modifier = Modifier.fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background),
+        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Bottom)
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp).padding(padding)) {
+        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp)) {
             // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -97,8 +98,6 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
                 }
             }
 
-            Spacer(Modifier.height(4.dp))
-
             // Tier filter
             var selectedTierFilter by remember { mutableStateOf<EquipmentTier?>(null) }
 
@@ -116,7 +115,7 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(4.dp))
 
             val available = DataLoader.equipment.filter { eq ->
                 eq.slot == selectedCategory &&
