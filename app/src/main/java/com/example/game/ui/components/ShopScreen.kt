@@ -85,7 +85,7 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
                     ) {
                         Text(
                             "\uD83E\uDE99",
-                            color = Color(0xFFFFD740),
+                            color = Color(0xFFFFD700),
                             style = MaterialTheme.typography.labelLarge
                         )
                         Spacer(Modifier.width(4.dp))
@@ -93,7 +93,7 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
                             "$availableGold",
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFFFD740)
+                            color = Color(0xFFFFD700)
                         )
                     }
                 }
@@ -350,7 +350,7 @@ private fun ShopItemCard(
                         "${item.goldCost} \uD83E\uDE99",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        color = if (canAfford && !levelLocked) Color(0xFFFFD740) else MaterialTheme.colorScheme.error
+                        color = if (canAfford && !levelLocked) Color(0xFFFFD700) else MaterialTheme.colorScheme.error
                     )
                     Spacer(Modifier.height(4.dp))
                     FilledTonalButton(

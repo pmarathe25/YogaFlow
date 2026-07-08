@@ -28,6 +28,7 @@ import kotlinx.coroutines.delay
 fun BattleResultScreen(viewModel: GameViewModel) {
     val battleState by viewModel.battleState.collectAsState()
     val isVictory = battleState?.phase == BattlePhase.VICTORY
+    val goldEarned by viewModel.goldEarned.collectAsState()
     val turnsTaken = battleState?.turnsTaken ?: 0
     val totalDamageDealt = remember(battleState) {
         battleState?.eventLog?.filterIsInstance<BattleEvent.SkillUsed>()?.sumOf { e ->
@@ -175,6 +176,11 @@ fun BattleResultScreen(viewModel: GameViewModel) {
                             "Damage dealt: $totalDamageDealt",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                        Text(
+                            "Gold earned: $goldEarned \uD83E\uDE99",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFFFFD700)
                         )
                     }
                 }

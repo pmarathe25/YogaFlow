@@ -484,7 +484,7 @@ fun SessionCompleteScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
                     }
-                    RewardItem(value = "${gameSaveData.gold}", label = "Gold", color = Color(0xFFFFD600))
+                    RewardItem(value = "${gameSaveData.gold} \uD83E\uDE99", label = "Gold", color = Color(0xFFFFD700))
                 }
             }
         }

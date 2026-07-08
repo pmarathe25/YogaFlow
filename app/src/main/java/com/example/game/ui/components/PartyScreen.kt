@@ -68,6 +68,14 @@ fun PartyScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.navig
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.primary
                 )
+                Spacer(Modifier.width(12.dp))
+                Text("\uD83E\uDE99", fontSize = 14.sp)
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    "${saveData.gold}",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    color = Color(0xFFFFD700)
+                )
             }
             
             Spacer(Modifier.height(16.dp))

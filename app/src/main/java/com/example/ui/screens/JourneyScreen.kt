@@ -163,8 +163,7 @@ fun ExpandedDashboardScreen(
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(12.dp))
-                    Icon(Icons.Default.MonetizationOn, contentDescription = null,
-                        tint = Color(0xFFFFD700), modifier = Modifier.size(20.dp))
+                    Text("\uD83E\uDE99", fontSize = 16.sp)
                     Spacer(Modifier.width(4.dp))
                     Text("$gold",
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),

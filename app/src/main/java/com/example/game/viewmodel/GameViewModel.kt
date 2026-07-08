@@ -54,6 +54,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _isProcessingTurn = MutableStateFlow(false)
     val isProcessingTurn: StateFlow<Boolean> = _isProcessingTurn.asStateFlow()
 
+    private val _goldEarned = MutableStateFlow(0)
+    val goldEarned: StateFlow<Int> = _goldEarned.asStateFlow()
+
     private val _selectedCardId = MutableStateFlow<String?>(null)
     val selectedCardId: StateFlow<String?> = _selectedCardId.asStateFlow()
 
@@ -367,9 +370,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             inventory = inventory + monster.firstDefeatItemReward
         }
 
+        val goldReward = when (monster.difficultyTier) {
+            DifficultyTier.EASY -> 10
+            DifficultyTier.MEDIUM -> 25
+            DifficultyTier.HARD -> 50
+            DifficultyTier.BOSS -> 100
+            DifficultyTier.SUPERBOSS -> 200
+        }
+        _goldEarned.value = goldReward
+
         _saveData.value = data.copy(
             totalBattlesWon = data.totalBattlesWon + 1,
             defeatedMonsterIds = data.defeatedMonsterIds + monster.id.lowercase(),
+            gold = data.gold + goldReward,
             inventory = inventory,
             lastPlayedTimestamp = System.currentTimeMillis()
         )
@@ -382,6 +395,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _saveData.value = defaultData
         _party.value = defaultData.party
         _battleState.value = null
+        _goldEarned.value = 0
     }
 
     // --- Equipment ---
