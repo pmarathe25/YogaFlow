@@ -718,6 +718,27 @@ private fun MonsterConfirmDialog(
                     }
                 }
 
+                // ── Monster Portrait ──
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Canvas(
+                        modifier = Modifier.size(100.dp)
+                    ) {
+                        val c = size.width / 2f
+                        val s = size.width * 0.45f
+                        drawCircle(elColor.copy(alpha = 0.1f), c * 0.9f, Offset(c, c * 1.1f))
+                        drawMonsterShape(
+                            cx = c,
+                            cy = c * 1.05f,
+                            s = s,
+                            name = monster.name,
+                            tint = elColor.copy(alpha = 0.9f)
+                        )
+                    }
+                }
+
                 // ── Flavor Text ──
                 val flavor = if (monster.flavorText.isNotBlank()) monster.flavorText else monster.mechanicDescription
                 Text(
