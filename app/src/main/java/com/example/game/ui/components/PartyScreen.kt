@@ -404,24 +404,24 @@ fun HeroDetailsDialog(
                 selectedSkill?.let { skill ->
                     val isUltimateSkill = skill == hero.ultimate
                     Dialog(onDismissRequest = { selectedSkill = null }) {
-                        Surface(
-                            shape = RoundedCornerShape(20.dp),
-                            color = MaterialTheme.colorScheme.surface
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                SkillCard(
-                                    skill = skill,
-                                    heroColor = elementToColor(hero.element),
-                                    isUltimate = isUltimateSkill,
-                                    ultReady = true,
-                                    heroLevel = partyMember.level,
-                                    modifier = Modifier.widthIn(min = 250.dp, max = 300.dp)
+                        Box {
+                            SkillCard(
+                                skill = skill,
+                                heroColor = elementToColor(hero.element),
+                                isUltimate = isUltimateSkill,
+                                ultReady = true,
+                                heroLevel = partyMember.level,
+                                modifier = Modifier.widthIn(min = 250.dp, max = 300.dp)
+                            )
+                            IconButton(
+                                onClick = { selectedSkill = null },
+                                modifier = Modifier.align(Alignment.TopEnd)
+                            ) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Close",
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
-                                Spacer(Modifier.height(12.dp))
-                                Button(
-                                    onClick = { selectedSkill = null },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) { Text("Close") }
                             }
                         }
                     }
@@ -452,7 +452,23 @@ fun HeroDetailsDialog(
 
 @Composable
 private fun HeroDetailSkillCard(skill: Skill, hero: Hero, level: Int, isUltimate: Boolean = false, heroColor: Color = Color.Gray, modifier: Modifier = Modifier) {
-    val typeColor = heroColor
+    val typeColor = when {
+        isUltimate -> heroColor
+        skill.healScaling != null -> Color(0xFF66BB6A)
+        skill.shieldScaling != null -> Color(0xFF42A5F5)
+        skill.damageComponents.any { it.element == Element.FIRE } -> Color(0xFFE53935)
+        skill.damageComponents.any { it.element == Element.WATER } -> Color(0xFF1E88E5)
+        skill.damageComponents.any { it.element == Element.AIR } -> Color(0xFFB0BEC5)
+        skill.damageComponents.any { it.element == Element.EARTH } -> Color(0xFF795548)
+        skill.damageComponents.any { it.element == Element.LIGHT } -> Color(0xFFFFF176)
+        skill.damageComponents.any { it.element == Element.DARK || it.element == Element.SHADOW } -> Color(0xFF7B1FA2)
+        skill.damageComponents.any { it.type == DamageType.ELEMENTAL } -> elementToColor(
+            skill.damageComponents.firstNotNullOfOrNull { it.element } ?: Element.NEUTRAL)
+        skill.buffs.isNotEmpty() -> Color(0xFFFFD740)
+        skill.cleanse -> Color(0xFF7E57C2)
+        skill.statusEffects.isNotEmpty() -> Color(0xFFFF7043)
+        else -> MaterialTheme.colorScheme.onSurface
+    }
 
     val typeLabel = when {
         isUltimate -> "Ultimate"
