@@ -45,19 +45,17 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
     var selectedItemForDetail by remember { mutableStateOf<Equipment?>(null) }
     var selectedCategory by remember { mutableStateOf(EquipmentSlot.WEAPON) }
 
-    Box(
+    Scaffold(
+        bottomBar = {
+            SlotNavigationBar(
+                selectedSlot = selectedCategory,
+                onSlotSelected = { selectedCategory = it }
+            )
+        },
         modifier = Modifier.fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-    ) {
-        Scaffold(
-            bottomBar = {
-                SlotNavigationBar(
-                    selectedSlot = selectedCategory,
-                    onSlotSelected = { selectedCategory = it }
-                )
-            }
-        ) { padding ->
-            Column(modifier = Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp).padding(padding)) {
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp).padding(padding)) {
             // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -99,7 +97,7 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(4.dp))
 
             // Tier filter
             var selectedTierFilter by remember { mutableStateOf<EquipmentTier?>(null) }
@@ -118,14 +116,14 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(8.dp))
 
             val available = DataLoader.equipment.filter { eq ->
                 eq.slot == selectedCategory &&
                 (selectedTierFilter == null || eq.tier == selectedTierFilter)
             }
 
-            LazyColumn(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
+            LazyColumn(modifier = Modifier.weight(1f)) {
                 if (selectedTierFilter != null) {
                     items(available, key = { it.id }) { item ->
                         val owned = item.id in saveData.inventory
@@ -180,14 +178,13 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
                 }
             }
         }
-        }
-        
-        selectedItemForDetail?.let { item ->
-            GearDetailsDialog(
-                item = item,
-                onDismiss = { selectedItemForDetail = null }
-            )
-        }
+    }
+    
+    selectedItemForDetail?.let { item ->
+        GearDetailsDialog(
+            item = item,
+            onDismiss = { selectedItemForDetail = null }
+        )
     }
 }
 
