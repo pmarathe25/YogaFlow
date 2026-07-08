@@ -161,6 +161,7 @@ private fun HandOfCards(
     var isPopped by remember { mutableStateOf(false) }
     var lastDragX by remember { mutableStateOf(0f) }
     val popThresholdPx = with(density) { 30.dp.toPx() }
+    var parentWidthPx by remember { mutableStateOf(0f) }
 
     val isDragged = dragActiveIndex >= 0
 
@@ -177,7 +178,8 @@ private fun HandOfCards(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp),
+            .height(280.dp)
+            .onSizeChanged { parentWidthPx = it.width.toFloat() },
         contentAlignment = Alignment.BottomCenter
     ) {
         val draggableState = rememberDraggableState { delta ->
@@ -208,7 +210,12 @@ private fun HandOfCards(
                     .graphicsLayer {
                         val dy = if (isDragged) rawDragY else snapBackY.value
                         val dx = if (isDragged && isPopped) rawDragX else snapBackX.value
-                        translationX = tx.dp.toPx() + dx
+                        if (isDragged && isPopped) {
+                            val cardWidthPx = with(density) { 150.dp.toPx() }
+                            translationX = (parentWidthPx - cardWidthPx) / 2f + dx
+                        } else {
+                            translationX = tx.dp.toPx() + dx
+                        }
                         translationY = ty.dp.toPx() + dy - (if (item is ComboSkill) 20f else 0f)
                         rotationZ = if (isDragged) 0f else rotation
                         if (isDragged) { scaleX = 1.15f; scaleY = 1.15f }
