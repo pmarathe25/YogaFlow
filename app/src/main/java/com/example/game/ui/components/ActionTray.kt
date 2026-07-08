@@ -249,22 +249,21 @@ private fun HandOfCards(
                                 }
                             },
                             onVerticalDrag = { change: PointerInputChange, dragAmountY: Float ->
-                                if (poppedCardIndex >= 0 && poppedCardIndex != index) {
-                                    return@onVerticalDrag
-                                }
-                                rawDragY += dragAmountY
-                                if (!isPopped) {
-                                    if (rawDragY < -popThresholdPx) {
-                                        isPopped = true
-                                        lastDragX = change.position.x
+                                if (poppedCardIndex < 0 || poppedCardIndex == index) {
+                                    rawDragY += dragAmountY
+                                    if (!isPopped) {
+                                        if (rawDragY < -popThresholdPx) {
+                                            isPopped = true
+                                            lastDragX = change.position.x
+                                        } else {
+                                            lastDragX = change.position.x
+                                        }
                                     } else {
-                                        lastDragX = change.position.x
+                                        val currentX = change.position.x
+                                        rawDragX += currentX - lastDragX
+                                        lastDragX = currentX
+                                        change.consume()
                                     }
-                                } else {
-                                    val currentX = change.position.x
-                                    rawDragX += currentX - lastDragX
-                                    lastDragX = currentX
-                                    change.consume()
                                 }
                             },
                             onDragEnd = {
@@ -438,7 +437,7 @@ internal fun SkillCard(
     val bgColor = when {
         isOnCooldown -> Color(0xFFE0E0E0)
         isUltimate   -> Color(0xFFFFF9C4)
-        else         -> heroColor.copy(alpha = 0.15f)
+        else         -> heroColor.copy(alpha = 0.25f)
     }
 
     val borderColor = when {
