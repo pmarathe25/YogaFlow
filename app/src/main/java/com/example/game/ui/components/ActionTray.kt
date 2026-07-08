@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.example.game.model.*
+import com.example.game.persistence.DataLoader
 import kotlin.math.pow
 
 private sealed class CardEntry {
@@ -410,7 +411,9 @@ internal fun ComboCard(
                 Spacer(Modifier.weight(1f))
 
                 Text(
-                    text = combo.requiredHeroes.joinToString(" + "),
+                    text = combo.requiredHeroes.joinToString(" + ") { id ->
+                        DataLoader.heroes.find { it.id == id }?.name ?: "Hero $id"
+                    },
                     style = MaterialTheme.typography.labelSmall,
                     fontSize = 8.sp,
                     color = Color(0xFFCE93D8).copy(alpha = 0.6f),

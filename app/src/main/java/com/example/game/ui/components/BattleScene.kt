@@ -27,6 +27,7 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -531,22 +532,33 @@ fun TurnOrderList(state: BattleState) {
         )
     )
 
+    val lastEvent = state.eventLog.lastOrNull()
+    val comboParticipantIds = remember(lastEvent) {
+        if (lastEvent is BattleEvent.ComboUsed) lastEvent.participants
+        else emptySet()
+    }
+
     LazyColumn(
         modifier = Modifier.padding(start = 4.dp, top = 2.dp),
         verticalArrangement = Arrangement.spacedBy(1.dp)
     ) {
         items(state.turnOrder) { actor ->
             val isActive = actor.id == state.currentActorId
+            val isComboParticipant = actor.id in comboParticipantIds
+            val isCurrentlyActive = isActive || isComboParticipant
+            val actorIndex = state.turnOrder.indexOf(actor)
+            val hasActed = actorIndex >= 0 && actorIndex < state.currentTurnIndex
             val color = elementToColor(actor.element)
 
             Text(
                 text = actor.name.uppercase(),
-                color = if (isActive) color else Color.White.copy(alpha = 0.6f),
-                fontWeight = if (isActive) FontWeight.Black else FontWeight.Normal,
-                fontSize = if (isActive) 12.sp else 10.sp,
+                color = if (isCurrentlyActive) color else Color.White.copy(alpha = if (hasActed) 0.35f else 0.6f),
+                fontWeight = if (isCurrentlyActive) FontWeight.Black else if (hasActed) FontWeight.Light else FontWeight.Normal,
+                fontSize = if (isCurrentlyActive) 12.sp else 10.sp,
+                textDecoration = if (hasActed) TextDecoration.LineThrough else null,
                 modifier = Modifier
                     .padding(horizontal = 4.dp, vertical = 0.dp)
-                    .then(if (isActive) Modifier.graphicsLayer { translationY = bounceOffset } else Modifier)
+                    .then(if (isCurrentlyActive) Modifier.graphicsLayer { translationY = bounceOffset } else Modifier)
             )
         }
     }
