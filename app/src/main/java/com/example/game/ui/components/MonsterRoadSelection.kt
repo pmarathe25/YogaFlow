@@ -10,6 +10,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,6 +44,7 @@ fun MonsterRoadSelection(
     monsters: List<Monster>,
     defeatedIds: Set<String>,
     partyMembers: List<PartyMemberData>,
+    onBack: () -> Unit,
     onMonsterSelected: (Monster) -> Unit
 ) {
     val sortedMonsters = remember { monsters.reversed() }
@@ -87,6 +90,21 @@ fun MonsterRoadSelection(
             .fillMaxSize()
             .background(Color(0xFF0D1B2A))
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 8.dp)
+                .zIndex(10f),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back to journey",
+                    tint = Color(0xFFE8F5E9)
+                )
+            }
+        }
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()

@@ -34,8 +34,10 @@ import com.example.game.ui.components.TrophyModal
 import com.example.db.Achievement
 import com.example.game.model.Monster
 import com.example.game.persistence.DataLoader
+import com.example.game.model.Monster
 import com.example.game.viewmodel.GameViewModel
 import androidx.compose.animation.core.*
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
@@ -86,11 +88,16 @@ fun ExpandedDashboardScreen(
         )
     }
 
+    BackHandler(enabled = showMonsterRoad) {
+        showMonsterRoad = false
+    }
+
     if (showMonsterRoad) {
         MonsterRoadSelection(
             monsters = DataLoader.monsters,
             defeatedIds = gameSaveData.defeatedMonsterIds,
             partyMembers = party,
+            onBack = { showMonsterRoad = false },
             onMonsterSelected = { monster ->
                 gameViewModel.startBattle(monster.id)
                 onNavigateToBattle()
