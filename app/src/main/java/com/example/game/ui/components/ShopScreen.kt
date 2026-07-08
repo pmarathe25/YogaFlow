@@ -9,10 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Checkroom
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -209,7 +206,7 @@ private fun SlotNavigationBar(
     ) {
         EquipmentSlot.WEAPON.let { slot ->
             NavigationBarItem(
-                icon = { Icon(Icons.Default.Shield, contentDescription = null) },
+                icon = { Text("\uD83D\uDDE1\uFE0F", fontSize = 20.sp) },
                 label = { Text("Weapon") },
                 selected = selectedSlot == slot,
                 onClick = { onSlotSelected(slot) },
@@ -222,7 +219,7 @@ private fun SlotNavigationBar(
         }
         EquipmentSlot.ARMOR.let { slot ->
             NavigationBarItem(
-                icon = { Icon(Icons.Default.Checkroom, contentDescription = null) },
+                icon = { Text("\uD83D\uDEE1\uFE0F", fontSize = 20.sp) },
                 label = { Text("Armor") },
                 selected = selectedSlot == slot,
                 onClick = { onSlotSelected(slot) },
@@ -235,7 +232,7 @@ private fun SlotNavigationBar(
         }
         EquipmentSlot.ACCESSORY.let { slot ->
             NavigationBarItem(
-                icon = { Icon(Icons.Default.Watch, contentDescription = null) },
+                icon = { Text("\uD83D\uDC8D", fontSize = 20.sp) },
                 label = { Text("Accessory") },
                 selected = selectedSlot == slot,
                 onClick = { onSlotSelected(slot) },
