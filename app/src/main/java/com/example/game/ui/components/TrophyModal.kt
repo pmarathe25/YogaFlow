@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,7 +28,6 @@ import com.example.game.persistence.DataLoader
 import com.example.ui.components.AchievementBadgeCard
 import com.example.db.Achievement
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrophyModal(
     achievements: List<Achievement>,
@@ -61,21 +59,6 @@ fun TrophyModal(
                     IconButton(onClick = onDismiss) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
-                }
-
-                TabRow(
-                    selectedTabIndex = 0, // Simplified for now
-                    containerColor = Color.Transparent,
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    indicator = { tabPositions ->
-                        @Suppress("DEPRECATION")
-                        TabRowDefaults.SecondaryIndicator(
-                            Modifier.tabIndicatorOffset(tabPositions[0]),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                ) {
-                    Tab(selected = true, onClick = {}, text = { Text("Badges & Trophies") })
                 }
 
                 LazyVerticalGrid(
