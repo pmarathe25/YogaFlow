@@ -181,10 +181,8 @@ private fun HandOfCards(
     ) {
         val draggableState = rememberDraggableState { delta ->
             if (poppedCardIndex >= 0) {
-                poppedCardIndex = -1
-                dragActiveIndex = -1
-                isPopped = false
-                rawDragY = 0f
+                rawDragX += delta
+                return@rememberDraggableState
             }
             scrollOffset = (scrollOffset + delta).coerceIn(minScrollOffset, maxScrollOffset)
         }
@@ -221,25 +219,33 @@ private fun HandOfCards(
                     Modifier.pointerInput(index) {
                         detectVerticalDragGestures(
                             onDragStart = { startPos ->
-                                val usable = if (item is com.example.game.model.Skill) {
-                                    val s = item
-                                    val isUlt = s.ultimateGain == 0
-                                    if (isUlt) currentHero.gauge >= 100
-                                    else (skillCooldowns[s.id] ?: 0) <= 0
-                                } else true
-                                if (usable) {
-                                    if (dragActiveIndex == index && isPopped) {
-                                        poppedCardIndex = -1
-                                        lastDragX = startPos.x
-                                    } else {
-                                        poppedCardIndex = -1
-                                        rawDragX = 0f
-                                        rawDragY = 0f
-                                        isPopped = false
-                                        lastDragX = startPos.x
+                                if (poppedCardIndex >= 0 && poppedCardIndex != index) {
+                                    poppedCardIndex = -1
+                                    dragActiveIndex = -1
+                                    isPopped = false
+                                    rawDragY = 0f
+                                    rawDragX = 0f
+                                } else {
+                                    val usable = if (item is com.example.game.model.Skill) {
+                                        val s = item
+                                        val isUlt = s.ultimateGain == 0
+                                        if (isUlt) currentHero.gauge >= 100
+                                        else (skillCooldowns[s.id] ?: 0) <= 0
+                                    } else true
+                                    if (usable) {
+                                        if (dragActiveIndex == index && isPopped) {
+                                            poppedCardIndex = -1
+                                            lastDragX = startPos.x
+                                        } else {
+                                            poppedCardIndex = -1
+                                            rawDragX = 0f
+                                            rawDragY = 0f
+                                            isPopped = false
+                                            lastDragX = startPos.x
+                                        }
+                                        dragActiveIndex = index
+                                        onCardDragStart?.invoke(cardColor)
                                     }
-                                    dragActiveIndex = index
-                                    onCardDragStart?.invoke(cardColor)
                                 }
                             },
                             onVerticalDrag = { change: PointerInputChange, dragAmountY: Float ->
