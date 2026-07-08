@@ -120,12 +120,8 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
 
             Spacer(Modifier.height(12.dp))
 
-            val battleRewardItemIds = DataLoader.monsters
-                .mapNotNull { it.firstDefeatItemReward }
-                .toSet()
-
             val available = DataLoader.equipment.filter { eq ->
-                eq.slot == selectedCategory && eq.id !in battleRewardItemIds &&
+                eq.slot == selectedCategory &&
                 (selectedTierFilter == null || eq.tier == selectedTierFilter)
             }
 
