@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import com.example.game.model.Element
 import kotlin.math.PI
 import kotlin.math.sin
@@ -48,6 +49,10 @@ fun CombatantSprite(
         targetValue = animState.alpha,
         animationSpec = tween(400)
     )
+    val smoothRotation by animateFloatAsState(
+        targetValue = animState.rotation,
+        animationSpec = spring(dampingRatio = 0.5f, stiffness = 200f)
+    )
     val smoothFlashAlpha by animateFloatAsState(
         targetValue = if (isFlashing) flashAlpha else 0f,
         animationSpec = tween(200)
@@ -72,54 +77,56 @@ fun CombatantSprite(
         val drawCx = cx
         val drawCy = cy + idleBob
 
-        // Elemental glow aura
-        if (isActive) {
-            drawCircle(
-                color = elementColor.copy(alpha = 0.12f + 0.05f * sin(animState.stateTime * 1.2f)),
-                radius = s * 1.6f,
-                center = Offset(drawCx, drawCy)
-            )
-        }
+        rotate(smoothRotation, Offset(drawCx, drawCy)) {
+            // Elemental glow aura
+            if (isActive) {
+                drawCircle(
+                    color = elementColor.copy(alpha = 0.12f + 0.05f * sin(animState.stateTime * 1.2f)),
+                    radius = s * 1.6f,
+                    center = Offset(drawCx, drawCy)
+                )
+            }
 
-        // Boss aura
-        if (isMonster && isBoss && bossPulse > 0f) {
-            val auraRadius = s * (1.5f + 0.3f * sin(bossPulse * PI.toFloat()))
-            drawCircle(
-                color = elementColor.copy(alpha = 0.15f),
-                radius = auraRadius,
-                center = Offset(drawCx, drawCy)
-            )
-            drawCircle(
-                color = Color(0xFFFF4444).copy(alpha = 0.08f + 0.05f * sin(bossPulse * 2f)),
-                radius = auraRadius * 1.4f,
-                center = Offset(drawCx, drawCy)
-            )
-        }
+            // Boss aura
+            if (isMonster && isBoss && bossPulse > 0f) {
+                val auraRadius = s * (1.5f + 0.3f * sin(bossPulse * PI.toFloat()))
+                drawCircle(
+                    color = elementColor.copy(alpha = 0.15f),
+                    radius = auraRadius,
+                    center = Offset(drawCx, drawCy)
+                )
+                drawCircle(
+                    color = Color(0xFFFF4444).copy(alpha = 0.08f + 0.05f * sin(bossPulse * 2f)),
+                    radius = auraRadius * 1.4f,
+                    center = Offset(drawCx, drawCy)
+                )
+            }
 
-        // Low-HP pulse effect
-        if (isLowHp && isActive) {
-            val pulseAlpha = 0.15f + 0.1f * sin(animState.stateTime * 3f)
-            drawCircle(
-                color = Color.Red.copy(alpha = pulseAlpha),
-                radius = s * 1.8f,
-                center = Offset(drawCx, drawCy)
-            )
-        }
+            // Low-HP pulse effect
+            if (isLowHp && isActive) {
+                val pulseAlpha = 0.15f + 0.1f * sin(animState.stateTime * 3f)
+                drawCircle(
+                    color = Color.Red.copy(alpha = pulseAlpha),
+                    radius = s * 1.8f,
+                    center = Offset(drawCx, drawCy)
+                )
+            }
 
-        // Draw sprite
-        if (isMonster) {
-            drawMonsterShape(drawCx, drawCy, s, name, elementColor.copy(alpha = smoothAlpha))
-        } else {
-            drawSilhouette(drawCx, drawCy, s, heroId, tint.copy(alpha = smoothAlpha))
-        }
+            // Draw sprite
+            if (isMonster) {
+                drawMonsterShape(drawCx, drawCy, s, name, elementColor.copy(alpha = smoothAlpha))
+            } else {
+                drawSilhouette(drawCx, drawCy, s, heroId, tint.copy(alpha = smoothAlpha))
+            }
 
-        // Flash overlay
-        if (smoothFlashAlpha > 0f) {
-            drawCircle(
-                color = flashColor.copy(alpha = smoothFlashAlpha * 0.5f),
-                radius = s * (if (isMonster) 1.1f else 1.2f),
-                center = Offset(drawCx, drawCy)
-            )
+            // Flash overlay
+            if (smoothFlashAlpha > 0f) {
+                drawCircle(
+                    color = flashColor.copy(alpha = smoothFlashAlpha * 0.5f),
+                    radius = s * (if (isMonster) 1.1f else 1.2f),
+                    center = Offset(drawCx, drawCy)
+                )
+            }
         }
 
         // Turn highlight pulse ring

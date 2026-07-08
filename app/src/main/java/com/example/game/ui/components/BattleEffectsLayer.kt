@@ -208,6 +208,13 @@ fun BattleEffectsLayer(
                         shakeHandle.shake(intensity = 12f, durationMs = 500)
                     }
                 }
+                is BattleEvent.MonsterDown -> {
+                    val monsterElement = event.element
+                    val emitter = emitterConfigForElement(monsterElement).copy(
+                        force = 15f
+                    )
+                    pool.emitBurst(emitter, monsterPosition, 40)
+                }
                 is BattleEvent.MonsterTurn -> {
                     event.outcome.perTargetResult.forEach { (targetId, result) ->
                         val targetPos = heroPositions[targetId] ?: Offset.Zero

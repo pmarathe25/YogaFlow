@@ -787,7 +787,7 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
         }
         val finalMonsters = newMonsters.map { m ->
             if (m.hp <= 0 && !m.isDefeated) {
-                events.add(BattleEvent.MonsterDown(m.id))
+                events.add(BattleEvent.MonsterDown(m.id, m.element))
                 m.copy(isDefeated = true, hp = 0)
             } else {
                 m

@@ -121,7 +121,7 @@ sealed class BattleEvent {
         val trigger: PhaseTrigger
     ) : BattleEvent()
     data class HeroDown(val heroId: String) : BattleEvent()
-    data class MonsterDown(val monsterId: String) : BattleEvent()
+    data class MonsterDown(val monsterId: String, val element: Element = Element.NEUTRAL) : BattleEvent()
     data class Victory(val turnsTaken: Int) : BattleEvent()
     data class Defeat(val round: Int) : BattleEvent()
 }

@@ -132,8 +132,31 @@ fun rememberSpriteAnimations(
                 }
             }
             is BattleEvent.MonsterDown -> {
-                monsterAnimState.value = SpriteAnimState(state = SpriteState.DYING, stateTime = 0f, alpha = 0f, offsetY = 30f)
-                delay(1200)
+                monsterAnimState.value = SpriteAnimState(
+                    state = SpriteState.DYING, stateTime = 0f,
+                    alpha = 1f, scale = 1f, rotation = 0f, offsetY = 0f
+                )
+                delay(100)
+                monsterAnimState.value = SpriteAnimState(
+                    state = SpriteState.DYING, stateTime = 0f,
+                    alpha = 0.8f, scale = 0.7f, rotation = 180f, offsetY = -10f
+                )
+                delay(200)
+                monsterAnimState.value = SpriteAnimState(
+                    state = SpriteState.DYING, stateTime = 0f,
+                    alpha = 0.5f, scale = 0.4f, rotation = 360f, offsetY = -5f
+                )
+                delay(200)
+                monsterAnimState.value = SpriteAnimState(
+                    state = SpriteState.DYING, stateTime = 0f,
+                    alpha = 0f, scale = 0.1f, rotation = 540f, offsetY = 20f
+                )
+                delay(300)
+                monsterAnimState.value = SpriteAnimState(
+                    state = SpriteState.DEAD, stateTime = 0f,
+                    alpha = 0f, scale = 0f
+                )
+                delay(400)
             }
             is BattleEvent.HeroDown -> {
                 heroAnimStates[event.heroId] = SpriteAnimState(state = SpriteState.DYING, stateTime = 0f, alpha = 0f, offsetY = 30f)

@@ -25,6 +25,7 @@ data class SpriteAnimState(
     val offsetX: Float = 0f,
     val offsetY: Float = 0f,
     val scale: Float = 1f,
+    val rotation: Float = 0f,
     val alpha: Float = 1f
 )
 
