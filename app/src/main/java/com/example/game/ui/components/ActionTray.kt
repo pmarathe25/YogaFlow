@@ -438,15 +438,17 @@ internal fun SkillCard(
     val bgColor = when {
         isOnCooldown -> Color(0xFFE0E0E0)
         isUltimate   -> Color(0xFFFFF9C4)
-        skill.healScaling != null -> Color(0xFFF1F8E9)
-        skill.damageComponents.isNotEmpty() -> Color(0xFFFFF1F0)
-        else         -> Color(0xFFE1F5FE)
+        else         -> heroColor.copy(alpha = 0.15f)
     }
 
     val borderColor = when {
-        isOnCooldown -> Color.Gray
-        isUltimate   -> Color(0xFFFFD700)
-        else         -> heroColor
+        isOnCooldown                     -> Color.Gray
+        isUltimate                       -> Color(0xFFFFD700)
+        skill.healScaling != null        -> Color(0xFF689F38)
+        skill.damageComponents.isNotEmpty() -> Color(0xFFD32F2F)
+        skill.shieldScaling != null      -> Color(0xFF0288D1)
+        skill.buffs.isNotEmpty()         -> Color(0xFFFFA000)
+        else                             -> Color(0xFF0288D1)
     }
 
     val infiniteTransition = rememberInfiniteTransition()
