@@ -163,21 +163,15 @@ private fun HandOfCards(
 
     val isDragged = dragActiveIndex >= 0
 
-    val displayDragY by animateFloatAsState(
-        targetValue = if (isDragged) rawDragY else 0f,
-        animationSpec = if (isDragged)
-            snap()
-        else
-            spring(dampingRatio = 0.5f, stiffness = 500f)
-    )
+    val snapBackY = remember { Animatable(0f) }
+    val snapBackX = remember { Animatable(0f) }
 
-    val displayDragX by animateFloatAsState(
-        targetValue = if (isDragged && isPopped) rawDragX else 0f,
-        animationSpec = if (isDragged)
-            snap()
-        else
-            spring(dampingRatio = 0.5f, stiffness = 500f)
-    )
+    LaunchedEffect(isDragged) {
+        if (!isDragged) {
+            snapBackY.snapTo(0f)
+            snapBackX.snapTo(0f)
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -213,8 +207,8 @@ private fun HandOfCards(
 
                 val cardMod = Modifier
                     .graphicsLayer {
-                        val dy = if (isDragged) displayDragY else 0f
-                        val dx = if (isDragged && isPopped) displayDragX else 0f
+                        val dy = if (isDragged) rawDragY else snapBackY.value
+                        val dx = if (isDragged && isPopped) rawDragX else snapBackX.value
                         translationX = tx.dp.toPx() + dx
                         translationY = ty.dp.toPx() + dy - (if (item is ComboSkill) 20f else 0f)
                         rotationZ = if (isDragged) 0f else rotation
@@ -254,16 +248,12 @@ private fun HandOfCards(
                                     if (!isPopped) {
                                         if (rawDragY < -popThresholdPx) {
                                             isPopped = true
-                                            lastDragX = change.position.x
-                                        } else {
-                                            lastDragX = change.position.x
                                         }
                                     } else {
-                                        val currentX = change.position.x
-                                        rawDragX += currentX - lastDragX
-                                        lastDragX = currentX
-                                        change.consume()
+                                        rawDragX += change.position.x - lastDragX
                                     }
+                                    lastDragX = change.position.x
+                                    change.consume()
                                 }
                             },
                             onDragEnd = {
@@ -335,12 +325,14 @@ private fun HandOfCards(
                             heroLevel = currentHero.level,
                             baseCooldown = item.cooldown,
                             cooldownRemaining = cooldown,
+                            suspendAnimations = isDragged,
                             modifier = Modifier.width(150.dp).height(220.dp).then(cardMod).then(dragMod).then(tapMod)
                         )
                     }
                     is ComboSkill -> {
                         ComboCard(
                             combo = item,
+                            suspendAnimations = isDragged,
                             modifier = Modifier.width(150.dp).height(220.dp).then(cardMod).then(dragMod).then(tapMod)
                         )
                     }
@@ -353,19 +345,23 @@ private fun HandOfCards(
 @Composable
 internal fun ComboCard(
     combo: ComboSkill,
+    suspendAnimations: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition()
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.4f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse)
+        animationSpec = if (suspendAnimations)
+            infiniteRepeatable(tween<Float>(0, easing = LinearEasing), RepeatMode.Reverse)
+        else
+            infiniteRepeatable(tween<Float>(1000, easing = LinearEasing), RepeatMode.Reverse)
     )
 
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF4A148C).copy(alpha = 0.3f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (suspendAnimations) 0.dp else 4.dp)
     ) {
         Box(
             modifier = Modifier
@@ -428,6 +424,7 @@ internal fun SkillCard(
     heroLevel: Int,
     baseCooldown: Int = 0,
     cooldownRemaining: Int = 0,
+    suspendAnimations: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val isOnCooldown = cooldownRemaining > 0 || (isUltimate && !ultReady)
@@ -453,7 +450,10 @@ internal fun SkillCard(
     val infiniteTransition = rememberInfiniteTransition()
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.4f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse)
+        animationSpec = if (suspendAnimations)
+            infiniteRepeatable(tween<Float>(0, easing = LinearEasing), RepeatMode.Reverse)
+        else
+            infiniteRepeatable(tween<Float>(1000, easing = LinearEasing), RepeatMode.Reverse)
     )
 
     Card(
@@ -461,7 +461,7 @@ internal fun SkillCard(
             .alpha(if (isOnCooldown) 0.8f else 1f),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = bgColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (suspendAnimations) 0.dp else 4.dp)
     ) {
         Box(
             modifier = Modifier
@@ -475,7 +475,7 @@ internal fun SkillCard(
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 // Sparkling effect for ready ultimate
-                if (isUltimate && ultReady) {
+                if (isUltimate && ultReady && !suspendAnimations) {
                     val sparkTransition = rememberInfiniteTransition()
                     repeat(5) { i ->
                         val sparkX by sparkTransition.animateFloat(
@@ -539,7 +539,7 @@ internal fun SkillCard(
                 }
 
                 // Ultimate Golden Glow - Pulse
-                if (isUltimate && ultReady) {
+                if (isUltimate && ultReady && !suspendAnimations) {
                     val pulseScale by infiniteTransition.animateFloat(
                         initialValue = 1f, targetValue = 1.05f,
                         animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse)
