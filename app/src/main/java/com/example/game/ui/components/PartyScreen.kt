@@ -411,7 +411,7 @@ fun HeroDetailsDialog(
                                 isUltimate = isUltimateSkill,
                                 ultReady = true,
                                 heroLevel = partyMember.level,
-                                modifier = Modifier.widthIn(min = 250.dp, max = 300.dp)
+                                modifier = Modifier.widthIn(min = 250.dp, max = 300.dp).height(220.dp)
                             )
                             IconButton(
                                 onClick = { selectedSkill = null },

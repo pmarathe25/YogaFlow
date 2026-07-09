@@ -630,10 +630,18 @@ private fun skillCardBorderColor(
     if (isOnCooldown) return Color.Gray
     if (isUltimate) return Color(0xFFFFD700)
 
-    val effectiveType = if (skill.type == SkillType.DAMAGE || skill.baseDamage > 0 || skill.damageComponents.isNotEmpty())
-        SkillType.DAMAGE else skill.type
+    val effectiveType = try {
+        if (skill.type == SkillType.DAMAGE || skill.baseDamage > 0 || skill.damageComponents.isNotEmpty())
+            SkillType.DAMAGE else skill.type
+    } catch (e: Exception) {
+        SkillType.DAMAGE
+    }
 
-    val types = skill.combinedTypes.ifEmpty { listOf(effectiveType) }
+    val types = try {
+        skill.combinedTypes.ifEmpty { listOf(effectiveType) }
+    } catch (e: Exception) {
+        listOf(SkillType.DAMAGE)
+    }
     val colorMap = mapOf(
         SkillType.DAMAGE to Color(0xFFD32F2F),
         SkillType.HEAL to Color(0xFF689F38),
