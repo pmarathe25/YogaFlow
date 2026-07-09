@@ -25,6 +25,7 @@ fun HubScreen(
             monsters = DataLoader.monsters,
             defeatedIds = saveData.defeatedMonsterIds,
             partyMembers = saveData.party,
+            onBack = onExitHub,
             onMonsterSelected = { onNavigateToBattle(it.id) }
         )
 

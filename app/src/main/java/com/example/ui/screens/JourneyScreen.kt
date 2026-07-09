@@ -34,7 +34,6 @@ import com.example.game.ui.components.TrophyModal
 import com.example.db.Achievement
 import com.example.game.model.Monster
 import com.example.game.persistence.DataLoader
-import com.example.game.model.Monster
 import com.example.game.viewmodel.GameViewModel
 import androidx.compose.animation.core.*
 import androidx.activity.compose.BackHandler
