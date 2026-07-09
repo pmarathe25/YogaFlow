@@ -2,34 +2,30 @@
 
 XP, levels, achievements, and stats earned through practice.
 
+## Data Sources
+
+| Data | Location |
+|------|----------|
+| Level definitions | `model/LevelDefinitions.kt` |
+| XP calculation formula | `model/XpCalculator.kt` |
+| Session logging | `db/YogaSession.kt`, `db/YogaSessionDao.kt` |
+| Stats computation | `db/StatsManager.kt`, `viewmodel/StatsViewModel.kt` |
+| Achievements | `model/YogaModels.kt` (Achievement data class) |
+
 ## Karma XP
 
-Every completed session earns Karma XP based on duration and difficulty:
-
+Formula in `XpCalculator.kt`:
 ```
 XP = 150 (base) + 10 × durationMinutes + difficultyBonus
 ```
 
-where `difficultyBonus` ranges from 30 (Beginner) to 150 (Advanced).
+Difficulty bonus varies by flow ID (see `XpCalculator.kt` for current mapping).
 
 Each unique practice day also awards 1 **Zen Spark** with a +150 XP bonus.
 
 ## Yoga Levels
 
-10 levels with XP thresholds:
-
-| Level | Name | XP Required |
-|-------|------|-------------|
-| 1 | Prana Sprout | 0 |
-| 2 | Breath Seeker | 500 |
-| 3 | Flow Walker | 1,200 |
-| 4 | Pose Weaver | 2,500 |
-| 5 | Sun Saluter | 5,000 |
-| 6 | Asana Holder | 10,000 |
-| 7 | Inner Warrior | 20,000 |
-| 8 | Zen Guardian | 40,000 |
-| 9 | Bliss Seeker | 75,000 |
-| 10 | Infinite Samadhi | 120,000 |
+10 levels defined in `LevelDefinitions.kt` with XP thresholds. See that file for current level names and XP ranges.
 
 Level progression determines:
 - Zen Battle hero unlocks (levels 1-5)
@@ -38,18 +34,16 @@ Level progression determines:
 
 ## Achievements
 
-| Badge | Name | Condition |
-|-------|------|-----------|
-| 🥇 | First Breath | Complete your first practice session |
-| 🥈 | Zen Spark Collector | Earn your first Zen Spark (first unique practice day) |
-| 🥈 | Tri-Fold Harmony | Practice 3 different flows |
-| 🥇 | Yogi Adept | Reach Yoga Level 5 |
-| 💎 | Deep Devotee | Practice on 7 different days |
+Defined in `YogaModels.kt`. Current achievements include:
+- First Breath — complete first session
+- Zen Spark Collector — earn first Zen Spark
+- Tri-Fold Harmony — practice 3 different flows
+- Yogi Adept — reach Yoga Level 5
+- Deep Devotee — practice on 7 different days
 
 ## Stats Tracking
 
-The `StatsViewModel` computes and exposes:
-
+`StatsViewModel` computes and exposes:
 - Total sessions completed
 - Total Karma XP earned
 - Current level, level name, and progress to next level

@@ -2,7 +2,7 @@
 
 ## App Settings
 
-Configured via `SettingsScreen` and persisted by `SettingsViewModel`.
+Configured via `SettingsScreen.kt` and persisted by `SettingsViewModel` (backed by `SettingsManager.kt` / DataStore).
 
 | Setting | Options | Default |
 |---------|---------|---------|
@@ -20,7 +20,7 @@ Managed by `ReminderViewModel` with Android alarm notifications.
 
 - Per-flow reminders with time and day-of-week selection
 - Tapping a reminder notification navigates directly to the flow detail screen
-- Reminders stored in Room `reminders` table
+- Reminders stored in Room `reminders` table (`ReminderEntity`)
 - Duplicate detection prevents multiple reminders for the same flow+time
 - Alarms scheduled via `AlarmManager` with `setAlarmClock` for exact timing
 
@@ -28,4 +28,11 @@ Managed by `ReminderViewModel` with Android alarm notifications.
 
 - **Reset All Stats**: Clears all yoga sessions, resets XP/level/achievements
 - Confirmation dialog prevents accidental data loss
-- Game save data (Zen Battle) is stored separately in SharedPreferences and is not affected
+- Game save data (Zen Battle) is stored separately in SharedPreferences and is NOT affected
+
+## Implementation Details
+
+- Settings: `SettingsManager.kt` (DataStore Preferences)
+- Reminders: `ReminderManager.kt` (AlarmManager), `ReminderDao.kt`, `ReminderEntity.kt`
+- ViewModels: `SettingsViewModel`, `ReminderViewModel`
+- Screens: `SettingsScreen.kt`

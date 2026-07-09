@@ -1,30 +1,29 @@
 # Architecture
 
-YogaFlow is a Kotlin/Jetpack Compose Android app with two feature domains: **Yoga Practice** (primary) and **Zen Battle** (minigame).
+YogaFlow is a Kotlin/Jetpack Compose Android app with two feature domains: **Yoga Practice** (primary) and **Zen Battle** (turn-based minigame).
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
 | Language | Kotlin 2.2.10 |
-| UI | Jetpack Compose (BOM 2025.01.00), Material 3 |
+| UI | Jetpack Compose (BOM 2024.09.00), Material 3 |
 | Architecture | ViewModel + StateFlow, AndroidViewModel |
 | Database | Room (yoga sessions, reminders, favorites) |
 | Persistence | SharedPreferences + Gson (game save data) |
 | Navigation | Jetpack Navigation Compose |
 | Audio | ZenSoundSynthesizer, SoundPool, Android TTS |
-| Build | Gradle with Kotlin DSL, AGP 9.1.1 |
+| Build | Gradle with Kotlin DSL, AGP 9.2.1 |
 
 ## Module Structure
 
 ```
 app/src/main/java/com/example/
-├── api/                      # API integrations
 ├── audio/                    # Sound synthesis, ambient music, TTS voice guidance
 ├── db/                       # Room database, entities, DAOs, repository
 ├── model/                    # Data models (YogaPose, YogaFlow, LevelDef, XpCalculator)
 ├── navigation/               # Screen sealed class with routes
-├── viewmodel/                # YogaViewModel + sub-VMs (Session, Stats, Settings, Reminder)
+├── viewmodel/                # YogaViewModel (delegates to managers) + GameViewModel
 ├── ui/
 │   ├── theme/                # Compose theme (colors, typography, frosted glass)
 │   ├── components/           # Shared composables (GlassCard, YogaPoseVisual, etc.)
@@ -39,13 +38,13 @@ app/src/main/java/com/example/
 ```kotlin
 sealed class Screen(val route: String) {
     Dashboard          // "dashboard"          — Bottom nav: main hub
-    FlowDetails        // "flow_details/{id}"  — Flow detail + pose list
+    FlowDetails        // "flow_details/{flowId}" — Flow detail + pose list
     Player             // "player"             — Active session player
     SessionComplete    // "session_complete"   — Post-session summary
     ExpandedDashboard  // "expanded_dashboard" — Bottom nav: journey/levels
     History            // "history"            — Bottom nav: practice history
     Settings           // "settings"           — Settings from multiple screens
-    ZenGarden          // "zen_garden"         — Bottom nav: Zen Battle
+    ZenBattle          // "zen_battle"         — Bottom nav: Zen Battle
 }
 ```
 
@@ -54,12 +53,12 @@ sealed class Screen(val route: String) {
 ## ViewModel Hierarchy
 
 ```
-YogaViewModel (top-level, delegates to sub-VMs)
-├── SessionViewModel      — Active yoga session (playback, timer, pose navigation)
-├── StatsViewModel        — Statistics, levels, XP, achievements
-├── SettingsViewModel     — User preferences (theme, audio, voice)
-├── ReminderViewModel     — Per-flow practice reminders
-└── RpgViewModel          — Legacy bridge to old Zen Garden (to be replaced)
+YogaViewModel (top-level, delegates to managers)
+├── SessionManager        — Active yoga session (playback, timer, pose navigation)
+├── StatsManager          — Statistics, levels, XP, achievements
+├── SettingsManager       — User preferences (theme, audio, voice) via DataStore
+├── ReminderManager       — Per-flow practice reminders (AlarmManager)
+└── YogaSessionRepository — Room data access for sessions
 
 GameViewModel (independent, for Zen Battle)
     — Party management, battle engine, equipment, save/load
@@ -96,3 +95,4 @@ Zen Battle (see docs/zen_battle/OVERVIEW.md):
 - **State management**: `StateFlow` with snapshot pattern for battle state to trigger Compose recomposition
 - **Background audio**: Foreground service with wake lock for uninterrupted music playback
 - **All game code** under `com.example.game.*` to maintain separation from yoga practice code
+- **Manager pattern** in `YogaViewModel` — delegates to focused manager classes instead of sub-ViewModels

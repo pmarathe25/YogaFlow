@@ -2,55 +2,24 @@
 
 The core feature of YogaFlow — guided yoga sessions with pose demonstrations, voice guidance, and ambient music.
 
-## Flows
+## Data Sources
 
-Yoga flows are sequences of poses loaded from `assets/flows.json`. They are organized into three difficulty tracks:
+| Data | Location |
+|------|----------|
+| Flows | `app/src/main/assets/flows.json` |
+| Poses | `app/src/main/assets/poses.json` |
+| Flow loading logic | `model/FlowLoader.kt` |
+| Level definitions | `model/LevelDefinitions.kt` |
+| XP calculation | `model/XpCalculator.kt` |
 
-| Track | Description |
-|-------|-------------|
-| Beginner Path | Flows for newcomers (e.g., Morning Energizer, Bedtime Wind-Down, Core Balance) |
-| Intermediate Path | Standard flows (e.g., Sun Salutation, Warrior Strength, Restorative Yin) |
-| Advanced Path | Challenging flows (e.g., Heart-Opening Vinyasa, Power Vinyasa, Advanced Balance) |
+## Key Components
 
-Each flow has:
-- Name, description, difficulty rating
-- Total duration in minutes
-- Ordered list of poses with hold durations
+- **FlowLoader** — Loads poses and flows from JSON assets with caching
+- **YogaPoseVisual / PoseVisualizer** — Canvas-drawn skeleton (front + side views)
+- **YogaPlayerScreen** — Active session: pose display, circular timer, playback controls, instructions, voice guidance, ambient music
+- **SessionViewModel** — Manages active session state (timer, pose navigation, playback)
 
-## Poses
-
-Each `YogaPose` model includes:
-
-| Field | Description |
-|-------|-------------|
-| `id` | Unique identifier |
-| `sanskritName` | Sanskrit name (e.g., "Adho Mukha Svanasana") |
-| `englishName` | English name (e.g., "Downward-Facing Dog") |
-| `description` | Brief pose description |
-| `benefits` | List of health/wellness benefits |
-| `instructions` | Step-by-step instructions for proper alignment |
-| `voicePrompt` | Text spoken aloud by the voice guide |
-| `holdDurationSec` | Default hold time (usually 30s) |
-
-### Pose Visualization
-
-Each pose is rendered as a Canvas-drawn skeleton (front + side views) using `YogaPoseVisual` composable. The `PoseSkeleton` system defines joints, limbs, and a head circle as bezier paths for poses including:
-
-Prayer, Raised Arms, Forward Bend, Lunge, Plank, Eight-Limbed, Cobra, Downward Dog, Mountain, Warrior I/II, Triangle, Child's Pose, Butterfly, Spinal Twist, Savasana, and more.
-
-## Session Player
-
-The `YogaPlayerScreen` provides the active session experience:
-
-- **Pose display**: Canvas skeleton (front + side) with Sanskrit + English name
-- **Circular timer**: Arc-based countdown for the current pose's hold duration
-- **Playback controls**: Play/pause, skip forward/backward, direct pose selection
-- **Instructions**: "How to Hold It" card with key benefits
-- **Voice guidance**: TTS reads pose instructions aloud (English or Sanskrit)
-- **Ambient music**: Background tracks play during the session
-- **Sound effects**: Wood-tap sound on pose completion
-
-### Session Flow
+## Session Flow
 
 1. User selects a flow from Dashboard → Flow Detail screen
 2. Optional 3-2-1 countdown before starting
@@ -59,16 +28,20 @@ The `YogaPlayerScreen` provides the active session experience:
 5. Flow ends → SessionCompleteScreen with summary (poses held, time, XP earned)
 6. Session auto-logged to Room database
 
-### Voice Guide
+## Voice Guide
 
 - English TTS via Android's built-in engine
 - Sanskrit TTS with `sa-IN`/`hi-IN` locale fallback
 - Live status banner shows loading/playing/error/idle state
-- Voice prompts can be toggled on/off in Settings
+- Toggle in Settings
 
-### Ambient Music
+## Ambient Music
 
 - Multiple selectable tracks for background playback
 - Runs as a foreground service with wake lock for background playback
 - Can be muted; track selection with 15-second previews
 - Music state persists across sessions
+
+## Settings
+
+See `SettingsScreen.kt` and `SettingsViewModel` for all user preferences (theme, screen awake, audio, voice language, reminders).
