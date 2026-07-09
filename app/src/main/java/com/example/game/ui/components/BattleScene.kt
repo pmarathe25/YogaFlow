@@ -430,9 +430,9 @@ fun BattleScene(viewModel: GameViewModel) {
             if (currentHero != null && state.phase == PLAYER_TURN) {
                 key(state.currentActorId) {
                     var showHand by remember { mutableStateOf(false) }
-                    val handOffset by animateFloatAsState(
-                        targetValue = if (showHand) 0f else 200f,
-                        animationSpec = spring(0.5f, 100f)
+                    val slideFraction by animateFloatAsState(
+                        targetValue = if (showHand) 0f else 1f,
+                        animationSpec = spring(dampingRatio = 0.7f, stiffness = 200f)
                     )
 
                     LaunchedEffect(Unit) {
@@ -443,10 +443,9 @@ fun BattleScene(viewModel: GameViewModel) {
 
                     Box(
                         modifier = Modifier
-                            .align(Alignment.BottomCenter)
                             .fillMaxWidth()
                             .zIndex(1f)
-                            .graphicsLayer { translationY = handOffset.dp.toPx() }
+                            .graphicsLayer { translationY = slideFraction * 200.dp.toPx() }
                     ) {
                         ActionTray(
                             currentHero = currentHero,
