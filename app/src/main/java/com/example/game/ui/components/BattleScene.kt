@@ -445,7 +445,7 @@ fun BattleScene(viewModel: GameViewModel) {
                         .fillMaxWidth()
                         .zIndex(1f)
                         .align(Alignment.BottomCenter)
-                        .windowInsetsBottom(WindowInsets.navigationBars)
+                        .windowInsetsPadding(WindowInsets.navigationBars)
                         .graphicsLayer { translationY = slideFraction * 200.dp.toPx() }
                 ) {
                     ActionTray(

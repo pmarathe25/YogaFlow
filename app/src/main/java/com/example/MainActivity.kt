@@ -9,6 +9,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
@@ -128,7 +129,7 @@ fun YogaAppContent(
             containerColor = Color.Transparent
         ) { paddingValues ->
             val adjustedPadding = if (currentRoute == Screen.ZenBattle.route) {
-                PaddingValues(top = paddingValues.top, bottom = 0.dp)
+                PaddingValues(top = paddingValues.calculateTopPadding(), bottom = 0.dp)
             } else {
                 paddingValues
             }
