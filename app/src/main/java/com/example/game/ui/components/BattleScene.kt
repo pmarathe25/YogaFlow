@@ -441,10 +441,11 @@ fun BattleScene(viewModel: GameViewModel) {
                 }
 
                 Box(
-                    contentAlignment = Alignment.BottomCenter,
                     modifier = Modifier
                         .fillMaxWidth()
                         .zIndex(1f)
+                        .align(Alignment.BottomCenter)
+                        .windowInsetsBottom(WindowInsets.navigationBars)
                         .graphicsLayer { translationY = slideFraction * 200.dp.toPx() }
                 ) {
                     ActionTray(
