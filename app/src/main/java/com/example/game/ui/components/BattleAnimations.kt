@@ -103,6 +103,33 @@ fun rememberSpriteAnimations(
                     heroAnimStates[event.heroId] = SpriteAnimState(state = SpriteState.IDLE, stateTime = 0f)
                 }
             }
+            is BattleEvent.ComboUsed -> {
+                event.participants.forEach { heroId ->
+                    val attackerPos = heroPositions[heroId] ?: return@forEach
+                    val targetPos = monsterPos
+                    val dx = targetPos.x - attackerPos.x
+                    val dy = targetPos.y - attackerPos.y
+                    val distance = sqrt(dx * dx + dy * dy)
+                    val normalizedDx = dx / distance
+                    val normalizedDy = dy / distance
+                    val lungeDistance = 80f
+                    heroAnimStates[heroId] = SpriteAnimState(
+                        state = SpriteState.ATTACKING, stateTime = 0f,
+                        offsetX = normalizedDx * lungeDistance,
+                        offsetY = normalizedDy * lungeDistance
+                    )
+                }
+                delay(300)
+                event.participants.forEach { heroId ->
+                    heroAnimStates[heroId] = SpriteAnimState(state = SpriteState.IDLE, stateTime = 0f)
+                }
+                monsterAnimState.value = SpriteAnimState(
+                    state = SpriteState.HIT, stateTime = 0f,
+                    offsetX = 0f, offsetY = 0f
+                )
+                delay(200)
+                monsterAnimState.value = SpriteAnimState(state = SpriteState.IDLE, stateTime = 0f)
+            }
             is BattleEvent.MonsterTurn -> {
                 val targetHeroId = event.targets.firstOrNull() ?: return@LaunchedEffect
                 val targetPos = heroPositions[targetHeroId] ?: return@LaunchedEffect
