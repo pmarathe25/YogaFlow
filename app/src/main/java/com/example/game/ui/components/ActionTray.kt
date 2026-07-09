@@ -49,6 +49,8 @@ private sealed class CardEntry {
 @Composable
 fun ActionTray(
     currentHero: CombatantState,
+    turnOrder: List<BattleActor>,
+    currentTurnIndex: Int,
     skillCooldowns: Map<String, Int>,
     availableCombos: List<ComboSkill>,
     isTargeting: Boolean,
@@ -57,6 +59,7 @@ fun ActionTray(
     onCancelTargeting: () -> Unit,
     onCardDragStart: ((Color) -> Unit)? = null,
     onCardDragEnd: (() -> Unit)? = null,
+    onSkipTurn: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val allCards = remember(currentHero, availableCombos) {
@@ -95,10 +98,22 @@ fun ActionTray(
             )
         }
 
+        // Skip Turn button
+        if (!isTargeting && onSkipTurn != null) {
+            TextButton(
+                onClick = onSkipTurn,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 8.dp, bottom = 4.dp)
+            ) {
+                Text("SKIP TURN", color = Color.Gray, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            }
+        }
+
         // Hand of Cards (when not in targeting mode)
         if (!isTargeting) {
             HandOfCards(
                 currentHero = currentHero,
+                turnOrder = turnOrder,
+                currentTurnIndex = currentTurnIndex,
                 skillCooldowns = skillCooldowns,
                 availableCombos = availableCombos,
                 onSkill = onSkill,
@@ -132,6 +147,8 @@ fun ActionTray(
 @Composable
 private fun HandOfCards(
     currentHero: CombatantState,
+    turnOrder: List<BattleActor>,
+    currentTurnIndex: Int,
     skillCooldowns: Map<String, Int>,
     availableCombos: List<ComboSkill>,
     onSkill: (com.example.game.model.Skill) -> Unit,
@@ -163,6 +180,13 @@ private fun HandOfCards(
     val popThresholdPx = with(density) { 30.dp.toPx() }
 
     val isDragged = dragActiveIndex >= 0
+
+    val actedHeroIds = remember(turnOrder, currentTurnIndex) {
+        turnOrder
+            .filterIndexed { idx, _ -> idx < currentTurnIndex }
+            .mapNotNull { it.id.toIntOrNull() }
+            .toSet()
+    }
 
     Box(
         modifier = Modifier
@@ -228,6 +252,8 @@ private fun HandOfCards(
                                         val isUlt = s.ultimateGain == 0
                                         if (isUlt) currentHero.gauge >= 100
                                         else (skillCooldowns[s.id] ?: 0) <= 0
+                                    } else if (item is ComboSkill) {
+                                        !item.requiredHeroes.any { it in actedHeroIds }
                                     } else true
                                     if (usable) {
                                         if (poppedCardIndex == index && isPopped) {
@@ -264,7 +290,7 @@ private fun HandOfCards(
                                                 else (skillCooldowns[skill.id] ?: 0) <= 0
                                             if (canUse) onSkill(skill)
                                         }
-                                        is ComboSkill -> onComboSelect(item.id)
+                                        is ComboSkill -> if (!item.requiredHeroes.any { it in actedHeroIds }) onComboSelect(item.id)
                                     }
                                 }
                                 dragActiveIndex = -1
@@ -291,6 +317,10 @@ private fun HandOfCards(
                                 val isUsable = if (isUlt) currentHero.gauge >= 100
                                     else (skillCooldowns[skill.id] ?: 0) <= 0
                                 if (!isUsable) return@detectTapGestures
+                            }
+                            if (item is ComboSkill) {
+                                val anyActed = item.requiredHeroes.any { it in actedHeroIds }
+                                if (anyActed) return@detectTapGestures
                             }
                             if (poppedCardIndex == index) {
                                 poppedCardIndex = -1
@@ -327,8 +357,10 @@ private fun HandOfCards(
                         )
                     }
                     is ComboSkill -> {
+                        val anyActed = item.requiredHeroes.any { it in actedHeroIds }
                         ComboCard(
                             combo = item,
+                            disabled = anyActed,
                             suspendAnimations = isDragged,
                             modifier = Modifier.width(150.dp).height(220.dp).then(cardMod).then(dragModifier).then(tapMod)
                         )
@@ -342,20 +374,22 @@ private fun HandOfCards(
 @Composable
 internal fun ComboCard(
     combo: ComboSkill,
+    disabled: Boolean = false,
     suspendAnimations: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition()
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.4f, targetValue = 1f,
-        animationSpec = if (suspendAnimations)
+        animationSpec = if (suspendAnimations || disabled)
             infiniteRepeatable(tween<Float>(0, easing = LinearEasing), RepeatMode.Reverse)
         else
             infiniteRepeatable(tween<Float>(1000, easing = LinearEasing), RepeatMode.Reverse)
     )
 
     Card(
-        modifier = modifier,
+        modifier = modifier
+            .alpha(if (disabled) 0.5f else 1f),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF4A148C).copy(alpha = 0.85f)),
         elevation = CardDefaults.cardElevation(defaultElevation = if (suspendAnimations) 0.dp else 4.dp)
@@ -366,7 +400,7 @@ internal fun ComboCard(
                 .padding(8.dp)
                 .border(
                     width = 3.dp,
-                    color = Color(0xFF9C27B0).copy(alpha = glowAlpha),
+                    color = if (disabled) Color.Gray.copy(alpha = 0.4f) else Color(0xFF9C27B0).copy(alpha = glowAlpha),
                     shape = RoundedCornerShape(12.dp)
                 )
         ) {

@@ -212,9 +212,7 @@ fun BattleScene(viewModel: GameViewModel) {
         else {
             val aliveHeroes = state.heroes.filter { it.hp > 0 && !it.isDefeated }
             val aliveHeroIds = aliveHeroes.mapNotNull { it.id.toIntOrNull() }.toSet()
-            val currentHeroId = currentHero.id.toIntOrNull() ?: -1
             DataLoader.combos.filter { combo ->
-                currentHeroId in combo.requiredHeroes &&
                 combo.requiredHeroes.all { id -> id in aliveHeroIds }
             }
         }
@@ -409,6 +407,8 @@ fun BattleScene(viewModel: GameViewModel) {
                 key(state.currentActorId) {
                     ActionTray(
                         currentHero = currentHero,
+                        turnOrder = state.turnOrder,
+                        currentTurnIndex = state.currentTurnIndex,
                         skillCooldowns = state.skillCooldowns[currentHero.id] ?: emptyMap(),
                         availableCombos = availableCombos,
                         isTargeting = isTargeting,
@@ -425,6 +425,7 @@ fun BattleScene(viewModel: GameViewModel) {
                         },
                         onCardDragStart = { color -> dragOverlayColor = color },
                         onCardDragEnd = { dragOverlayColor = null },
+                        onSkipTurn = { viewModel.skipTurn(state.currentActorId) },
                         modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().zIndex(1f)
                     )
                 }

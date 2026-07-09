@@ -212,6 +212,25 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         return state.copy(isComboAvailable = isAvailable)
     }
 
+    fun skipTurn(heroId: String) {
+        val state = _battleState.value ?: return
+        if (state.phase != PLAYER_TURN || _isProcessingTurn.value) return
+        val hero = state.heroes.find { it.id == heroId && !it.isDefeated } ?: return
+
+        viewModelScope.launch {
+            _isProcessingTurn.value = true
+            _battleState.value = state.copy(pendingSkill = null)
+
+            val result = turnManager.defend(_battleState.value ?: return@launch, heroId)
+            _battleState.value = updateComboAvailability(result.newState)
+            result.logMessages.forEach { addBattleLog(it) }
+
+            delay(400)
+            advanceToNextTurn()
+            _isProcessingTurn.value = false
+        }
+    }
+
     fun cancelAction() {
         val state = _battleState.value ?: return
         _battleState.value = state.copy(pendingSkill = null)
