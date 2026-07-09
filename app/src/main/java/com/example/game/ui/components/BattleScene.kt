@@ -104,7 +104,6 @@ fun BattleScene(viewModel: GameViewModel) {
     }
 
     // ─── Targeting Logic ───────────────────────────────────────────
-    val selectedTargets = remember { mutableStateListOf<String>() }
     val isTargeting = state.phase == PLAYER_TURN && state.pendingSkill != null
 
     // ─── Battle Start Animation ────────────────────────────────────
@@ -262,14 +261,13 @@ fun BattleScene(viewModel: GameViewModel) {
                         val canTarget = state.pendingSkill?.let {
                             it.targetType == TargetType.SINGLE_ENEMY || it.targetType == TargetType.ALL_ENEMIES || it.targetType == TargetType.ALL
                         } ?: false
-                        val isTargeted = selectedTargets.contains(monster.id)
+                        val isTargeted = isTargeting && canTarget
 
                         val monsterClickable = if (isTargeting && canTarget) {
                             Modifier.clickable {
                                 if (isTargeting) {
                                     val skill = state.pendingSkill ?: return@clickable
                                     viewModel.executeSkill(currentHero?.id ?: return@clickable, skill, listOf(monster.id))
-                                    selectedTargets.clear()
                                 }
                             }
                         } else Modifier
@@ -338,7 +336,7 @@ fun BattleScene(viewModel: GameViewModel) {
                                     else -> false
                                 }
                             } ?: false
-                            val isTargeted = selectedTargets.contains(hero.id)
+                            val isTargeted = isTargeting && canTarget
                             val heroEntry by animateFloatAsState(
                                 targetValue = if (heroVisibilities[hero.id] == true) 0f else 150f,
                                 animationSpec = spring(0.7f, 150f)
@@ -349,7 +347,6 @@ fun BattleScene(viewModel: GameViewModel) {
                                 Modifier.clickable {
                                     val skill = state.pendingSkill ?: return@clickable
                                     viewModel.executeSkill(currentHero?.id ?: return@clickable, skill, listOf(hero.id))
-                                    selectedTargets.clear()
                                 }
                             } else Modifier
 
@@ -392,6 +389,33 @@ fun BattleScene(viewModel: GameViewModel) {
                 }
             }
 
+            // Targeting prompt
+            if (isTargeting) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp, vertical = 4.dp)
+                        .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "Select a target",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                        Spacer(Modifier.width(16.dp))
+                        TextButton(onClick = {
+                            viewModel.cancelAction()
+                        }) {
+                            Text("CANCEL", color = Color.Red, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+
             // Drop zone overlay during card drag
             if (dragOverlayColor != null) {
                 Box(
@@ -414,14 +438,12 @@ fun BattleScene(viewModel: GameViewModel) {
                         isTargeting = isTargeting,
                         onSkill = { skill ->
                             viewModel.executeSkill(currentHero.id, skill)
-                            selectedTargets.clear()
                         },
                         onComboById = { comboId ->
                             viewModel.executeComboById(comboId)
                         },
                         onCancelTargeting = {
                             viewModel.cancelAction()
-                            selectedTargets.clear()
                         },
                         onCardDragStart = { color -> dragOverlayColor = color },
                         onCardDragEnd = { dragOverlayColor = null },

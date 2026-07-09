@@ -123,24 +123,7 @@ fun ActionTray(
             )
         }
 
-        // Targeting instruction overlay
-        if (isTargeting) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 16.dp)
-                    .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(20.dp))
-                    .padding(horizontal = 24.dp, vertical = 8.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Select a target by clicking them", color = Color.White, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.width(16.dp))
-                    TextButton(onClick = { onCancelTargeting() }) {
-                        Text("CANCEL", color = Color.Red, fontWeight = FontWeight.ExtraBold)
-                    }
-                }
-            }
-        }
+        // Targeting instruction overlay removed — now in BattleScene
     }
 }
 
