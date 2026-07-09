@@ -379,7 +379,7 @@ internal fun ComboCard(
         modifier = modifier
             .alpha(if (disabled) 0.5f else 1f),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.lerp(Color(0xFFF5EEDC), Color(0xFF4A148C), 0.15f)),
+        colors = CardDefaults.cardColors(containerColor = lerp(Color(0xFFF5EEDC), Color(0xFF4A148C), 0.15f)),
         elevation = CardDefaults.cardElevation(defaultElevation = if (suspendAnimations) 0.dp else 4.dp)
     ) {
         Box(
@@ -457,7 +457,7 @@ internal fun SkillCard(
     val bgColor = when {
         isOnCooldown -> Color(0xFFE0E0E0)
         isUltimate   -> Color(0xFFFFF9C4)
-        else         -> Color.lerp(eggshell, heroColor, 0.15f)
+        else         -> lerp(eggshell, heroColor, 0.15f)
     }
 
     val borderColor = skillCardBorderColor(skill, isOnCooldown, isUltimate, ultReady)
