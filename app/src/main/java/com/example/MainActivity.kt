@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -126,6 +127,11 @@ fun YogaAppContent(
             },
             containerColor = Color.Transparent
         ) { paddingValues ->
+            val adjustedPadding = if (currentRoute == Screen.ZenBattle.route) {
+                PaddingValues(top = paddingValues.top, bottom = 0.dp)
+            } else {
+                paddingValues
+            }
             YogaNavHost(
                 navController = navController,
                 viewModel = viewModel,
@@ -134,7 +140,7 @@ fun YogaAppContent(
                 isCompleted = isCompleted,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
+                    .padding(adjustedPadding)
             )
         }
     }
