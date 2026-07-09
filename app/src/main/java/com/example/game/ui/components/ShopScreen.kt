@@ -192,8 +192,7 @@ private fun SlotNavigationBar(
 ) {
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 4.dp,
-        windowInsets = WindowInsets(0, 0, 0, 0)
+        tonalElevation = 4.dp
     ) {
         EquipmentSlot.WEAPON.let { slot ->
             NavigationBarItem(
