@@ -25,6 +25,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -378,7 +379,7 @@ internal fun ComboCard(
         modifier = modifier
             .alpha(if (disabled) 0.5f else 1f),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF4A148C).copy(alpha = 0.85f)),
+        colors = CardDefaults.cardColors(containerColor = Color.lerp(Color(0xFFF5EEDC), Color(0xFF4A148C), 0.15f)),
         elevation = CardDefaults.cardElevation(defaultElevation = if (suspendAnimations) 0.dp else 4.dp)
     ) {
         Box(
@@ -451,10 +452,12 @@ internal fun SkillCard(
     val showCooldown = baseCooldown > 1
     val displayText = if (isOnCooldown) "$cooldownRemaining" else "$baseCooldown"
 
+    val eggshell = Color(0xFFF5EEDC)
+
     val bgColor = when {
         isOnCooldown -> Color(0xFFE0E0E0)
         isUltimate   -> Color(0xFFFFF9C4)
-        else         -> heroColor.copy(alpha = 0.85f)
+        else         -> Color.lerp(eggshell, heroColor, 0.15f)
     }
 
     val borderColor = skillCardBorderColor(skill, isOnCooldown, isUltimate, ultReady)
