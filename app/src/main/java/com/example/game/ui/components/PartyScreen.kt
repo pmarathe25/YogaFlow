@@ -431,34 +431,80 @@ fun HeroDetailsDialog(
                 Spacer(Modifier.height(8.dp))
 
                 hero.skills.forEach { skill ->
-                    SkillCard(
-                        skill = skill,
-                        heroColor = heroColor,
-                        isUltimate = false,
-                        ultReady = true,
-                        heroLevel = partyMember.level,
-                        modifier = Modifier.fillMaxWidth()
-                            .height(180.dp)
-                            .padding(vertical = 4.dp)
-                            .clickable { selectedSkill = skill }
+                    HeroDetailSkillCard(
+                        skill = skill, hero = hero, level = partyMember.level, heroColor = heroColor,
+                        modifier = Modifier.clickable { selectedSkill = skill }
                     )
                 }
 
-                // Ultimate
                 Spacer(Modifier.height(12.dp))
-                SkillCard(
-                    skill = hero.ultimate,
-                    heroColor = heroColor,
-                    isUltimate = true,
-                    ultReady = true,
-                    heroLevel = partyMember.level,
-                    modifier = Modifier.fillMaxWidth()
-                        .height(180.dp)
-                        .padding(vertical = 4.dp)
-                        .clickable { selectedSkill = hero.ultimate }
+                HeroDetailSkillCard(
+                    skill = hero.ultimate, hero = hero, level = partyMember.level, isUltimate = true, heroColor = heroColor,
+                    modifier = Modifier.clickable { selectedSkill = hero.ultimate }
                 )
 
                 Spacer(Modifier.height(20.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeroDetailSkillCard(skill: Skill, hero: Hero, level: Int, isUltimate: Boolean = false, heroColor: Color = Color.Gray, modifier: Modifier = Modifier) {
+    val typeColor = heroColor
+
+    val typeLabel = when {
+        isUltimate -> "Ultimate"
+        skill.healScaling != null -> "Heal"
+        skill.shieldScaling != null -> "Shield"
+        skill.cleanse -> "Cleanse"
+        skill.statusEffects.isNotEmpty() -> "Status"
+        skill.buffs.isNotEmpty() -> "Buff"
+        skill.damageComponents.any { it.type == DamageType.ELEMENTAL } ->
+            skill.damageComponents.firstNotNullOfOrNull { it.element?.name } ?: "Damage"
+        else -> "Physical"
+    }
+
+    val damage = skill.baseDamage + skill.damagePerLevel * level
+    val healAmount = skill.healScaling?.let {
+        if (it.isPercentage) "${it.baseHeal}%" else "${it.baseHeal + it.healPerLevel * level}"
+    }
+
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = typeColor.copy(alpha = 0.08f),
+        border = BorderStroke(1.dp, typeColor.copy(alpha = 0.3f)),
+        modifier = modifier.fillMaxWidth().padding(vertical = 3.dp)
+    ) {
+        Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.Top) {
+            Box(
+                modifier = Modifier.size(8.dp, 36.dp)
+                    .background(typeColor, RoundedCornerShape(4.dp))
+            )
+            Spacer(Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(skill.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = typeColor)
+                    Spacer(Modifier.width(8.dp))
+                    Surface(shape = RoundedCornerShape(4.dp), color = typeColor.copy(alpha = 0.15f)) {
+                        Text(typeLabel, style = MaterialTheme.typography.labelSmall, color = typeColor, modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp))
+                    }
+                    if (isUltimate) { Spacer(Modifier.width(4.dp)); Text("\u2B50", fontSize = 12.sp) }
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(skill.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (damage > 0) Text("${damage} dmg", style = MaterialTheme.typography.labelSmall, color = typeColor)
+                    if (healAmount != null) Text("Heal $healAmount", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4CAF50))
+                    if (skill.cooldown > 0) Text("CD: ${skill.cooldown}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                    if (skill.cleanse) Text("Cleanses", style = MaterialTheme.typography.labelSmall, color = Color(0xFFAB47BC))
+                }
+            }
+            if (!isUltimate) {
+                Column(horizontalAlignment = Alignment.End) {
+                    Text("+${skill.ultimateGain}", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                    Text("ult gauge", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                }
             }
         }
     }
