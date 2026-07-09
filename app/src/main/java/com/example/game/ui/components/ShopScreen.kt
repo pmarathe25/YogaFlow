@@ -45,18 +45,11 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
     var selectedItemForDetail by remember { mutableStateOf<Equipment?>(null) }
     var selectedCategory by remember { mutableStateOf(EquipmentSlot.WEAPON) }
 
-    Scaffold(
-        bottomBar = {
-            SlotNavigationBar(
-                selectedSlot = selectedCategory,
-                onSlotSelected = { selectedCategory = it }
-            )
-        },
+    Column(
         modifier = Modifier.fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp)) {
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
             // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -177,6 +170,11 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
                 }
             }
         }
+
+        SlotNavigationBar(
+            selectedSlot = selectedCategory,
+            onSlotSelected = { selectedCategory = it }
+        )
     }
     
     selectedItemForDetail?.let { item ->
