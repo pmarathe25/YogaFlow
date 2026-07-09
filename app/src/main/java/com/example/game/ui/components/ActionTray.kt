@@ -12,6 +12,7 @@ import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -374,7 +375,7 @@ internal fun ComboCard(
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF4A148C).copy(alpha = 0.3f)),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF4A148C).copy(alpha = 0.85f)),
         elevation = CardDefaults.cardElevation(defaultElevation = if (suspendAnimations) 0.dp else 4.dp)
     ) {
         Box(
@@ -450,7 +451,7 @@ internal fun SkillCard(
     val bgColor = when {
         isOnCooldown -> Color(0xFFE0E0E0)
         isUltimate   -> Color(0xFFFFF9C4)
-        else         -> heroColor.copy(alpha = 0.25f)
+        else         -> heroColor.copy(alpha = 0.85f)
     }
 
     val borderColor = when {
