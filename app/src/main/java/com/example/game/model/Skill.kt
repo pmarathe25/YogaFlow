@@ -33,8 +33,7 @@ data class Skill(
     val name: String,
     val description: String, // Flavor text
     val targetType: TargetType,
-    val type: SkillType = SkillType.DAMAGE,
-    val combinedTypes: List<SkillType> = emptyList(),
+    val combinedTypes: List<SkillType> = listOf(SkillType.DAMAGE),
     val damageComponents: List<DamageComponent> = emptyList(),
     val baseDamage: Int = 0,
     val damagePerLevel: Int = 0,
