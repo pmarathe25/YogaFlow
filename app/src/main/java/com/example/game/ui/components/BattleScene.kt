@@ -456,7 +456,7 @@ fun BattleScene(viewModel: GameViewModel) {
                         availableCombos = availableCombos,
                         isTargeting = isTargeting,
                         onSkill = { skill ->
-                            viewModel.executeSkill(currentHero.id, skill)
+                            currentHero?.let { viewModel.executeSkill(it.id, skill) }
                         },
                         onComboById = { comboId ->
                             viewModel.executeComboById(comboId)

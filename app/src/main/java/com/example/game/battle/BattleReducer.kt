@@ -881,13 +881,13 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
                 val idx = rng.nextInt(alive.size)
                 alive[idx].id
             }
-            TargetStrategy.LOWEST_HP -> alive.minByOrNull { it.hp }!!.id
-            TargetStrategy.HIGHEST_HP -> alive.maxByOrNull { it.hp }!!.id
+            TargetStrategy.LOWEST_HP -> alive.minByOrNull { it.hp }?.id ?: ""
+            TargetStrategy.HIGHEST_HP -> alive.maxByOrNull { it.hp }?.id ?: ""
             TargetStrategy.MOST_BUFFS -> {
-                val s = state ?: return alive.maxByOrNull { it.hp }!!.id
+                val s = state ?: return alive.maxByOrNull { it.hp }?.id ?: ""
                 alive.maxByOrNull { hero ->
                     s.getStatusesForTarget(hero.id).size
-                }!!.id
+                }?.id ?: ""
             }
         }
     }

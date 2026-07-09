@@ -266,9 +266,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             _isProcessingTurn.value = true
-            _battleState.value = state.copy(pendingSkill = null)
-
-            val result = turnManager.executeSkill(_battleState.value ?: return@launch, heroId, skill, targets)
+            val currentState = _battleState.value ?: run { _isProcessingTurn.value = false; return@launch }
+            _battleState.value = currentState.copy(pendingSkill = null)
+            val heroStillAlive = currentState.heroes.find { it.id == heroId && !it.isDefeated } ?: run {
+                _isProcessingTurn.value = false; return@launch
+            }
+            val result = turnManager.executeSkill(currentState, heroId, skill, targets)
             _battleState.value = updateComboAvailability(result.newState)
             result.logMessages.forEach { addBattleLog(it) }
 
