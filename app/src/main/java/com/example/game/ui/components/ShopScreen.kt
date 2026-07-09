@@ -53,8 +53,7 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
             )
         },
         modifier = Modifier.fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Bottom)
+            .background(MaterialTheme.colorScheme.background)
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp)) {
             // Header
