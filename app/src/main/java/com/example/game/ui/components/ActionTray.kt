@@ -7,7 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.ui.input.pointer.pointerInput
@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.example.game.model.*
 import com.example.game.persistence.DataLoader
+import kotlin.math.abs
 import kotlin.math.pow
 
 private sealed class CardEntry {
@@ -179,11 +180,6 @@ private fun HandOfCards(
         contentAlignment = Alignment.BottomCenter
     ) {
         val draggableState = rememberDraggableState { delta ->
-            if (poppedCardIndex >= 0 && dragActiveIndex == poppedCardIndex) {
-                rawDragX += delta
-                dragActiveIndex = poppedCardIndex
-                return@rememberDraggableState
-            }
             scrollOffset = (scrollOffset + delta).coerceIn(minScrollOffset, maxScrollOffset)
         }
 
@@ -228,43 +224,38 @@ private fun HandOfCards(
                 val dragModifier = if (item is com.example.game.model.Skill || item is ComboSkill) {
                     val cardColor = getCardColor(item)
                     Modifier.pointerInput(index) {
-                        detectVerticalDragGestures(
+                        detectDragGestures(
                             onDragStart = { startPos ->
                                 if (poppedCardIndex >= 0 && poppedCardIndex != index) {
-                                    poppedCardIndex = -1
-                                    dragActiveIndex = -1
-                                    isPopped = false
-                                    rawDragY = 0f
-                                    rawDragX = 0f
+                                    poppedCardIndex = -1; dragActiveIndex = -1; isPopped = false; rawDragY = 0f; rawDragX = 0f
                                 } else {
                                     val usable = if (item is com.example.game.model.Skill) {
-                                        val s = item
-                                        val isUlt = s.ultimateGain == 0
-                                        if (isUlt) currentHero.gauge >= 100
-                                        else (skillCooldowns[s.id] ?: 0) <= 0
+                                        val s = item; val isUlt = s.ultimateGain == 0
+                                        if (isUlt) currentHero.gauge >= 100 else (skillCooldowns[s.id] ?: 0) <= 0
                                     } else if (item is ComboSkill) {
                                         !item.requiredHeroes.any { it in actedHeroIds }
                                     } else true
                                     if (usable) {
-                                        if (poppedCardIndex == index && isPopped) {
-                                        } else {
-                                            poppedCardIndex = -1
-                                            rawDragX = 0f
-                                            rawDragY = 0f
-                                            isPopped = false
+                                        if (poppedCardIndex == index && isPopped) { /* keep state */ } else {
+                                            poppedCardIndex = -1; rawDragX = 0f; rawDragY = 0f; isPopped = false
                                         }
-                                        dragActiveIndex = index
-                                        onCardDragStart?.invoke(cardColor)
+                                        dragActiveIndex = index; onCardDragStart?.invoke(cardColor)
                                     }
                                 }
                             },
-                            onVerticalDrag = { change, dragAmount ->
+                            onDrag = { change, dragAmount ->
                                 if (poppedCardIndex < 0 || poppedCardIndex == index) {
-                                    rawDragY += dragAmount
-                                    if (!isPopped && rawDragY < -popThresholdPx) {
+                                    rawDragY += dragAmount.y
+                                    rawDragX += dragAmount.x
+                                    // Pop only if gesture is vertical-dominant
+                                    if (!isPopped && rawDragY < -popThresholdPx
+                                        && abs(rawDragY) > abs(rawDragX) * 1.5f) {
                                         isPopped = true
                                     }
-                                    change.consume()
+                                    // Consume only when popped to prevent parent scroll interference
+                                    if (isPopped) {
+                                        change.consume()
+                                    }
                                 }
                             },
                             onDragEnd = {
@@ -272,25 +263,18 @@ private fun HandOfCards(
                                     rawDragY = 0f
                                     when (item) {
                                         is com.example.game.model.Skill -> {
-                                            val skill = item
-                                            val isUlt = skill.ultimateGain == 0
+                                            val s = item; val isUlt = s.ultimateGain == 0
                                             val canUse = if (isUlt) currentHero.gauge >= 100
-                                                else (skillCooldowns[skill.id] ?: 0) <= 0
-                                            if (canUse) onSkill(skill)
+                                                else (skillCooldowns[s.id] ?: 0) <= 0
+                                            if (canUse) onSkill(s)
                                         }
                                         is ComboSkill -> if (!item.requiredHeroes.any { it in actedHeroIds }) onComboSelect(item.id)
                                     }
                                 }
-                                dragActiveIndex = -1
-                                poppedCardIndex = -1
-                                isPopped = false
-                                onCardDragEnd?.invoke()
+                                dragActiveIndex = -1; poppedCardIndex = -1; isPopped = false; onCardDragEnd?.invoke()
                             },
                             onDragCancel = {
-                                dragActiveIndex = -1
-                                poppedCardIndex = -1
-                                isPopped = false
-                                onCardDragEnd?.invoke()
+                                dragActiveIndex = -1; poppedCardIndex = -1; isPopped = false; onCardDragEnd?.invoke()
                             }
                         )
                     }
