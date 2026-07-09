@@ -426,30 +426,50 @@ fun BattleScene(viewModel: GameViewModel) {
                 )
             }
 
-            // Action Tray at bottom
+            // Action Tray at bottom with card-deal slide-up animation
             if (currentHero != null && state.phase == PLAYER_TURN) {
                 key(state.currentActorId) {
-                    ActionTray(
-                        currentHero = currentHero,
-                        turnOrder = state.turnOrder,
-                        currentTurnIndex = state.currentTurnIndex,
-                        skillCooldowns = state.skillCooldowns[currentHero.id] ?: emptyMap(),
-                        availableCombos = availableCombos,
-                        isTargeting = isTargeting,
-                        onSkill = { skill ->
-                            viewModel.executeSkill(currentHero.id, skill)
-                        },
-                        onComboById = { comboId ->
-                            viewModel.executeComboById(comboId)
-                        },
-                        onCancelTargeting = {
-                            viewModel.cancelAction()
-                        },
-                        onCardDragStart = { color -> dragOverlayColor = color },
-                        onCardDragEnd = { dragOverlayColor = null },
-                        onSkipTurn = { viewModel.skipTurn(state.currentActorId) },
-                        modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().zIndex(1f)
+                    var showHand by remember { mutableStateOf(false) }
+                    val handOffset by animateFloatAsState(
+                        targetValue = if (showHand) 0f else 200f,
+                        animationSpec = spring(0.5f, 100f)
                     )
+
+                    LaunchedEffect(Unit) {
+                        showHand = false
+                        delay(50)
+                        showHand = true
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .zIndex(1f)
+                            .graphicsLayer { translationY = handOffset.dp.toPx() }
+                    ) {
+                        ActionTray(
+                            currentHero = currentHero,
+                            turnOrder = state.turnOrder,
+                            currentTurnIndex = state.currentTurnIndex,
+                            skillCooldowns = state.skillCooldowns[currentHero.id] ?: emptyMap(),
+                            availableCombos = availableCombos,
+                            isTargeting = isTargeting,
+                            onSkill = { skill ->
+                                viewModel.executeSkill(currentHero.id, skill)
+                            },
+                            onComboById = { comboId ->
+                                viewModel.executeComboById(comboId)
+                            },
+                            onCancelTargeting = {
+                                viewModel.cancelAction()
+                            },
+                            onCardDragStart = { color -> dragOverlayColor = color },
+                            onCardDragEnd = { dragOverlayColor = null },
+                            onSkipTurn = { viewModel.skipTurn(state.currentActorId) },
+                            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                        )
+                    }
                 }
             }
         }

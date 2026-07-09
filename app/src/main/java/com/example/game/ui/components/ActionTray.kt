@@ -171,6 +171,11 @@ private fun HandOfCards(
             .toSet()
     }
 
+    val handGeneration = remember { mutableIntStateOf(0) }
+    LaunchedEffect(currentHero.id) {
+        handGeneration.intValue++
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -195,6 +200,7 @@ private fun HandOfCards(
             contentAlignment = Alignment.BottomCenter
         ) {
             allCards.forEachIndexed { index, item ->
+                key(handGeneration.intValue * 1000 + index) {
                 val centerIndex = (cardCount - 1) / 2f
                 val relativeIndex = index - centerIndex + (scrollOffset / 150f)
                 val rotation = relativeIndex * 12f
@@ -203,7 +209,14 @@ private fun HandOfCards(
 
                 val isDragged = dragActiveIndex == index
 
+                val cardAlpha by animateFloatAsState(
+                    targetValue = 1f,
+                    animationSpec = tween(400, delayMillis = 100 + index * 80),
+                    label = "cardAlpha_$index"
+                )
+
                 val cardMod = Modifier
+                    .alpha(cardAlpha)
                     .graphicsLayer {
                         val dy = if (isDragged) rawDragY else 0f
                         val dx = if (isDragged && isPopped) rawDragX else 0f
@@ -348,6 +361,7 @@ private fun HandOfCards(
                             modifier = Modifier.width(150.dp).height(220.dp).then(cardMod).then(dragModifier).then(tapMod)
                         )
                     }
+                }
                 }
             }
         }
