@@ -22,11 +22,19 @@ data class DamageComponent(
     val percentage: Int = 100
 )
 
+enum class SkillType(val label: String) {
+    DAMAGE("Damage"),
+    HEAL("Heal"),
+    BUFF("Buff")
+}
+
 data class Skill(
     val id: String,
     val name: String,
     val description: String, // Flavor text
     val targetType: TargetType,
+    val type: SkillType = SkillType.DAMAGE,
+    val combinedTypes: List<SkillType> = emptyList(),
     val damageComponents: List<DamageComponent> = emptyList(),
     val baseDamage: Int = 0,
     val damagePerLevel: Int = 0,

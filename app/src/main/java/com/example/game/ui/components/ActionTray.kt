@@ -436,15 +436,7 @@ internal fun SkillCard(
         else         -> heroColor.copy(alpha = 0.85f)
     }
 
-    val borderColor = when {
-        isOnCooldown                     -> Color.Gray
-        isUltimate                       -> Color(0xFFFFD700)
-        skill.healScaling != null        -> Color(0xFF689F38)
-        skill.damageComponents.isNotEmpty() -> Color(0xFFD32F2F)
-        skill.shieldScaling != null      -> Color(0xFF0288D1)
-        skill.buffs.isNotEmpty()         -> Color(0xFFFFA000)
-        else                             -> Color(0xFF0288D1)
-    }
+    val borderColor = skillCardBorderColor(skill, isOnCooldown, isUltimate, ultReady)
 
     val infiniteTransition = rememberInfiniteTransition()
     val glowAlpha by infiniteTransition.animateFloat(
@@ -595,6 +587,35 @@ internal fun getSkillIcon(skill: com.example.game.model.Skill): String {
         skill.damageComponents.any { it.element == Element.LIGHT } -> "\u2600\uFE0F"
         skill.damageComponents.any { it.element == Element.DARK || it.element == Element.SHADOW } -> "\uD83D\uDC7B"
         else -> "\u2694\uFE0F"
+    }
+}
+
+private fun skillCardBorderColor(
+    skill: com.example.game.model.Skill,
+    isOnCooldown: Boolean,
+    isUltimate: Boolean,
+    ultReady: Boolean
+): Color {
+    if (isOnCooldown) return Color.Gray
+    if (isUltimate) return Color(0xFFFFD700)
+
+    val effectiveType = if (skill.type == SkillType.DAMAGE || skill.baseDamage > 0 || skill.damageComponents.isNotEmpty())
+        SkillType.DAMAGE else skill.type
+
+    val types = skill.combinedTypes.ifEmpty { listOf(effectiveType) }
+    val colorMap = mapOf(
+        SkillType.DAMAGE to Color(0xFFD32F2F),
+        SkillType.HEAL to Color(0xFF689F38),
+        SkillType.BUFF to Color(0xFF0288D1),
+    )
+    return if (types.size == 1) {
+        colorMap[types.first()] ?: Color(0xFF0288D1)
+    } else {
+        val colors = types.mapNotNull { colorMap[it] }
+        val avgR = colors.map { (it.red * 255).toInt() }.average().toInt()
+        val avgG = colors.map { (it.green * 255).toInt() }.average().toInt()
+        val avgB = colors.map { (it.blue * 255).toInt() }.average().toInt()
+        Color(avgR, avgG, avgB)
     }
 }
 
