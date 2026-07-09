@@ -7,10 +7,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 
 import androidx.compose.ui.platform.LocalDensity
@@ -228,7 +227,7 @@ private fun HandOfCards(
                 val dragModifier = if (item is com.example.game.model.Skill || item is ComboSkill) {
                     val cardColor = getCardColor(item)
                     Modifier.pointerInput(index) {
-                        detectDragGestures(
+                        detectVerticalDragGestures(
                             onDragStart = { startPos ->
                                 if (poppedCardIndex >= 0 && poppedCardIndex != index) {
                                     poppedCardIndex = -1
@@ -247,7 +246,6 @@ private fun HandOfCards(
                                     } else true
                                     if (usable) {
                                         if (poppedCardIndex == index && isPopped) {
-                                            // Already popped by tap — just set dragActiveIndex, keep state
                                         } else {
                                             poppedCardIndex = -1
                                             rawDragX = 0f
@@ -259,10 +257,9 @@ private fun HandOfCards(
                                     }
                                 }
                             },
-                            onDrag = { change: PointerInputChange, dragAmount: Offset ->
+                            onVerticalDrag = { change, dragAmount ->
                                 if (poppedCardIndex < 0 || poppedCardIndex == index) {
-                                    rawDragY += dragAmount.y
-                                    rawDragX += dragAmount.x
+                                    rawDragY += dragAmount
                                     if (!isPopped && rawDragY < -popThresholdPx) {
                                         isPopped = true
                                     }

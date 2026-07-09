@@ -428,47 +428,46 @@ fun BattleScene(viewModel: GameViewModel) {
 
             // Action Tray at bottom with card-deal slide-up animation
             if (currentHero != null && state.phase == PLAYER_TURN) {
-                key(state.currentActorId) {
-                    var showHand by remember { mutableStateOf(false) }
-                    val slideFraction by animateFloatAsState(
-                        targetValue = if (showHand) 0f else 1f,
-                        animationSpec = spring(dampingRatio = 0.7f, stiffness = 200f)
+                var showHand by remember { mutableStateOf(false) }
+                val slideFraction by animateFloatAsState(
+                    targetValue = if (showHand) 0f else 1f,
+                    animationSpec = spring(dampingRatio = 0.7f, stiffness = 200f)
+                )
+
+                LaunchedEffect(Unit) {
+                    showHand = false
+                    delay(50)
+                    showHand = true
+                }
+
+                Box(
+                    contentAlignment = Alignment.BottomCenter,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .zIndex(1f)
+                        .graphicsLayer { translationY = slideFraction * 200.dp.toPx() }
+                ) {
+                    ActionTray(
+                        currentHero = currentHero,
+                        turnOrder = state.turnOrder,
+                        currentTurnIndex = state.currentTurnIndex,
+                        skillCooldowns = state.skillCooldowns[currentHero.id] ?: emptyMap(),
+                        availableCombos = availableCombos,
+                        isTargeting = isTargeting,
+                        onSkill = { skill ->
+                            viewModel.executeSkill(currentHero.id, skill)
+                        },
+                        onComboById = { comboId ->
+                            viewModel.executeComboById(comboId)
+                        },
+                        onCancelTargeting = {
+                            viewModel.cancelAction()
+                        },
+                        onCardDragStart = { color -> dragOverlayColor = color },
+                        onCardDragEnd = { dragOverlayColor = null },
+                        onSkipTurn = { viewModel.skipTurn(state.currentActorId) },
+                        modifier = Modifier.fillMaxWidth()
                     )
-
-                    LaunchedEffect(Unit) {
-                        showHand = false
-                        delay(50)
-                        showHand = true
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .zIndex(1f)
-                            .graphicsLayer { translationY = slideFraction * 200.dp.toPx() }
-                    ) {
-                        ActionTray(
-                            currentHero = currentHero,
-                            turnOrder = state.turnOrder,
-                            currentTurnIndex = state.currentTurnIndex,
-                            skillCooldowns = state.skillCooldowns[currentHero.id] ?: emptyMap(),
-                            availableCombos = availableCombos,
-                            isTargeting = isTargeting,
-                            onSkill = { skill ->
-                                viewModel.executeSkill(currentHero.id, skill)
-                            },
-                            onComboById = { comboId ->
-                                viewModel.executeComboById(comboId)
-                            },
-                            onCancelTargeting = {
-                                viewModel.cancelAction()
-                            },
-                            onCardDragStart = { color -> dragOverlayColor = color },
-                            onCardDragEnd = { dragOverlayColor = null },
-                            onSkipTurn = { viewModel.skipTurn(state.currentActorId) },
-                            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
-                        )
-                    }
                 }
             }
         }
