@@ -220,14 +220,15 @@ private fun HandOfCards(
                                 if (!isPopped) {
                                     scrollOffset = (scrollOffset + dragAmount.x)
                                         .coerceIn(minScrollOffset, maxScrollOffset)
-                                }
-                                if (poppedCardIndex < 0 || poppedCardIndex == dragActiveIndex) {
                                     rawDragY += dragAmount.y
-                                    if (!isPopped) rawDragX += dragAmount.x
-                                    if (!isPopped && rawDragY < -popThresholdPx
-                                        && abs(rawDragY) > abs(rawDragX) * 1.5f) {
-                                        isPopped = true
-                                    }
+                                    rawDragX = 0f
+                                } else {
+                                    rawDragX += dragAmount.x
+                                    rawDragY += dragAmount.y
+                                }
+                                if (!isPopped && rawDragY < -popThresholdPx
+                                    && abs(rawDragY) > abs(rawDragX) * 1.5f) {
+                                    isPopped = true
                                 }
                             }
                             if (isPopped) change.consume()
