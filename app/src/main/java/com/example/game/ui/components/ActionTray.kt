@@ -5,8 +5,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.input.pointer.pointerInput
 
 import androidx.compose.ui.platform.LocalDensity
@@ -36,8 +36,9 @@ import androidx.compose.ui.zIndex
 import com.example.game.model.*
 import com.example.game.persistence.DataLoader
 import kotlin.math.abs
+import kotlin.math.min
 import kotlin.math.pow
-import kotlin.math.roundToInt
+
 
 private sealed class CardEntry {
     data class Skill(val skill: com.example.game.model.Skill) : CardEntry()
@@ -58,7 +59,6 @@ fun ActionTray(
     onCancelTargeting: () -> Unit,
     onCardDragStart: ((Color) -> Unit)? = null,
     onCardDragEnd: (() -> Unit)? = null,
-    onSkipTurn: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val allCards = remember(currentHero, availableCombos) {
@@ -95,16 +95,6 @@ fun ActionTray(
                 size = Size(w, 4f),
                 topLeft = Offset(0f, 0f)
             )
-        }
-
-        // Skip Turn button
-        if (!isTargeting && onSkipTurn != null) {
-            TextButton(
-                onClick = onSkipTurn,
-                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 8.dp, bottom = 4.dp)
-            ) {
-                Text("SKIP TURN", color = Color.Gray, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-            }
         }
 
         // Hand of Cards (when not in targeting mode)
@@ -144,24 +134,34 @@ private fun HandOfCards(
         availableCombos.forEach { add(it) }
     }
     val cardCount = allCards.size
+    if (cardCount == 0) return
+
     val density = LocalDensity.current
     val thresholdPx = with(density) { 200.dp.toPx() }
-    val tapPopPositionPx = with(density) { 130.dp.toPx() }
-    var scrollOffset by remember { mutableStateOf(0f) }
-    val (minScrollOffset, maxScrollOffset) = remember(cardCount) {
+    val popPositionPx = with(density) { 130.dp.toPx() }
+    val popThresholdPx = with(density) { 30.dp.toPx() }
+    val cardWidthDp = 150.dp
+    val cardHeightDp = 220.dp
+    val cardSpacingPx = with(density) { 85.dp.toPx() }
+    val arcHeightFactorPx = with(density) { 10.dp.toPx() }
+    val cardWidthPx = with(density) { cardWidthDp.toPx() }
+    val cardHeightPx = with(density) { cardHeightDp.toPx() }
+
+    var scrollOffset by remember { mutableFloatStateOf(0f) }
+    val (minScrollOffset, maxScrollOffset) = remember(cardCount, cardSpacingPx) {
         val center = (cardCount - 1) / 2f
-        val maxOff = center * 150f
-        val minOff = -(cardCount - 1 - center) * 150f
+        val maxOff = center * cardSpacingPx
+        val minOff = -(cardCount - 1 - center) * cardSpacingPx
         minOff to maxOff
     }
-    var poppedCardIndex by remember { mutableIntStateOf(-1) }
-    var dragActiveIndex by remember { mutableIntStateOf(-1) }
-    var rawDragY by remember { mutableStateOf(0f) }
-    var rawDragX by remember { mutableStateOf(0f) }
-    var isPopped by remember { mutableStateOf(false) }
-    val popThresholdPx = with(density) { 30.dp.toPx() }
 
-    val isDragged = dragActiveIndex >= 0
+    var selectedCardIndex by remember { mutableIntStateOf(-1) }
+    var dragCardIndex by remember { mutableIntStateOf(-1) }
+    var dragOffsetY by remember { mutableFloatStateOf(0f) }
+    var dragOffsetX by remember { mutableFloatStateOf(0f) }
+    var isDragPopped by remember { mutableStateOf(false) }
+    var popAnchorX by remember { mutableFloatStateOf(0f) }
+    var dragFromSelected by remember { mutableStateOf(false) }
 
     val actedHeroIds = remember(turnOrder, currentTurnIndex) {
         turnOrder
@@ -170,106 +170,183 @@ private fun HandOfCards(
             .toSet()
     }
 
+    fun isCardUsable(item: Any): Boolean = when (item) {
+        is com.example.game.model.Skill -> {
+            val isUlt = item.ultimateGain == 0
+            if (isUlt) currentHero.gauge >= 100
+            else (skillCooldowns[item.id] ?: 0) <= 0
+        }
+        is ComboSkill -> !item.requiredHeroes.any { it in actedHeroIds }
+        else -> false
+    }
+
+    fun arcTx(index: Int): Float {
+        val centerIndex = (cardCount - 1) / 2f
+        val relIdx = index - centerIndex + (scrollOffset / cardSpacingPx)
+        return relIdx * 85f
+    }
+
+    fun arcTy(index: Int): Float {
+        val centerIndex = (cardCount - 1) / 2f
+        val relIdx = index - centerIndex + (scrollOffset / cardSpacingPx)
+        return relIdx.pow(2) * 10f
+    }
+
+    fun arcRotation(index: Int): Float {
+        val centerIndex = (cardCount - 1) / 2f
+        val relIdx = index - centerIndex + (scrollOffset / cardSpacingPx)
+        return relIdx * 12f
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp)
-            ,
+            .height(280.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(280.dp)
-                .pointerInput(cardCount, scrollOffset) {
-                    val centerIndex = (cardCount - 1) / 2f
-                    val density = this.density
+                .pointerInput(cardCount) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown()
+                        down.consume()
+                        val downPos = down.position
+                        val boxWidth = size.width
+                        val boxHeight = size.height
+                        val density = density
 
-                    detectDragGestures(
-                        onDragStart = { startPos ->
-                            val boxCenterX = size.width / 2f
-                            val relativeX = (startPos.x - boxCenterX) / density
-                            val approxIndex = centerIndex + relativeX / 85f - (scrollOffset / 150f)
-                            val index = approxIndex.roundToInt().coerceIn(0, cardCount - 1)
+                        val centerIndex = (cardCount - 1) / 2f
 
-                            if (index in allCards.indices) {
-                                if (poppedCardIndex >= 0 && poppedCardIndex != index) {
-                                    poppedCardIndex = -1; dragActiveIndex = -1; isPopped = false
-                                    rawDragY = 0f; rawDragX = 0f
+                        fun hitTestCard(touchX: Float, touchY: Float): Int {
+                            if (selectedCardIndex >= 0) {
+                                val selCenterX = boxWidth / 2f
+                                val selCenterY = boxHeight - cardHeightPx / 2f - popPositionPx
+                                if (abs(touchX - selCenterX) < cardWidthPx / 2f &&
+                                    abs(touchY - selCenterY) < cardHeightPx / 2f) {
+                                    return selectedCardIndex
+                                }
+                            }
+                            for (i in allCards.indices.reversed()) {
+                                if (i == selectedCardIndex) continue
+                                val relIdx = i - centerIndex + (scrollOffset / cardSpacingPx)
+                                val cardCenterX = boxWidth / 2f + relIdx * cardSpacingPx
+                                val arcY = relIdx * relIdx * arcHeightFactorPx
+                                val cardCenterY = boxHeight - cardHeightPx / 2f - arcY
+                                if (abs(touchX - cardCenterX) < cardWidthPx / 2f &&
+                                    abs(touchY - cardCenterY) < cardHeightPx / 2f) {
+                                    return i
+                                }
+                            }
+                            return -1
+                        }
+
+                        val touchedIdx = hitTestCard(downPos.x, downPos.y)
+
+                        var hasMoved = false
+                        var gestureAction = ""
+                        var lastPos = downPos
+
+                        do {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.first()
+                            val curPos = change.position
+                            val delta = curPos - lastPos
+
+                            if (!hasMoved && (curPos - downPos).getDistance() > viewConfiguration.touchSlop) {
+                                hasMoved = true
+                                val absDx = abs(delta.x)
+                                val absDy = abs(delta.y)
+
+                                if (touchedIdx >= 0 &&
+                                    isCardUsable(allCards[touchedIdx]) &&
+                                    (touchedIdx == selectedCardIndex || absDy > absDx)
+                                ) {
+                                    val alreadyPopped = touchedIdx == selectedCardIndex
+                                    if (selectedCardIndex >= 0 && !alreadyPopped) {
+                                        selectedCardIndex = -1
+                                    }
+                                    gestureAction = "cardDrag"
+                                    dragCardIndex = touchedIdx
+                                    isDragPopped = alreadyPopped
+                                    dragFromSelected = alreadyPopped
+                                    if (alreadyPopped) {
+                                        popAnchorX = downPos.x
+                                    }
+                                    dragOffsetY = 0f
+                                    dragOffsetX = 0f
+                                    onCardDragStart?.invoke(getCardColor(allCards[touchedIdx]))
                                 } else {
-                                    val item = allCards[index]
-                                    val usable = if (item is com.example.game.model.Skill) {
-                                        val s = item; val isUlt = s.ultimateGain == 0
-                                        if (isUlt) currentHero.gauge >= 100
-                                        else (skillCooldowns[s.id] ?: 0) <= 0
-                                    } else if (item is ComboSkill) {
-                                        !item.requiredHeroes.any { it in actedHeroIds }
-                                    } else true
-                                    if (usable) {
-                                        if (poppedCardIndex == index && isPopped) { /* keep */ } else {
-                                            poppedCardIndex = -1; rawDragX = 0f; rawDragY = 0f; isPopped = false
-                                        }
-                                        dragActiveIndex = index
-                                        onCardDragStart?.invoke(getCardColor(item))
+                                    gestureAction = "scroll"
+                                    if (selectedCardIndex >= 0) {
+                                        selectedCardIndex = -1
                                     }
                                 }
                             }
-                        },
-                        onDrag = { change, dragAmount ->
-                            if (dragActiveIndex >= 0) {
-                                if (!isPopped) {
-                                    scrollOffset = (scrollOffset + dragAmount.x)
-                                        .coerceIn(minScrollOffset, maxScrollOffset)
-                                    rawDragY += dragAmount.y
-                                    rawDragX = 0f
-                                } else {
-                                    rawDragX += dragAmount.x
-                                    rawDragY += dragAmount.y
-                                }
-                                if (!isPopped && rawDragY < -popThresholdPx
-                                    && abs(rawDragY) > abs(rawDragX) * 1.5f) {
-                                    isPopped = true
-                                }
-                            }
-                            if (isPopped) change.consume()
-                        },
-                        onDragEnd = {
-                            if (dragActiveIndex >= 0) {
-                                val item = allCards.getOrNull(dragActiveIndex)
-                                if (rawDragY < -thresholdPx) {
-                                    rawDragY = 0f
-                                    when (item) {
-                                        is com.example.game.model.Skill -> {
-                                            val s = item; val isUlt = s.ultimateGain == 0
-                                            val canUse = if (isUlt) currentHero.gauge >= 100
-                                                else (skillCooldowns[s.id] ?: 0) <= 0
-                                            if (canUse) onSkill(s)
+
+                            if (hasMoved) {
+                                when (gestureAction) {
+                                    "cardDrag" -> {
+                                        dragOffsetY = curPos.y - downPos.y
+                                        if (!isDragPopped && dragOffsetY < -popThresholdPx) {
+                                            isDragPopped = true
+                                            popAnchorX = curPos.x
+                                            dragOffsetX = 0f
                                         }
-                                        is ComboSkill -> if (!item.requiredHeroes.any { it in actedHeroIds }) onComboSelect(item.id)
+                                        if (isDragPopped) {
+                                            dragOffsetX = curPos.x - popAnchorX
+                                        }
+                                    }
+                                    "scroll" -> {
+                                        scrollOffset = (scrollOffset + delta.x)
+                                            .coerceIn(minScrollOffset, maxScrollOffset)
                                     }
                                 }
                             }
-                            dragActiveIndex = -1; poppedCardIndex = -1; isPopped = false
-                            rawDragY = 0f; rawDragX = 0f
-                            onCardDragEnd?.invoke()
-                        },
-                        onDragCancel = {
-                            dragActiveIndex = -1; poppedCardIndex = -1; isPopped = false
-                            rawDragY = 0f; rawDragX = 0f
+
+                            lastPos = curPos
+                        } while (event.changes.any { it.pressed })
+
+                        if (!hasMoved && touchedIdx >= 0) {
+                            if (selectedCardIndex == touchedIdx) {
+                                selectedCardIndex = -1
+                            } else if (isCardUsable(allCards[touchedIdx])) {
+                                selectedCardIndex = touchedIdx
+                            }
+                        } else if (gestureAction == "cardDrag") {
+                            if (isDragPopped && dragOffsetY < -thresholdPx) {
+                                val item = allCards[dragCardIndex]
+                                when (item) {
+                                    is com.example.game.model.Skill -> {
+                                        val isUlt = item.ultimateGain == 0
+                                        val canUse = if (isUlt) currentHero.gauge >= 100
+                                            else (skillCooldowns[item.id] ?: 0) <= 0
+                                        if (canUse) onSkill(item)
+                                    }
+                                    is ComboSkill -> {
+                                        if (!item.requiredHeroes.any { it in actedHeroIds }) {
+                                            onComboSelect(item.id)
+                                        }
+                                    }
+                                }
+                            }
+                            dragCardIndex = -1
+                            dragOffsetY = 0f
+                            dragOffsetX = 0f
+                            popAnchorX = 0f
+                            isDragPopped = false
+                            dragFromSelected = false
+                            selectedCardIndex = -1
                             onCardDragEnd?.invoke()
                         }
-                    )
+                    }
                 },
             contentAlignment = Alignment.BottomCenter
         ) {
             allCards.forEachIndexed { index, item ->
-                val centerIndex = (cardCount - 1) / 2f
-                val relativeIndex = index - centerIndex + (scrollOffset / 150f)
-                val rotation = relativeIndex * 12f
-                val ty = (relativeIndex.pow(2) * 10f)
-                val tx = relativeIndex * 85f
-
-                val isDragged = dragActiveIndex == index
+                val isSelected = selectedCardIndex == index
+                val isDragged = dragCardIndex == index
 
                 val cardAlpha by animateFloatAsState(
                     targetValue = 1f,
@@ -280,48 +357,43 @@ private fun HandOfCards(
                 val cardMod = Modifier
                     .alpha(cardAlpha)
                     .graphicsLayer {
-                        val dy = if (isDragged) rawDragY else 0f
-                        val dx = if (isDragged && isPopped) rawDragX else 0f
-                        if (isDragged && isPopped) {
-                            translationX = dx
-                        } else {
-                            translationX = tx.dp.toPx() + dx
-                        }
-                        translationY = ty.dp.toPx() + dy - (if (item is ComboSkill) 20f else 0f)
-                        rotationZ = if (isDragged) 0f else rotation
-                        if (isDragged) { scaleX = 1.15f; scaleY = 1.15f }
-                    }
-                    .zIndex(if (isDragged) 999f else index.toFloat())
-
-                val tapMod = if (item is com.example.game.model.Skill || item is ComboSkill) {
-                    Modifier.pointerInput(index) {
-                        detectTapGestures {
-                            if (item is com.example.game.model.Skill) {
-                                val skill = item
-                                val isUlt = skill.ultimateGain == 0
-                                val isUsable = if (isUlt) currentHero.gauge >= 100
-                                    else (skillCooldowns[skill.id] ?: 0) <= 0
-                                if (!isUsable) return@detectTapGestures
+                        when {
+                            isDragged -> {
+                                val startTx = arcTx(index).dp.toPx()
+                                val startTy = arcTy(index).dp.toPx()
+                                if (dragFromSelected || isDragPopped) {
+                                    translationX = dragOffsetX
+                                    translationY = if (dragFromSelected) -popPositionPx + dragOffsetY else startTy + dragOffsetY
+                                    rotationZ = 0f
+                                    scaleX = 1.15f; scaleY = 1.15f
+                                } else {
+                                    val progress = (-dragOffsetY / popThresholdPx).coerceIn(0f, 1f)
+                                    translationX = startTx * (1f - progress)
+                                    translationY = startTy + min(dragOffsetY, 0f)
+                                    rotationZ = arcRotation(index) * (1f - progress)
+                                    scaleX = 1f + 0.15f * progress
+                                    scaleY = 1f + 0.15f * progress
+                                }
                             }
-                            if (item is ComboSkill) {
-                                val anyActed = item.requiredHeroes.any { it in actedHeroIds }
-                                if (anyActed) return@detectTapGestures
+                            isSelected -> {
+                                translationX = 0f
+                                translationY = -popPositionPx
+                                rotationZ = 0f
+                                scaleX = 1.15f; scaleY = 1.15f
                             }
-                            if (poppedCardIndex == index) {
-                                poppedCardIndex = -1
-                                dragActiveIndex = -1
-                                isPopped = false
-                                rawDragY = 0f
-                            } else {
-                                poppedCardIndex = index
-                                dragActiveIndex = index
-                                isPopped = true
-                                rawDragY = -tapPopPositionPx
-                                rawDragX = 0f
+                            else -> {
+                                translationX = arcTx(index).dp.toPx()
+                                translationY = arcTy(index).dp.toPx() - (if (item is ComboSkill) 20f else 0f)
+                                rotationZ = arcRotation(index)
                             }
                         }
                     }
-                } else Modifier
+                    .zIndex(
+                        when {
+                            isSelected || isDragged -> 999f
+                            else -> index.toFloat()
+                        }
+                    )
 
                 when (item) {
                     is com.example.game.model.Skill -> {
@@ -338,7 +410,7 @@ private fun HandOfCards(
                             baseCooldown = item.cooldown,
                             cooldownRemaining = cooldown,
                             suspendAnimations = isDragged,
-                            modifier = Modifier.width(150.dp).height(220.dp).then(cardMod).then(tapMod)
+                            modifier = Modifier.width(cardWidthDp).height(cardHeightDp).then(cardMod)
                         )
                     }
                     is ComboSkill -> {
@@ -347,7 +419,7 @@ private fun HandOfCards(
                             combo = item,
                             disabled = anyActed,
                             suspendAnimations = isDragged,
-                            modifier = Modifier.width(150.dp).height(220.dp).then(cardMod).then(tapMod)
+                            modifier = Modifier.width(cardWidthDp).height(cardHeightDp).then(cardMod)
                         )
                     }
                 }

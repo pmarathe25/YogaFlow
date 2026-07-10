@@ -466,7 +466,6 @@ fun BattleScene(viewModel: GameViewModel) {
                         },
                         onCardDragStart = { color -> dragOverlayColor = color },
                         onCardDragEnd = { dragOverlayColor = null },
-                        onSkipTurn = { viewModel.skipTurn(state.currentActorId) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
