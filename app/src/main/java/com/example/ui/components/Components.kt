@@ -342,14 +342,6 @@ fun getColorForFlow(flowId: String): Color {
     return when (flowId) {
         "sun_salutation" -> Color(0xFFFFB74D)          // Amber/Orange
         "warrior_flow" -> Color(0xFFE57373)            // Light Red/Coral
-        "restorative_yin" -> Color(0xFF64B5F6)          // Light Blue
-        "morning_energizer" -> Color(0xFFFFF176)        // Yellow
-        "bedtime_wind_down" -> Color(0xFF9575CD)        // Purple
-        "core_balance" -> Color(0xFF4DB6AC)            // Teal
-        "heart_opening_vinyasa" -> Color(0xFFF06292)   // Pink
-        "power_vinyasa_ascent" -> Color(0xFFFF8A65)    // Deep Orange
-        "ashtanga_core_power" -> Color(0xFFAED581)     // Light Green
-        "advanced_balance_mastery" -> Color(0xFF4DD0E1) // Cyan
         else -> Color(0xFF81C784)                       // Default Green
     }
 }

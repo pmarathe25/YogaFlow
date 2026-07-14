@@ -188,7 +188,7 @@ fun YogaPlayerScreen(
                             style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round)
                         )
                         // Draw active countdown arc
-                        val sweepAngle = (remainingTimeSec.toFloat() / 30f) * 360f
+                        val sweepAngle = (remainingTimeSec.toFloat() / pose.holdDurationSec.toFloat()) * 360f
                         drawArc(
                             color = primaryColor,
                             startAngle = -90f,
