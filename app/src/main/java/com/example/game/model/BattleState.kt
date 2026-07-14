@@ -9,12 +9,11 @@ enum class BattlePhase {
     PLAYER_TURN,
     ENEMY_TURN,
     VICTORY,
-    DEFEAT,
-    PHASE_TRIGGER
+    DEFEAT
 }
 
 enum class TurnAction {
-    SKILL, ULTIMATE, DEFEND, ITEM, COMBO
+    SKILL, ULTIMATE, DEFEND, COMBO
 }
 
 enum class CombatSide {
@@ -32,8 +31,6 @@ data class CombatantState(
     val speed: Int,
     val shield: Int = 0,
     val gauge: Int = 0,
-    val cooldowns: Map<String, Int> = emptyMap(),
-    val statuses: List<BattleStatus> = emptyList(),
     val isDefeated: Boolean = false,
     val level: Int = 1,
     val skills: List<Skill> = emptyList(),
@@ -83,9 +80,7 @@ data class TargetResult(
 data class DamageBreakdown(
     val type: DamageType,
     val element: Element?,
-    val amount: Int,
-    val isPercentile: Boolean = false,
-    val percentileAmount: Float = 0f
+    val amount: Int
 )
 
 data class BattleStatus(

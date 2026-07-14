@@ -36,7 +36,6 @@ data class Equipment(
     val icon: String = "❓"
 ) {
     val yogaLevelRequired: Int get() = minYogaLevel
-    val sparksCost: Int get() = sparkCost
     val goldCost: Int get() = sparkCost * when (tier) {
         EquipmentTier.COMMON -> 5
         EquipmentTier.UNCOMMON -> 7

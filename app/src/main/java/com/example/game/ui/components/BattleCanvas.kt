@@ -13,7 +13,6 @@ import com.example.game.model.Element
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.PI
-import kotlin.random.Random
 
 // ─── Sprite Animation State ───────────────────────────────────────────
 
@@ -29,10 +28,6 @@ data class SpriteAnimState(
     val alpha: Float = 1f
 )
 
-@Composable
-fun rememberSpriteAnimState(): MutableState<SpriteAnimState> =
-    remember { mutableStateOf(SpriteAnimState()) }
-
 // ─── Background ────────────────────────────────────────────────────────
 
 @Composable
@@ -41,8 +36,7 @@ fun BattleBackground(
     parallaxOffset: Float = 0f,
     bossFight: Boolean = false,
     monsterElement: Element = Element.NEUTRAL,
-    elementTint: Color = Color.Transparent,
-    biomeIndex: Int = 0
+    elementTint: Color = Color.Transparent
 ) {
     val skyBase = if (bossFight) Color(0xFF2A0055) else Color(0xFF1B263B) // BRIGHTER
     val groundBase = if (bossFight) Color(0xFF3D2B5E) else Color(0xFF243447) // BRIGHTER
@@ -373,63 +367,6 @@ private fun DrawScope.drawPillar(x: Float, baseY: Float, width: Float, height: F
         color.copy(alpha = color.alpha * 1.5f),
         Offset(x - width * 0.7f, baseY - height - 5f),
         Size(width * 1.4f, 8f)
-    )
-}
-
-// ─── Animated Hero Sprite ──────────────────────────────────────────────
-
-@Composable
-fun HeroSprite(
-    modifier: Modifier = Modifier,
-    heroName: String,
-    heroId: Int = 0,
-    elementColor: Color,
-    isActive: Boolean = true,
-    isFlashing: Boolean = false,
-    flashColor: Color = Color.Red,
-    flashAlpha: Float = 0f,
-    animState: SpriteAnimState = SpriteAnimState()
-) {
-    CombatantSprite(
-        modifier = modifier,
-        isMonster = false,
-        name = heroName,
-        heroId = heroId,
-        elementColor = elementColor,
-        isActive = isActive,
-        isFlashing = isFlashing,
-        flashColor = flashColor,
-        flashAlpha = flashAlpha,
-        animState = animState
-    )
-}
-
-// ─── Animated Monster Sprite ───────────────────────────────────────────
-
-@Composable
-fun MonsterSprite(
-    modifier: Modifier = Modifier,
-    monsterName: String,
-    elementColor: Color,
-    isBoss: Boolean = false,
-    isFlashing: Boolean = false,
-    flashColor: Color = Color.Red,
-    flashAlpha: Float = 0f,
-    bossPulse: Float = 0f,
-    animState: SpriteAnimState = SpriteAnimState()
-) {
-    CombatantSprite(
-        modifier = modifier,
-        isMonster = true,
-        name = monsterName,
-        elementColor = elementColor,
-        isActive = true,
-        isBoss = isBoss,
-        isFlashing = isFlashing,
-        flashColor = flashColor,
-        flashAlpha = flashAlpha,
-        bossPulse = bossPulse,
-        animState = animState
     )
 }
 

@@ -57,18 +57,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _goldEarned = MutableStateFlow(0)
     val goldEarned: StateFlow<Int> = _goldEarned.asStateFlow()
 
-    private val _selectedCardId = MutableStateFlow<String?>(null)
-    val selectedCardId: StateFlow<String?> = _selectedCardId.asStateFlow()
-
     private var lastSyncedMainSparks: Int = 0
-
-    fun selectCard(cardId: String?) {
-        _selectedCardId.value = cardId
-    }
-
-    fun dismissSelectedCard() {
-        _selectedCardId.value = null
-    }
 
     init {
         loadGame()
@@ -129,7 +118,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _currentScreen.value = GameScreen.HUB
     }
 
-    fun addBattleLog(message: String) {
+    private fun addBattleLog(message: String) {
         _battleLog.value = _battleLog.value + message
     }
 
@@ -145,18 +134,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun restoreParty(data: GameProgress) {
         _party.value = data.party
-    }
-
-    fun getUnlockedHeroes(): List<Hero> {
-        val unlockedIds = _saveData.value.unlockedHeroIds
-        return DataLoader.heroes.filter { it.id in unlockedIds }
-    }
-
-    fun getAvailableHeroes(): List<Hero> {
-        val data = _saveData.value
-        return DataLoader.heroes.filter { h ->
-            h.unlockYogaLevel <= data.yogaLevel && h.id !in data.unlockedHeroIds
-        }
     }
 
     fun startBattle(monsterId: String) {

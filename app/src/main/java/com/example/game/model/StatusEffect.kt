@@ -14,12 +14,6 @@ enum class StatusEffectType {
     CONFUSE
 }
 
-data class AppliedStatusEffect(
-    val type: StatusEffectType,
-    val remainingTurns: Int,
-    val value: Float = 0f
-)
-
 data class StatusEffectInfliction(
     val type: StatusEffectType,
     val chance: Float = 1f,

@@ -444,17 +444,17 @@ class TurnManagerTest {
     fun `executeCombo_multiTarget_appliesToAll`() {
         val combo = ComboSkill(
             id = "test_combo", name = "Test Combo", description = "",
-            requiredHeroes = setOf("H1", "H2"),
+            requiredHeroes = setOf(1, 2),
             targetType = TargetType.ALL_ENEMIES,
             damageComponents = listOf(DamageComponent(DamageType.PHYSICAL)),
             baseDamage = 100, comboType = ComboType.TWO_HERO
         )
-        val h1 = makeHero(id = "H1")
-        val h2 = makeHero(id = "H2")
+        val h1 = makeHero(id = "1")
+        val h2 = makeHero(id = "2")
         val m1 = makeMonster(id = "M1")
         val m2 = makeMonster(id = "M2")
         val state = turnManager.startBattle(listOf(h1, h2), listOf(m1, m2))
-        val result = turnManager.executeCombo(state, combo, setOf("H1", "H2"))
+        val result = turnManager.executeCombo(state, combo, setOf("1", "2"))
         val updatedM1 = result.newState.monsters.find { it.id == "M1" }
         val updatedM2 = result.newState.monsters.find { it.id == "M2" }
         assertTrue(updatedM1!!.hp < 1000)
@@ -465,18 +465,18 @@ class TurnManagerTest {
     fun `executeCombo_participantsGainUltimateGauge`() {
         val combo = ComboSkill(
             id = "test_combo", name = "Test Combo", description = "",
-            requiredHeroes = setOf("H1", "H2"),
+            requiredHeroes = setOf(1, 2),
             targetType = TargetType.SINGLE_ENEMY,
             damageComponents = listOf(DamageComponent(DamageType.PHYSICAL)),
             baseDamage = 100, comboType = ComboType.TWO_HERO
         )
-        val h1 = makeHero(id = "H1")
-        val h2 = makeHero(id = "H2")
+        val h1 = makeHero(id = "1")
+        val h2 = makeHero(id = "2")
         val monster = makeMonster(id = "M1")
         val state = turnManager.startBattle(listOf(h1, h2), listOf(monster))
-        val result = turnManager.executeCombo(state, combo, setOf("H1", "H2"))
-        val updatedH1 = result.newState.heroes.find { it.id == "H1" }
-        val updatedH2 = result.newState.heroes.find { it.id == "H2" }
+        val result = turnManager.executeCombo(state, combo, setOf("1", "2"))
+        val updatedH1 = result.newState.heroes.find { it.id == "1" }
+        val updatedH2 = result.newState.heroes.find { it.id == "2" }
         assertTrue(updatedH1!!.gauge > 0)
         assertTrue(updatedH2!!.gauge > 0)
     }

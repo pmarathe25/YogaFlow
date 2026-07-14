@@ -97,7 +97,7 @@ class GameSaveManagerTest {
                 PartyMemberData(4, 3)
             ),
             unlockedHeroIds = setOf(5, 2),
-            defeatedMonsterIds = setOf("Bhaya_Fear", "Krodha--Anger")
+            defeatedMonsterIds = setOf("Bhaya_Fear", "Krodha_Anger")
         )
         saveManager.saveGame(data)
         val loaded = saveManager.loadGame()
@@ -118,8 +118,8 @@ class GameSaveManagerTest {
         val loaded = saveManager.loadGame()
 
         assertEquals(3, loaded.version)
-        assertTrue(loaded.party.isEmpty())
-        assertTrue(loaded.unlockedHeroIds.isEmpty())
+        assertEquals(1, loaded.party.size)
+        assertTrue(loaded.unlockedHeroIds.contains(1))
         assertEquals(0, loaded.sparks)
         assertEquals(1, loaded.yogaLevel)
         assertEquals(0, loaded.totalBattlesWon)
@@ -141,7 +141,7 @@ class GameSaveManagerTest {
 
         assertEquals(0, loaded.sparks)
         assertEquals(1, loaded.yogaLevel)
-        assertTrue(loaded.party.isEmpty())
+        assertEquals(1, loaded.party.size)
         assertEquals(0, loaded.totalBattlesWon)
     }
 

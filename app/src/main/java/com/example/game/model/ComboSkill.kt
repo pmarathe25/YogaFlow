@@ -16,7 +16,6 @@ data class ComboSkill(
     val statusEffects: List<StatusEffectInfliction> = emptyList(),
     val cleanse: Boolean = false,
     val revive: Boolean = false,
-    val speedWeight: ActionSpeed = ActionSpeed.SLOW,
     val comboType: ComboType
 )
 

@@ -44,7 +44,6 @@ data class Skill(
     val buffs: List<BuffApplication> = emptyList(),
     val cleanse: Boolean = false,
     val revive: Boolean = false,
-    val speedWeight: ActionSpeed = ActionSpeed.NORMAL,
     val ultimateGain: Int = 20,
     val cooldown: Int = 0
 ) {
@@ -104,8 +103,7 @@ data class Skill(
 data class HealScaling(
     val baseHeal: Int,
     val healPerLevel: Int,
-    val isPercentage: Boolean = false,
-    val targetMissingHpBonus: Float = 0f
+    val isPercentage: Boolean = false
 )
 
 data class ShieldScaling(
@@ -119,7 +117,5 @@ data class BuffApplication(
     val type: StatusEffectType,
     val duration: Int = 3,
     val value: Float = 0.25f,
-    val targetsParty: Boolean = false,
-    val stacksPermanently: Boolean = false,
-    val permanentValue: Int = 0
+    val targetsParty: Boolean = false
 )

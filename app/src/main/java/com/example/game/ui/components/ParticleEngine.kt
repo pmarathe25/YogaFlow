@@ -1,8 +1,6 @@
 package com.example.game.ui.components
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -40,12 +38,6 @@ data class EmitterConfig(
     val sizeRange: ClosedFloatingPointRange<Float> = 2f..6f,
     val lifetimeRange: IntRange = 20..60,
     val blendMode: BlendMode = BlendMode.SrcOver
-)
-
-data class EmitterState(
-    val position: Offset,
-    val active: Boolean,
-    val config: EmitterConfig
 )
 
 class ParticlePool(capacity: Int) {
@@ -172,28 +164,4 @@ fun rememberParticlePool(capacity: Int = 200): ParticlePool {
     return remember { ParticlePool(capacity) }
 }
 
-@Composable
-fun ParticleEffect(
-    config: EmitterConfig,
-    active: Boolean,
-    position: Offset,
-    modifier: Modifier = Modifier,
-    pool: ParticlePool = remember { ParticlePool(200) }
-) {
-    LaunchedEffect(active, position) {
-        if (!active) return@LaunchedEffect
-        while (true) {
-            val count = (config.particlesPerSecond / 60).coerceAtLeast(1)
-            pool.emit(config, position, count)
-            pool.update()
-            kotlinx.coroutines.delay(16)
-        }
-    }
 
-    if (pool.hasActive) {
-        Canvas(modifier = modifier) {
-            pool.update()
-            pool.draw(this)
-        }
-    }
-}

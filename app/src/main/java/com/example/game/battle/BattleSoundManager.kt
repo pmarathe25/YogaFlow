@@ -21,7 +21,6 @@ class BattleSoundManager(context: Context) {
     private var healSoundId: Int = 0
     private var whooshSoundId: Int = 0
     private var ultimateSoundId: Int = 0
-    private var clickSoundId: Int = 0
     private var fireSoundId: Int = 0
     private var waterSoundId: Int = 0
     private var earthSoundId: Int = 0
@@ -34,7 +33,6 @@ class BattleSoundManager(context: Context) {
         healSoundId = loadSound(context, generateHealPcm(), "heal")
         whooshSoundId = loadSound(context, generateWhooshPcm(), "whoosh")
         ultimateSoundId = loadSound(context, generateUltimatePcm(), "ultimate")
-        clickSoundId = loadSound(context, generateClickPcm(), "click")
         fireSoundId = loadSound(context, generateFirePcm(), "fire")
         waterSoundId = loadSound(context, generateWaterPcm(), "water")
         earthSoundId = loadSound(context, generateEarthPcm(), "earth")
@@ -47,7 +45,6 @@ class BattleSoundManager(context: Context) {
     fun playHeal() { soundPool.play(healSoundId, 0.5f, 0.5f, 1, 0, 1f) }
     fun playWhoosh() { soundPool.play(whooshSoundId, 0.3f, 0.3f, 1, 0, 1f) }
     fun playUltimate() { soundPool.play(ultimateSoundId, 0.8f, 0.8f, 1, 0, 1f) }
-    fun playClick() { soundPool.play(clickSoundId, 0.4f, 0.4f, 1, 0, 1f) }
 
     fun playElementSound(element: Element) {
         val soundId = when (element) {
@@ -141,20 +138,6 @@ class BattleSoundManager(context: Context) {
                 }
                 val finalVal = (sampleVal * attack * decay * 12000.0).coerceIn(-32768.0, 32767.0)
                 buffer[i] = finalVal.toInt().toShort()
-            }
-            return buffer
-        }
-
-        fun generateClickPcm(): ShortArray {
-            val durationSec = 0.03
-            val totalSamples = (SAMPLE_RATE * durationSec).toInt()
-            val buffer = ShortArray(totalSamples)
-            val freq = 8000.0
-            for (i in 0 until totalSamples) {
-                val t = i.toDouble() / SAMPLE_RATE
-                val envelope = exp(-100.0 * t)
-                val sampleVal = (sin(2.0 * PI * freq * t) * envelope * 12000.0).coerceIn(-32768.0, 32767.0)
-                buffer[i] = sampleVal.toInt().toShort()
             }
             return buffer
         }

@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -559,15 +560,6 @@ private fun EquipmentSlotCard(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun DetailStat(label: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
-        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
     }
 }
 

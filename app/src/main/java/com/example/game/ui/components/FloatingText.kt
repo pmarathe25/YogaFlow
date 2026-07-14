@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-enum class FloatingTextType { DAMAGE, HEAL, SHIELD_BREAK, SHIELD, OTHER }
+enum class FloatingTextType { DAMAGE, HEAL, SHIELD_BREAK, SHIELD }
 
 data class FloatingTextEntry(
     val id: Long,

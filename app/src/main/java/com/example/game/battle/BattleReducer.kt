@@ -2,7 +2,6 @@ package com.example.game.battle
 
 import com.example.game.model.*
 import com.example.game.model.BattlePhase.*
-import kotlin.math.*
 
 private data class DamageResult(
     val amount: Int,
@@ -86,7 +85,6 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
         if (queue.isEmpty()) {
             wrapped = true
         } else {
-            if (currentIndex < 0) currentIndex = -1
             currentIndex += 1
             if (currentIndex >= queue.size) wrapped = true
         }

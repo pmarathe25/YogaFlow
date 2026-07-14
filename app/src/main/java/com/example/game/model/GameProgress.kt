@@ -12,13 +12,7 @@ data class GameProgress(
     val gold: Int = 0,
     val totalBattlesWon: Int = 0,
     val earnedTrophyIds: Set<String> = emptySet(),
-    val lastPlayedTimestamp: Long = 0L,
-    val consumables: Map<String, Int> = emptyMap(),
-    val equippedSkins: Map<String, String> = emptyMap(),
-    val unlockedSkinIds: Set<String> = emptySet(),
-    val totalPlayTimeMs: Long = 0L,
-    val highestComboHits: Int = 0,
-    val fastestBattleTurns: Int = Int.MAX_VALUE
+    val lastPlayedTimestamp: Long = 0L
 )
 
 data class PartyMemberData(

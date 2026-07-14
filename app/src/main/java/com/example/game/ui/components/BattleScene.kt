@@ -40,10 +40,6 @@ import com.example.game.persistence.DataLoader
 import kotlinx.coroutines.delay
 import kotlin.math.*
 
-val LocalBattleSoundManager = staticCompositionLocalOf<BattleSoundManager> {
-    error("No BattleSoundManager provided")
-}
-
 @Composable
 fun BattleScene(viewModel: GameViewModel) {
     val context = LocalContext.current
@@ -217,18 +213,16 @@ fun BattleScene(viewModel: GameViewModel) {
         }
     }
 
-    CompositionLocalProvider(LocalBattleSoundManager provides soundManager) {
-        Box(
-            modifier = Modifier.fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .shakeOffset(shakeHandle)
-        ) {
+    Box(
+        modifier = Modifier.fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .shakeOffset(shakeHandle)
+    ) {
         BattleBackground(
             parallaxOffset = sin(parallaxOffset),
             bossFight = isBoss,
             monsterElement = monster?.element ?: Element.NEUTRAL,
             elementTint = monsterColor,
-            biomeIndex = state.turnsTaken % 4,
             modifier = Modifier.fillMaxSize()
         )
 
@@ -461,9 +455,6 @@ fun BattleScene(viewModel: GameViewModel) {
                         onComboById = { comboId ->
                             viewModel.executeComboById(comboId)
                         },
-                        onCancelTargeting = {
-                            viewModel.cancelAction()
-                        },
                         onCardDragStart = { color -> dragOverlayColor = color },
                         onCardDragEnd = { dragOverlayColor = null },
                         modifier = Modifier.fillMaxWidth()
@@ -528,7 +519,6 @@ fun BattleScene(viewModel: GameViewModel) {
         // Battle Log Dialog
         if (showFullLog) {
             BattleLogDialog(log = battleLog, onDismiss = { showFullLog = false })
-        }
         }
     }
 }

@@ -55,11 +55,6 @@ object DataLoader {
             intIds == combo.requiredHeroes
         }
 
-    fun getTrophy(id: String): Trophy = trophies.first { it.id == id }
-
-    fun getTrophiesByCategory(category: TrophyCategory): List<Trophy> =
-        trophies.filter { it.category == category }
-
     private inline fun <reified T> loadList(file: String): List<T> {
         val json = context.assets.open("game/$file").bufferedReader().use { it.readText() }
         return gson.fromJson(json, object : TypeToken<List<T>>() {}.type)

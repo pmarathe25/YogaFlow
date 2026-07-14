@@ -40,12 +40,6 @@ import kotlin.math.min
 import kotlin.math.pow
 
 
-private sealed class CardEntry {
-    data class Skill(val skill: com.example.game.model.Skill) : CardEntry()
-    data class Ultimate(val skill: com.example.game.model.Skill) : CardEntry()
-    data class Combo(val combo: ComboSkill) : CardEntry()
-}
-
 @Composable
 fun ActionTray(
     currentHero: CombatantState,
@@ -56,18 +50,10 @@ fun ActionTray(
     isTargeting: Boolean,
     onSkill: (com.example.game.model.Skill) -> Unit,
     onComboById: (String) -> Unit,
-    onCancelTargeting: () -> Unit,
     onCardDragStart: ((Color) -> Unit)? = null,
     onCardDragEnd: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    val allCards = remember(currentHero, availableCombos) {
-        buildList {
-            currentHero.skills.forEach { add(CardEntry.Skill(it)) }
-            if (currentHero.ultimate != null) add(CardEntry.Ultimate(currentHero.ultimate!!))
-            availableCombos.forEach { add(CardEntry.Combo(it)) }
-        }
-    }
     Box(
         modifier = modifier.fillMaxWidth().height(400.dp),
         contentAlignment = Alignment.BottomCenter

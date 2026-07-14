@@ -477,18 +477,18 @@ class BattleReducerTest {
     fun `combo participants gain ultimate gauge`() {
         val combo = ComboSkill(
             id = "test_combo", name = "Test Combo", description = "",
-            requiredHeroes = setOf("h1", "h2"),
+            requiredHeroes = setOf(1, 2),
             targetType = TargetType.SINGLE_ENEMY,
             damageComponents = listOf(DamageComponent(DamageType.PHYSICAL)),
             baseDamage = 100, comboType = ComboType.TWO_HERO
         )
-        val h1 = makeCombatant(id = "h1")
-        val h2 = makeCombatant(id = "h2")
+        val h1 = makeCombatant(id = "1")
+        val h2 = makeCombatant(id = "2")
         val monster = makeCombatant(id = "m1", isMonster = true)
         val state = turnManager.startBattle(listOf(h1, h2), listOf(monster))
-        val result = turnManager.executeCombo(state, combo, setOf("h1", "h2"))
-        val updated1 = result.newState.heroes.find { it.id == "h1" }
-        val updated2 = result.newState.heroes.find { it.id == "h2" }
+        val result = turnManager.executeCombo(state, combo, setOf("1", "2"))
+        val updated1 = result.newState.heroes.find { it.id == "1" }
+        val updated2 = result.newState.heroes.find { it.id == "2" }
         assertTrue(updated1!!.gauge > 0)
         assertTrue(updated2!!.gauge > 0)
     }
@@ -497,17 +497,17 @@ class BattleReducerTest {
     fun `combo multi target applies damage to all enemies`() {
         val combo = ComboSkill(
             id = "test_combo", name = "Test Combo", description = "",
-            requiredHeroes = setOf("h1", "h2"),
+            requiredHeroes = setOf(1, 2),
             targetType = TargetType.ALL_ENEMIES,
             damageComponents = listOf(DamageComponent(DamageType.PHYSICAL)),
             baseDamage = 100, comboType = ComboType.TWO_HERO
         )
-        val h1 = makeCombatant(id = "h1")
-        val h2 = makeCombatant(id = "h2")
+        val h1 = makeCombatant(id = "1")
+        val h2 = makeCombatant(id = "2")
         val m1 = makeCombatant(id = "m1", isMonster = true)
         val m2 = makeCombatant(id = "m2", isMonster = true)
         val state = turnManager.startBattle(listOf(h1, h2), listOf(m1, m2))
-        val result = turnManager.executeCombo(state, combo, setOf("h1", "h2"))
+        val result = turnManager.executeCombo(state, combo, setOf("1", "2"))
         val updated1 = result.newState.monsters.find { it.id == "m1" }
         val updated2 = result.newState.monsters.find { it.id == "m2" }
         assertTrue(updated1!!.hp < 1000)
@@ -518,20 +518,20 @@ class BattleReducerTest {
     fun `combo healing restores HP to all allies`() {
         val combo = ComboSkill(
             id = "heal_combo", name = "Heal Combo", description = "",
-            requiredHeroes = setOf("h1", "h2"),
+            requiredHeroes = setOf(1, 2),
             targetType = TargetType.ALL_ALLIES,
             healScaling = HealScaling(baseHeal = 30, healPerLevel = 0, isPercentage = true),
             comboType = ComboType.TWO_HERO
         )
-        val h1 = makeCombatant(id = "h1", hp = 500, maxHp = 500)
-        val h2 = makeCombatant(id = "h2", hp = 500, maxHp = 500)
+        val h1 = makeCombatant(id = "1", hp = 500, maxHp = 500)
+        val h2 = makeCombatant(id = "2", hp = 500, maxHp = 500)
         val monster = makeCombatant(id = "m1", isMonster = true)
         var state = turnManager.startBattle(listOf(h1, h2), listOf(monster))
         state = state.copy(
-            heroes = state.heroes.map { if (it.id == "h1") it.copy(hp = 100) else it }
+            heroes = state.heroes.map { if (it.id == "1") it.copy(hp = 100) else it }
         )
-        val result = turnManager.executeCombo(state, combo, setOf("h1", "h2"))
-        val updated = result.newState.heroes.find { it.id == "h1" }
+        val result = turnManager.executeCombo(state, combo, setOf("1", "2"))
+        val updated = result.newState.heroes.find { it.id == "1" }
         assertTrue(updated!!.hp > 100)
     }
 
