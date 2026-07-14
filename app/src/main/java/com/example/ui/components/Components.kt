@@ -480,49 +480,6 @@ fun FlowCard(
 }
 
 @Composable
-fun StatCard(
-    value: String,
-    label: String,
-    icon: ImageVector,
-    color: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    isSelected: Boolean = false
-) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { onClick() }
-            .background(if (isSelected) color.copy(alpha = 0.16f) else color.copy(alpha = 0.08f))
-            .then(
-                if (isSelected) Modifier.border(1.5.dp, color, RoundedCornerShape(16.dp))
-                else Modifier
-            )
-            .padding(12.dp)
-    ) {
-        Column(horizontalAlignment = Alignment.Start) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = color,
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
-        }
-    }
-}
-
-@Composable
 fun AchievementBadgeCard(
     achievement: Achievement,
     modifier: Modifier = Modifier
@@ -583,9 +540,6 @@ fun AchievementBadgeCard(
                         "tri_fold_harmony" -> "🌿"
                         "yogi_adept" -> "🎯"
                         "deep_devotee" -> "🧘"
-                        "practice_morning_light" -> "☀️"
-                        "practice_hour_of_power" -> "⚡"
-                        "practice_ten_sessions" -> "🔟"
                         else -> if (achievement.id.startsWith("badge_")) "🏅" else "🏆"
                     },
                     style = MaterialTheme.typography.titleMedium
@@ -631,65 +585,6 @@ fun AchievementBadgeCard(
                     color = if (achievement.isUnlocked) (rarityColor ?: MaterialTheme.colorScheme.primary) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun DrawerStatisticsBadge(
-    viewModel: YogaViewModel,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val currentLevel by viewModel.currentLevel.collectAsState()
-    val currentLevelName by viewModel.currentLevelName.collectAsState()
-    val totalSessions by viewModel.totalSessions.collectAsState()
-    val totalSparks by viewModel.totalSparks.collectAsState()
-    val totalXp by viewModel.totalXp.collectAsState()
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        // Mini Level Badge
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .background(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.secondary
-                        )
-                    ),
-                    shape = CircleShape
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "$currentLevel",
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onPrimary
-            )
-        }
-
-        // Progress Summary info
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "$currentLevelName • $totalXp XP",
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = "🧘 $totalSessions • ✨ $totalSparks",
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.primary
-            )
         }
     }
 }

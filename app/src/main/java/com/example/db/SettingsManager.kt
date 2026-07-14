@@ -86,10 +86,5 @@ class SettingsManager(private val context: Context) {
         fun saveString(context: Context, key: String, value: String) = getPrefs(context).edit().putString(key, value).apply()
         fun saveBoolean(context: Context, key: String, value: Boolean) = getPrefs(context).edit().putBoolean(key, value).apply()
         fun saveInt(context: Context, key: String, value: Int) = getPrefs(context).edit().putInt(key, value).apply()
-        
-        // Aliases for backward compatibility if needed
-        fun savePreferredVoice(context: Context, voice: String) = saveString(context, "preferred_voice", voice)
-        fun saveIsMusicMuted(context: Context, muted: Boolean) = saveBoolean(context, "is_music_muted", muted)
-        fun saveCurrentTrackIndex(context: Context, index: Int) = saveInt(context, "current_track_index", index)
     }
 }

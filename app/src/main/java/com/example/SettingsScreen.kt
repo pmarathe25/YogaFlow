@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Notifications
@@ -254,7 +253,7 @@ fun SettingsScreen(
                 if (!isMusicMuted) {
                     Spacer(modifier = Modifier.height(12.dp))
                     val currentTrackIndex by viewModel.currentTrackIndex.collectAsState()
-                    val tracks = viewModel.ambientMusicManager.tracks
+                    val tracks = viewModel.tracks
                     
                     val context = androidx.compose.ui.platform.LocalContext.current
                     var previewPlayer by remember { mutableStateOf<android.media.MediaPlayer?>(null) }

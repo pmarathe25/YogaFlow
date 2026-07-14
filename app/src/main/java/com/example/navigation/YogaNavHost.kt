@@ -61,13 +61,6 @@ fun YogaNavHost(
                         navController.navigate(Screen.Player.route) {
                             popUpTo(Screen.Dashboard.route) { inclusive = false }
                         }
-                    },
-                    onSelectPose = { index ->
-                        viewModel.selectFlow(flow)
-                        viewModel.selectPoseDirectly(index)
-                        navController.navigate(Screen.Player.route) {
-                            popUpTo(Screen.Dashboard.route) { inclusive = false }
-                        }
                     }
                 )
             }

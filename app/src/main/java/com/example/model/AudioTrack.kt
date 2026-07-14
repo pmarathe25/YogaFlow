@@ -4,8 +4,7 @@ import com.example.R
 
 data class AudioTrack(
     val name: String,
-    val resId: Int,
-    val isMusic: Boolean
+    val resId: Int
 ) {
     companion object {
         fun loadTracks(): List<AudioTrack> {
@@ -15,8 +14,7 @@ data class AudioTrack(
                 val nameParts = field.name.removePrefix("track_").split("_")
                 val name = nameParts.filter { it.toIntOrNull() == null }
                     .joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
-                val isMusic = !name.contains("Breath", ignoreCase = true) && !name.contains("Ocean", ignoreCase = true)
-                AudioTrack(name, resId, isMusic)
+                AudioTrack(name, resId)
             }.sortedBy { it.name }
         }
     }

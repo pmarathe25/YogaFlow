@@ -319,7 +319,7 @@ fun YogaPlayerScreen(
 
             val isMusicMuted by viewModel.isMusicMuted.collectAsState()
             val currentTrackIndex by viewModel.currentTrackIndex.collectAsState()
-            val tracks = viewModel.ambientMusicManager.tracks
+            val tracks = viewModel.tracks
             val activeTrackName = if (currentTrackIndex in tracks.indices) tracks[currentTrackIndex].name else "Calm Sound"
 
             TextButton(

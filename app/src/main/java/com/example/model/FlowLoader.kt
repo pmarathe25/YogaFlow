@@ -83,10 +83,6 @@ object FlowLoader {
         return flows
     }
 
-    fun getPoseById(context: Context, id: Int): YogaPose? {
-        return loadPoses(context)[id]
-    }
-
     fun getFlowById(context: Context, id: String): YogaFlow? {
         return loadFlows(context).find { it.id == id }
     }

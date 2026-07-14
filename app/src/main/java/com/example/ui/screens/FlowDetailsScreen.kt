@@ -25,7 +25,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.db.ReminderEntity
-import com.example.db.ReminderManager
 import com.example.ui.components.*
 import com.example.viewmodel.YogaViewModel
 import kotlinx.coroutines.launch
@@ -35,10 +34,8 @@ fun YogaFlowDetailsScreen(
     flow: com.example.model.YogaFlow,
     viewModel: YogaViewModel,
     onBack: () -> Unit,
-    onStartFlow: () -> Unit,
-    onSelectPose: (Int) -> Unit
+    onStartFlow: () -> Unit
 ) {
-    val isVoiceEnabled by viewModel.isVoiceEnabled.collectAsState()
     val favoriteFlowIds by viewModel.favoriteFlowIds.collectAsState()
     val isFavorite = favoriteFlowIds.contains(flow.id)
     var expandedPoseIndex by remember { mutableStateOf<Int?>(null) }
@@ -259,8 +256,6 @@ fun YogaFlowDetailsScreen(
                 }
             }
         }
-
-        // Settings / Options Card removed, moved to Settings Screen
 
         // Pose List Sequence Section Header
         item {

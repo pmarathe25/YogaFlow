@@ -20,14 +20,8 @@ object LevelDefinitions {
         LevelDef(10, "Infinite Samadhi", 153301..Int.MAX_VALUE)
     )
 
-    fun getLevelName(level: Int): String =
-        levels.firstOrNull { it.level == level }?.name ?: "Unknown"
-
     fun getLevelForXp(xp: Int): LevelDef =
         levels.last { it.xpRange.contains(xp) }
-
-    fun getXpForLevel(level: Int): Int =
-        levels.firstOrNull { it.level == level }?.xpRange?.first ?: 0
 
     fun getLevelProgress(xp: Int): Float {
         val currentLevel = getLevelForXp(xp)
@@ -37,13 +31,5 @@ object LevelDefinitions {
         if (rangeSize <= 0) return 1f
         val progress = (xp - currentLevel.xpRange.first).toFloat() / rangeSize
         return progress.coerceIn(0f, 1f)
-    }
-
-    fun remainingXpToNextLevel(xp: Int): String {
-        val currentLevel = getLevelForXp(xp)
-        val nextLevel = levels.firstOrNull { it.level == currentLevel.level + 1 }
-        if (nextLevel == null) return "Maximum level achieved!"
-        val needed = nextLevel.xpRange.first - xp
-        return "$needed XP to level up!"
     }
 }

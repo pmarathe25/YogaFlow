@@ -61,7 +61,7 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
     val countdownRemaining = sessionManager.countdownRemaining
     val speechState = sessionManager.speechState
     val currentPose = sessionManager.currentPose
-    val ambientMusicManager = sessionManager.ambientMusicManager
+    val tracks: List<com.example.model.AudioTrack> = sessionManager.tracks
 
     fun setThemeMode(mode: String) = settingsManager.setThemeMode(mode)
     fun setKeepScreenAwake(enabled: Boolean) = settingsManager.setKeepScreenAwake(enabled)
@@ -72,8 +72,6 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
 
     fun selectFlow(yogaFlow: YogaFlow) = sessionManager.selectFlow(yogaFlow)
     fun togglePlay() = sessionManager.togglePlay()
-    fun toggleMusicMute() = sessionManager.toggleMusicMute()
-    fun selectAmbientTrack(index: Int) = sessionManager.selectAmbientTrack(index)
     fun skipForward() = sessionManager.skipForward()
     fun skipBackward() = sessionManager.skipBackward()
     fun selectPoseDirectly(index: Int) = sessionManager.selectPoseDirectly(index)

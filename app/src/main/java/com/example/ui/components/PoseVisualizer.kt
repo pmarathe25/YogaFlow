@@ -21,8 +21,7 @@ import androidx.compose.ui.unit.sp
 
 enum class PoseAngle {
     FRONT,
-    SIDE,
-    PERSPECTIVE
+    SIDE
 }
 
 class PoseSkeleton(

@@ -11,6 +11,7 @@ import com.example.db.YogaDatabase
 import com.example.db.YogaSession
 import com.example.db.YogaSessionRepository
 import com.example.model.FlowLoader
+import com.example.model.AudioTrack
 import com.example.model.YogaFlow
 import com.example.model.YogaPose
 import kotlinx.coroutines.CoroutineScope
@@ -36,7 +37,9 @@ class SessionManager(
     
     val audioCueManager = AudioCueManager(context)
     private val zenSoundSynthesizer = ZenSoundSynthesizer(context)
-    val ambientMusicManager = AmbientMusicManager(context)
+    private val ambientMusicManager = AmbientMusicManager(context)
+
+    val tracks: List<AudioTrack> get() = ambientMusicManager.tracks
 
     private val _flow = MutableStateFlow<YogaFlow>(
         FlowLoader.getFlowById(context, "sun_salutation") 
@@ -145,22 +148,6 @@ class SessionManager(
         timerJob = null
         audioCueManager.stop()
         ambientMusicManager.pause()
-    }
-
-    fun toggleMusicMute() {
-        val newMuted = !settingsManager.isMusicMuted.value
-        ambientMusicManager.setMute(newMuted)
-        settingsManager.setIsMusicMuted(newMuted)
-    }
-
-    fun selectAmbientTrack(index: Int) {
-        if (index >= 0 && index < ambientMusicManager.tracks.size) {
-            ambientMusicManager.setCurrentTrackIndex(index)
-            settingsManager.setCurrentTrackIndex(index)
-            if (_isPlaying.value || _isCountdownActive.value) {
-                ambientMusicManager.play()
-            }
-        }
     }
 
     fun skipForward() {

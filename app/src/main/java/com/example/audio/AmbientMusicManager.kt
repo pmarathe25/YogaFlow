@@ -45,10 +45,4 @@ class AmbientMusicManager(private val context: Context) {
         context.startService(intent)
     }
 
-    fun getCurrentTrackName(): String = tracks.getOrNull(getCurrentTrackIndexSync())?.name ?: ""
-    
-    fun getCurrentTrackIndexSync(): Int {
-        return context.getSharedPreferences("ambient_music_prefs", Context.MODE_PRIVATE)
-            .getInt("current_track_index", 0)
     }
-}
