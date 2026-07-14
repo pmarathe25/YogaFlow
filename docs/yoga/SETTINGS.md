@@ -2,7 +2,7 @@
 
 ## App Settings
 
-Configured via `SettingsScreen.kt` and persisted by `SettingsViewModel` (backed by `SettingsManager.kt` / DataStore).
+Configured via `SettingsScreen.kt` and persisted by `SettingsManager.kt` (SharedPreferences).
 
 | Setting | Options | Default |
 |---------|---------|---------|
@@ -16,7 +16,7 @@ Configured via `SettingsScreen.kt` and persisted by `SettingsViewModel` (backed 
 
 ## Practice Reminders
 
-Managed by `ReminderViewModel` with Android alarm notifications.
+Managed by `ReminderManager` with Android alarm notifications.
 
 - Per-flow reminders with time and day-of-week selection
 - Tapping a reminder notification navigates directly to the flow detail screen
@@ -32,7 +32,7 @@ Managed by `ReminderViewModel` with Android alarm notifications.
 
 ## Implementation Details
 
-- Settings: `SettingsManager.kt` (DataStore Preferences)
+- Settings: `SettingsManager.kt` (SharedPreferences)
 - Reminders: `ReminderManager.kt` (AlarmManager), `ReminderDao.kt`, `ReminderEntity.kt`
-- ViewModels: `SettingsViewModel`, `ReminderViewModel`
+- ViewModels: `YogaViewModel` (delegates to `SettingsManager` / `ReminderManager`)
 - Screens: `SettingsScreen.kt`

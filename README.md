@@ -28,18 +28,17 @@ A guided yoga practice app for Android with pose visualizations, voice guidance,
 - **Database**: Room (yoga data) + SharedPreferences/Gson (game save)
 - **Audio**: ZenSoundSynthesizer, SoundPool, Android TTS
 - **Navigation**: Jetpack Navigation Compose
-- **Build**: Gradle with Kotlin DSL, AGP 9.1.1
+- **Build**: Gradle with Kotlin DSL, AGP 9.2.1
 
 ## Getting Started
 
 1. Open in Android Studio
-2. Remove `signingConfig = signingConfigs.getByName("debugConfig")` from `app/build.gradle.kts`
-3. Build and run on emulator or physical device
+2. Build and run on emulator or physical device
 
 ## Documentation
 
 Developer docs are in `docs/`:
 
-- `docs/YOGA/` — Yoga practice features
-- `docs/ZEN_BATTLE/` — Battle minigame
+- `docs/yoga/` — Yoga practice features
+- `docs/zen_battle/` — Battle minigame
 - `docs/ARCHITECTURE.md` — Full app structure

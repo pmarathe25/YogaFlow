@@ -23,7 +23,7 @@ app/src/main/java/com/example/
 ├── db/                       # Room database, entities, DAOs, repository
 ├── model/                    # Data models (YogaPose, YogaFlow, LevelDef, XpCalculator)
 ├── navigation/               # Screen sealed class with routes
-├── viewmodel/                # YogaViewModel (delegates to managers) + GameViewModel
+├── viewmodel/                # YogaViewModel (delegates to managers) + GameViewModel (facade: BattleOrchestrator, PartyManager, EconomyManager, GameSyncManager)
 ├── ui/
 │   ├── theme/                # Compose theme (colors, typography, frosted glass)
 │   ├── components/           # Shared composables (GlassCard, YogaPoseVisual, etc.)
@@ -56,12 +56,13 @@ sealed class Screen(val route: String) {
 YogaViewModel (top-level, delegates to managers)
 ├── SessionManager        — Active yoga session (playback, timer, pose navigation)
 ├── StatsManager          — Statistics, levels, XP, achievements
-├── SettingsManager       — User preferences (theme, audio, voice) via DataStore
+├── SettingsManager       — User preferences (theme, audio, voice) via SharedPreferences
 ├── ReminderManager       — Per-flow practice reminders (AlarmManager)
 └── YogaSessionRepository — Room data access for sessions
 
 GameViewModel (independent, for Zen Battle)
-    — Party management, battle engine, equipment, save/load
+    — Thin facade over BattleOrchestrator (battle engine), PartyManager (party/progression),
+      EconomyManager (sparks/gold), and GameSyncManager (save/load)
 ```
 
 ## Database (Room)
@@ -71,7 +72,6 @@ GameViewModel (independent, for Zen Battle)
 | `YogaSession` | `yoga_sessions` | Completed practice sessions |
 | `FavoriteFlow` | `favorite_flows` | User-starred flows |
 | `ReminderEntity` | `reminders` | Scheduled practice reminders |
-| `GardenItemEntity` | `garden_items` | Legacy Zen Garden decorations |
 
 ## Data Flow
 

@@ -44,4 +44,4 @@ The core feature of YogaFlow — guided yoga sessions with pose demonstrations, 
 
 ## Settings
 
-See `SettingsScreen.kt` and `SettingsViewModel` for all user preferences (theme, screen awake, audio, voice language, reminders).
+See `SettingsScreen.kt` and `SettingsManager` for all user preferences (theme, screen awake, audio, voice language, reminders).

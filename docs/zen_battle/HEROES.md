@@ -7,7 +7,7 @@ Five heroes, each with 1 basic attack + 4 class skills + 1 Ultimate.
 | Data | Location |
 |------|----------|
 | Hero definitions | `assets/game/heroes.json` |
-| Skill definitions | `assets/game/skills.json` (or embedded in heroes.json) |
+| Skill definitions | embedded in `assets/game/heroes.json` (`skills` array) |
 | Hero model | `game/model/Hero.kt` |
 | Data loading | `game/persistence/DataLoader.kt` |
 

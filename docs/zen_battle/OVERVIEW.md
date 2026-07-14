@@ -44,8 +44,12 @@ A turn-based battle minigame within YogaFlow. Players guide five yoga-virtue her
 
 ## Key Components
 
-- **GameViewModel** — Party management, battle engine, equipment, save/load
-- **BattleReducer** — Pure function battle state transitions
+- **GameViewModel** — Thin facade coordinating the battle engine, party, economy, and save/load
+  - **BattleOrchestrator** — Battle lifecycle and action orchestration
+  - **PartyManager** — Party management and hero progression
+  - **EconomyManager** — Sparks, gold, and reward economy
+  - **GameSyncManager** — Save/load synchronization
+- **BattleReducer** — Coordinator for pure battle state transitions (delegates to `DamageCalculator`, `MonsterAI`, `StatusResolver`, `TargetResolver`)
 - **TurnManager** — Speed-based turn queue
 - **BattleCanvas** — Canvas rendering for sprites, backgrounds, effects
 - **GameSaveManager** — SharedPreferences + Gson persistence

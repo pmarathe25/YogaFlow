@@ -6,12 +6,16 @@ Speed-based turn queue with interleaved hero/monster turns. Canvas-drawn sprites
 
 | Data | Location |
 |------|----------|
-| Combat logic | `game/battle/BattleReducer.kt` |
+| Combat logic (coordinator) | `game/battle/BattleReducer.kt` |
+| Damage calculation | `game/battle/DamageCalculator.kt` |
+| Monster AI | `game/battle/MonsterAI.kt` |
+| Status resolution | `game/battle/StatusResolver.kt` |
+| Target selection | `game/battle/TargetResolver.kt` |
 | Turn management | `game/battle/TurnManager.kt` |
 | Random provider | `game/battle/RandomProvider.kt` |
 | Sound effects | `game/battle/BattleSoundManager.kt` |
 | Status effects | `game/model/StatusEffect.kt` |
-| Element effectiveness | `game/model/Element.kt` |
+| Element effectiveness | `game/model/Skill.kt` (`Element` enum) |
 
 ## Turn System
 
@@ -24,7 +28,7 @@ Speed-based turn queue with interleaved hero/monster turns. Canvas-drawn sprites
 
 | Action | Ultimate Gauge | Description |
 |--------|---------------|-------------|
-| Skill | +20 | Use one of 3 class skills |
+| Skill | +20 | Use one of 4 class skills |
 | Ultimate | 0 (costs 100) | Hero's ultimate ability |
 | Defend | +30 | Skip turn, gain more gauge |
 | Combo | +20 each | Team attack consuming all participants' turns |
@@ -39,7 +43,7 @@ See `game/model/StatusEffect.kt` for current implementation.
 
 ## Element Effectiveness
 
-See `game/model/Element.kt` for the current effectiveness matrix.
+See `game/model/Skill.kt` (`Element` enum) for the current effectiveness matrix.
 
 ## Battle Layout
 

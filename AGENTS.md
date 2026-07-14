@@ -30,7 +30,7 @@ Android app (Kotlin + Jetpack Compose) with two domains: **Yoga Practice** (prim
 ```
 
 ## Key Gradle Config (app/build.gradle.kts)
-- **compileSdk**: 36 (Android 14, minorApiLevel 1)
+- **compileSdk**: 36 (Android 16, minorApiLevel 1)
 - **minSdk**: 24, **targetSdk**: 36
 - **Kotlin**: 2.2.10, **Compose BOM**: 2024.09.00, **AGP**: 9.2.1
 - **KSP** for Room compiler + Moshi codegen
@@ -42,7 +42,7 @@ Android app (Kotlin + Jetpack Compose) with two domains: **Yoga Practice** (prim
 - **Entry point**: `MainActivity.kt` → `NavHost` with 4-tab bottom nav
 - **Navigation**: Sealed class `Screen` in `navigation/Screen.kt`
 - **ViewModels**: `YogaViewModel` (delegates to Session/Stats/Settings/Reminder) + independent `GameViewModel`
-- **Database**: Room (`YogaSession`, `FavoriteFlow`, `ReminderEntity`, `GardenItemEntity`)
+- **Database**: Room (`YogaSession`, `FavoriteFlow`, `ReminderEntity`)
 - **Game save**: SharedPreferences + Gson (`game/persistence/GameSaveManager.kt`)
 
 ## Important Conventions
