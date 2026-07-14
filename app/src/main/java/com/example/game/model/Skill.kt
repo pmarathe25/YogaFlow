@@ -1,8 +1,24 @@
 package com.example.game.model
 
+import androidx.compose.ui.graphics.Color
+
 enum class Element {
     FIRE, WATER, AIR, EARTH, LIGHT, DARK, SHADOW, ELECTRIC, VOID, NEUTRAL
 }
+
+val Element.color: Color
+    get() = when (this) {
+        Element.FIRE -> Color(0xFFE53935)
+        Element.WATER -> Color(0xFF1E88E5)
+        Element.AIR -> Color(0xFFB0BEC5)
+        Element.EARTH -> Color(0xFF795548)
+        Element.LIGHT -> Color(0xFFFFF176)
+        Element.DARK -> Color(0xFF7B1FA2)
+        Element.SHADOW -> Color(0xFF455A64)
+        Element.ELECTRIC -> Color(0xFFFFEB3B)
+        Element.VOID -> Color(0xFF9C27B0)
+        Element.NEUTRAL -> Color(0xFF9E9E9E)
+    }
 
 enum class DamageType {
     PHYSICAL, ELEMENTAL

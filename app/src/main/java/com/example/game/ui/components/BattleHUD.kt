@@ -46,7 +46,7 @@ fun FloatingHUD(
     width: Int = 80,
     hpBarColor: Color? = null
 ) {
-    val accentColor = elementToColor(element)
+    val accentColor = element.color
     val hpPercent = hp.toFloat() / maxHp.coerceAtLeast(1)
     
     val animatedHpPercent by animateFloatAsState(
@@ -212,21 +212,6 @@ fun StatusIcon(type: StatusEffectType, iconSize: Int = 12) {
             fontWeight = FontWeight.ExtraBold,
             textAlign = TextAlign.Center
         )
-    }
-}
-
-fun elementToColor(element: Element): Color {
-    return when (element) {
-        Element.FIRE -> Color(0xFFF44336)
-        Element.WATER -> Color(0xFF2196F3)
-        Element.AIR -> Color(0xFFE1F5FE)
-        Element.EARTH -> Color(0xFF795548)
-        Element.LIGHT -> Color(0xFFFFF176)
-        Element.DARK -> Color(0xFF3F51B5)
-        Element.SHADOW -> Color(0xFF455A64)
-        Element.ELECTRIC -> Color(0xFFFFEB3B)
-        Element.VOID -> Color(0xFF9C27B0)
-        Element.NEUTRAL -> Color(0xFF9E9E9E)
     }
 }
 

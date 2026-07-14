@@ -441,7 +441,7 @@ private fun DrawScope.drawPathSegments(
 
         when {
             isCompleted -> {
-                val glowColor = elementToColor(sortedMonsters[i].element)
+                val glowColor = sortedMonsters[i].element.color
                 drawPath(segPath, glowColor.copy(alpha = 0.5f), style = Stroke(width = 5f * dpScale, cap = StrokeCap.Round))
                 drawPath(segPath, glowColor.copy(alpha = 0.2f), style = Stroke(width = 12f * dpScale, cap = StrokeCap.Round))
             }
@@ -473,9 +473,9 @@ private fun DrawScope.drawNodes(
         val isLocked = !isUnlocked && !isDefeated
         val isBoss = monster.isBoss
         val difficulty = monster.difficultyTier
-        val elColor = elementToColor(monster.element)
+val elColor = monster.element.color
 
-        val cy = startY + index * sH + sH / 2f
+    val cy = startY + index * sH + sH / 2f
         val cx = size.width / 2f + sin(index * 0.8f) * PATH_AMPLITUDE.value * dpScale
 
         val nodeScale = when (difficulty) {
@@ -691,7 +691,7 @@ private fun MonsterConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val elColor = elementToColor(monster.element)
+    val elColor = monster.element.color
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -828,7 +828,7 @@ private fun StatChip(label: String, value: String, color: Color) {
 
 @Composable
 private fun PartyHeroRow(heroDef: Hero, pm: PartyMemberData) {
-    val heroColor = elementToColor(heroDef.element)
+    val heroColor = heroDef.element.color
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)

@@ -70,7 +70,7 @@ fun BattleScene(viewModel: GameViewModel) {
     )
 
     val monster = state.monsters.firstOrNull()
-    val monsterColor = monster?.let { elementToColor(it.element) } ?: Color.Gray
+    val monsterColor = monster?.let { it.element.color } ?: Color.Gray
     val isBoss = monster?.isBoss ?: false
 
     // ─── Battle UI States ──────────────────────────────────────────
@@ -361,7 +361,7 @@ fun BattleScene(viewModel: GameViewModel) {
                                             isMonster = false,
                                             name = hero.id,
                                             heroId = hero.id.toIntOrNull() ?: 0,
-                                            elementColor = elementToColor(hero.element),
+                                            elementColor = hero.element.color,
                                             isActive = !hero.isDefeated,
                                             isFlashing = heroFlash > 0f,
                                             flashColor = heroFlashColors[hero.id] ?: Color.Red,
@@ -468,6 +468,7 @@ fun BattleScene(viewModel: GameViewModel) {
             events = state.eventLog,
             heroPositions = heroPositions,
             monsterPosition = monsterPos,
+            heroNames = state.heroes.map { it.id to it.name }.toMap(),
             pool = pool,
             shakeHandle = shakeHandle,
             soundManager = soundManager,
@@ -579,7 +580,7 @@ fun TurnOrderList(state: BattleState) {
             val isCurrentlyActive = isActive || isComboParticipant
             val actorIndex = state.turnOrder.indexOf(actor)
             val hasActed = actorIndex >= 0 && actorIndex < state.currentTurnIndex
-            val color = elementToColor(actor.element)
+            val color = actor.element.color
 
             Text(
                 text = actor.name.uppercase(),

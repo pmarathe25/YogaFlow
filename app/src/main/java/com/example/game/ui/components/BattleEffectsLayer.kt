@@ -32,6 +32,7 @@ fun BattleEffectsLayer(
     events: List<BattleEvent>,
     heroPositions: Map<String, Offset>,
     monsterPosition: Offset,
+    heroNames: Map<String, String>,
     pool: ParticlePool,
     shakeHandle: ShakeHandle,
     soundManager: BattleSoundManager,
@@ -125,7 +126,7 @@ fun BattleEffectsLayer(
                         val flashElement = event.skill.damageComponents.firstOrNull()?.element ?: Element.NEUTRAL
                         val flashColor = when {
                             event.skill.healScaling != null -> Color(0xFF66BB6A)
-                            else -> elementToColor(flashElement)
+                            else -> flashElement.color
                         }
                         screenTintColor = flashColor
                         screenTintAlpha = 0.2f
@@ -179,11 +180,11 @@ fun BattleEffectsLayer(
 
                     // Ultimate cut-in
                     if (event.skill.ultimateGain == 0 && event.skill.damageComponents.isNotEmpty()) {
-                        val heroName = stateHeroName(events, event.heroId)
+                        val heroName = heroNames[event.heroId] ?: event.heroId
                         cutInText = "${heroName.uppercase()} unleashes\n${event.skill.name.uppercase()}!"
-                        cutInColor = elementToColor(
+                        cutInColor = (
                             event.skill.damageComponents.firstOrNull()?.element ?: Element.NEUTRAL
-                        )
+                        ).color
                         showCutIn = true
                         scope.launch {
                             shakeHandle.shake(intensity = 10f, durationMs = 500)
@@ -314,11 +315,6 @@ fun BattleEffectsLayer(
             onExpired = { id -> damageNumbers.removeAll { it.id == id } }
         )
     }
-}
-
-private fun stateHeroName(events: List<BattleEvent>, heroId: String): String {
-    // This is just a fallback; the actual rendering uses the current state
-    return heroId
 }
 
 fun emitterConfigForElement(element: Element): EmitterConfig {

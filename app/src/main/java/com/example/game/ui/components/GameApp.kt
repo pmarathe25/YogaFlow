@@ -16,7 +16,7 @@ fun GameApp(
 
     BackHandler(enabled = currentScreen != GameScreen.HUB) {
         when (currentScreen) {
-            GameScreen.PARTY, GameScreen.SHOP, GameScreen.TROPHIES, GameScreen.EQUIPMENT, GameScreen.SETTINGS -> onExitHub()
+            GameScreen.PARTY, GameScreen.SHOP, GameScreen.TROPHIES -> onExitHub()
             else -> viewModel.navigateBack()
         }
     }
@@ -41,15 +41,10 @@ fun GameApp(
             )
             GameScreen.BATTLE -> BattleScene(viewModel = viewModel)
             GameScreen.PARTY -> PartyScreen(viewModel = viewModel, onBack = onExitHub)
-            GameScreen.EQUIPMENT -> PartyScreen(viewModel = viewModel, onBack = onExitHub)
             GameScreen.TROPHIES -> TrophyScreen(viewModel = viewModel, onBack = onExitHub)
             GameScreen.SHOP -> ShopScreen(viewModel = viewModel, onBack = onExitHub)
             GameScreen.BATTLE_RESULT -> BattleResultScreen(viewModel = viewModel)
-            GameScreen.SETTINGS -> HubScreen(
-                model = viewModel,
-                onNavigateToBattle = { monsterId -> viewModel.startBattle(monsterId) },
-                onExitHub = onExitHub
-            )
+            else -> Unit
         }
     }
 }

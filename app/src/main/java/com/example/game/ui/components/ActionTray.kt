@@ -409,7 +409,7 @@ private fun HandOfCards(
 
                         SkillCard(
                             skill = item,
-                            heroColor = elementToColor(currentHero.element),
+                            heroColor = currentHero.element.color,
                             isUltimate = isUlt,
                             ultReady = ultReady,
                             heroLevel = currentHero.level,
@@ -722,13 +722,8 @@ private fun getCardColor(item: Any): Color {
             else when {
                 item.healScaling != null -> Color(0xFF66BB6A)
                 item.shieldScaling != null -> Color(0xFF42A5F5)
-                item.damageComponents.any { it.element == Element.FIRE } -> Color(0xFFE53935)
-                item.damageComponents.any { it.element == Element.WATER } -> Color(0xFF1E88E5)
-                item.damageComponents.any { it.element == Element.AIR } -> Color(0xFFB0BEC5)
-                item.damageComponents.any { it.element == Element.EARTH } -> Color(0xFF795548)
-                item.damageComponents.any { it.element == Element.LIGHT } -> Color(0xFFFFF176)
-                item.damageComponents.any { it.element == Element.DARK || it.element == Element.SHADOW } -> Color(0xFF7B1FA2)
-                else -> Color(0xFF9E9E9E)
+                item.damageComponents.any { it.element == Element.DARK || it.element == Element.SHADOW } -> Element.DARK.color
+                else -> item.damageComponents.firstNotNullOfOrNull { it.element }?.color ?: Element.NEUTRAL.color
             }
         }
         is ComboSkill -> Color(0xFF9C27B0)

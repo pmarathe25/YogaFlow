@@ -135,7 +135,7 @@ private fun computeHeroStats(hero: Hero, level: Int): HeroStats {
 
 @Composable
 private fun HeroListItem(hero: Hero, partyMember: PartyMemberData?, isUnlocked: Boolean, onClick: () -> Unit) {
-    val heroColor = if (isUnlocked) elementToColor(hero.element) else Color.Gray
+    val heroColor = if (isUnlocked) hero.element.color else Color.Gray
 
     GlassCard(
         modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp).alpha(if (isUnlocked) 1f else 0.5f).clickable(enabled = isUnlocked) { onClick() },
@@ -190,7 +190,7 @@ private fun HeroListItem(hero: Hero, partyMember: PartyMemberData?, isUnlocked: 
 
 @Composable
 private fun PurchasableHeroItem(hero: Hero, sparks: Int, onPurchase: () -> Unit) {
-    val heroColor = elementToColor(hero.element)
+    val heroColor = hero.element.color
     val cost = hero.unlockYogaLevel
     val canAfford = sparks >= cost
 
@@ -253,7 +253,7 @@ fun HeroDetailsDialog(
     viewModel: GameViewModel,
     onDismiss: () -> Unit
 ) {
-    val heroColor = elementToColor(hero.element)
+    val heroColor = hero.element.color
     val levelUpCost = viewModel.getHeroLevelUpCost(hero.id)
     val canLevelUp = saveData.sparks >= levelUpCost
     val stats = computeHeroStats(hero, partyMember.level)
@@ -408,7 +408,7 @@ fun HeroDetailsDialog(
                         Box {
                             SkillCard(
                                 skill = skill,
-                                heroColor = elementToColor(hero.element),
+                                heroColor = hero.element.color,
                                 isUltimate = isUltimateSkill,
                                 ultReady = true,
                                 heroLevel = partyMember.level,

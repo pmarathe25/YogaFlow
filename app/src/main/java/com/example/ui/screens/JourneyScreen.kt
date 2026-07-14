@@ -28,11 +28,11 @@ import com.example.viewmodel.YogaViewModel
 
 import androidx.compose.ui.graphics.Color
 import com.example.game.ui.components.MonsterRoadSelection
-import com.example.game.ui.components.elementToColor
 import com.example.game.ui.components.drawMonsterShape
 import com.example.game.ui.components.TrophyModal
 import com.example.db.Achievement
 import com.example.game.model.Monster
+import com.example.game.model.color
 import com.example.game.persistence.DataLoader
 import com.example.game.viewmodel.GameViewModel
 import androidx.compose.animation.core.*
@@ -383,7 +383,7 @@ fun NavCard(
 
 @Composable
 private fun MonsterPreviewCircle(monster: Monster, size: Dp = 44.dp, isLocked: Boolean = false, isDefeated: Boolean = false) {
-    val elColor = elementToColor(monster.element)
+    val elColor = monster.element.color
     Box(
         modifier = Modifier.size(size),
         contentAlignment = Alignment.Center

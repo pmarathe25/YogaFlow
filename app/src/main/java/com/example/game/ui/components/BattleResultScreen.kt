@@ -31,8 +31,12 @@ fun BattleResultScreen(viewModel: GameViewModel) {
     val goldEarned by viewModel.goldEarned.collectAsState()
     val turnsTaken = battleState?.turnsTaken ?: 0
     val totalDamageDealt = remember(battleState) {
-        battleState?.eventLog?.filterIsInstance<BattleEvent.SkillUsed>()?.sumOf { e ->
-            e.outcomes.sumOf { it.damageDealt }
+        battleState?.eventLog?.sumOf { event ->
+            when (event) {
+                is BattleEvent.SkillUsed -> event.outcomes.sumOf { it.damageDealt }
+                is BattleEvent.ComboUsed -> event.outcome.damageDealt
+                else -> 0
+            }
         } ?: 0
     }
 

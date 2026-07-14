@@ -17,16 +17,12 @@ enum class EquipmentTier {
     }
 }
 
-enum class HeroClass {
-    HEALER, TANK, DPS, BUFFER, MAGE
-}
-
 data class Equipment(
     val id: String,
     val name: String,
     val slot: EquipmentSlot,
     val tier: EquipmentTier,
-    val heroClass: HeroClass? = null,
+    val heroClass: HeroRole? = null,
     val heroId: Int? = null,
     val minYogaLevel: Int = 1,
     val minHeroLevel: Int = 1,
