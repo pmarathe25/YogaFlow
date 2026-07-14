@@ -69,9 +69,9 @@ class GameSaveManager(private val context: Context) {
         return try {
             val json = context.assets.open("game/default_save.json")
                 .bufferedReader().use { it.readText() }
-            gson.fromJson(json, GameProgress::class.java).normalized()
+            gson.fromJson(json, GameProgress::class.java)?.normalized() ?: GameProgress().normalized()
         } catch (e: Exception) {
-            GameProgress()
+            GameProgress().normalized()
         }
     }
 
@@ -152,11 +152,14 @@ class GameSaveManager(private val context: Context) {
     private fun GameProgress.normalized(): GameProgress {
         var result = copy(
             version = 3,
-            party = party.map {
-                it.copy(equippedItemIds = it.equippedItemIds.map(::normalizeItemId))
+            party = (party ?: emptyList()).map {
+                it.copy(
+                    level = it.level ?: 1,
+                    equippedItemIds = it.equippedItemIds.orEmpty()
+                )
             },
-            unlockedHeroIds = unlockedHeroIds,
-            defeatedMonsterIds = defeatedMonsterIds.map(::normalizeMonsterId).toSet()
+            unlockedHeroIds = unlockedHeroIds ?: emptySet(),
+            defeatedMonsterIds = (defeatedMonsterIds ?: emptySet()).map(::normalizeMonsterId).toSet()
         )
         if (1 !in result.unlockedHeroIds) {
             result = result.copy(unlockedHeroIds = result.unlockedHeroIds + 1)

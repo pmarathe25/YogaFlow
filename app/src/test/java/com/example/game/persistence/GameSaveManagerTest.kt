@@ -26,8 +26,9 @@ class GameSaveManagerTest {
     fun `default save loads with version 3`() {
         val data = saveManager.loadGame()
         assertEquals(3, data.version)
-        assertTrue(data.party.isEmpty())
-        assertTrue(data.unlockedHeroIds.isEmpty())
+        assertEquals(1, data.party.size)
+        assertTrue(data.party.any { it.heroId == 1 })
+        assertTrue(data.unlockedHeroIds.contains(1))
         assertEquals(0, data.sparks)
         assertEquals(1, data.yogaLevel)
     }
@@ -234,9 +235,14 @@ class GameSaveManagerTest {
     fun `default save loaded from assets has expected structure`() {
         val data = saveManager.loadGame()
         assertEquals(3, data.version)
-        assertNotNull(data.party)
-        assertNotNull(data.unlockedHeroIds)
-        assertNotNull(data.inventory)
-        assertNotNull(data.defeatedMonsterIds)
+        assertEquals(1, data.party.size)
+        assertTrue(data.party.any { it.heroId == 1 })
+        assertTrue(data.unlockedHeroIds.contains(1))
+        assertTrue(data.inventory.isEmpty())
+        assertTrue(data.defeatedMonsterIds.isEmpty())
+        assertEquals(0, data.sparks)
+        assertEquals(1, data.yogaLevel)
+        assertEquals(0, data.gold)
+        assertEquals(0, data.totalBattlesWon)
     }
 }

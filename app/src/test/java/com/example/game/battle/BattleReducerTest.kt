@@ -7,7 +7,6 @@ import org.junit.Test
 class BattleReducerTest {
 
     private val fixedRng = object : RandomProvider {
-        private var floatCalls = 0
         override fun nextFloat(): Float = 0.5f
         override fun nextInt(until: Int): Int = 0
     }
@@ -471,6 +470,7 @@ class BattleReducerTest {
         val h2 = makeCombatant(id = "h2", speed = 100)
         val monster = makeCombatant(id = "m1", isMonster = true, speed = 50)
         val state = turnManager.startBattle(listOf(h1, h2), listOf(monster))
+        assertFalse(state.isComboAvailable)
     }
 
     @Test
