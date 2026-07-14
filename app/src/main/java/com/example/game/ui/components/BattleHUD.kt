@@ -191,6 +191,7 @@ fun StatusIcon(type: StatusEffectType, iconSize: Int = 12) {
         StatusEffectType.DAMAGE_REDUCTION -> "DRD" to Color.Blue
         StatusEffectType.DEF_DOWN -> "DEF↓" to Color.Gray
         StatusEffectType.SHIELD -> "SHD" to Color.Cyan
+        StatusEffectType.REFLECT -> "RFL" to Color.Magenta
     }
 
     Box(

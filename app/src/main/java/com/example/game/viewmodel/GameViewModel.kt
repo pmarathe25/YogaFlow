@@ -147,7 +147,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
         val battleHeroes = partyMembers.mapNotNull { pm ->
             val heroDef = DataLoader.heroes.find { it.id == pm.heroId } ?: return@mapNotNull null
-            heroDef.toCombatantState(pm)
+            val equipped = pm.equippedItemIds.mapNotNull { DataLoader.getEquipment(it) }
+            heroDef.toCombatantState(pm, equipped)
         }
         val monsterCombatant = monster.toCombatantState()
 
@@ -378,11 +379,61 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
         _goldEarned.value = goldReward
 
+        val defeatedIds = data.defeatedMonsterIds + monster.id.lowercase()
+        val finalState = _battleState.value
+        val battleLog = _battleLog.value
+        val comboUses = battleLog.count { it.contains("Party links") }
+        val usedUltimateOrCombo = battleLog.any { it.contains("unleashes") || it.contains("Party links") }
+        val noHeroDied = finalState?.heroes?.all { !it.isDefeated } ?: true
+        val heroesAboveHalf = finalState?.heroes?.all { it.hp >= it.maxHp * 0.5 } ?: false
+        val killedBeforeBerserk = finalState?.monsters?.firstOrNull { it.id == monster.id }?.activePhase == -1
+        val round = finalState?.round ?: 1
+        val allBossesDefeated = DataLoader.monsters.filter { it.isBoss }.all { it.id.lowercase() in defeatedIds }
+
+        val existing = data.earnedTrophyIds.toMutableSet()
+        val allBadges = DataLoader.trophies.filter { it.category == TrophyCategory.BADGE }
+        val allTrophies = DataLoader.trophies
+
+        allBadges.forEach { t ->
+            if (t.id !in existing && t.monsterId != null && t.monsterId.lowercase() in defeatedIds) {
+                existing.add(t.id)
+            }
+        }
+
+        DataLoader.trophies.filter { it.category == TrophyCategory.TROPHY }.forEach { t ->
+            if (t.id in existing) return@forEach
+            val met = when (t.condition) {
+                TrophyCondition.DEFEAT_MONSTER -> t.monsterId != null && t.monsterId.lowercase() in defeatedIds
+                TrophyCondition.NO_HERO_BELOW_50 -> heroesAboveHalf
+                TrophyCondition.WITHIN_ROUNDS -> round <= 5
+                TrophyCondition.KILL_BEFORE_BERSERK -> killedBeforeBerserk
+                TrophyCondition.NO_DEATHS -> noHeroDied
+                TrophyCondition.FIRST_ROUND -> round == 1
+                TrophyCondition.ALL_COMBOS -> comboUses > 0
+                TrophyCondition.NO_ULTIMATE_OR_COMBO -> !usedUltimateOrCombo
+                TrophyCondition.ALL_BOSSES_SAME_PARTY -> allBossesDefeated
+                TrophyCondition.THREE_HERO_COMBOS_SINGLE_BATTLE -> comboUses >= 3
+                else -> false
+            }
+            if (met) existing.add(t.id)
+        }
+
+        DataLoader.trophies.filter { it.category == TrophyCategory.TROPHY }.forEach { t ->
+            if (t.id in existing) return@forEach
+            val met = when (t.condition) {
+                TrophyCondition.COLLECT_ALL_BADGES -> allBadges.all { it.id in existing }
+                TrophyCondition.COLLECT_ALL -> allTrophies.all { it.id == t.id || it.id in existing }
+                else -> false
+            }
+            if (met) existing.add(t.id)
+        }
+
         _saveData.value = data.copy(
             totalBattlesWon = data.totalBattlesWon + 1,
-            defeatedMonsterIds = data.defeatedMonsterIds + monster.id.lowercase(),
+            defeatedMonsterIds = defeatedIds,
             gold = data.gold + goldReward,
             inventory = inventory,
+            earnedTrophyIds = existing.toSet(),
             lastPlayedTimestamp = System.currentTimeMillis()
         )
         saveGame()

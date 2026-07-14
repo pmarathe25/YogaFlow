@@ -3,6 +3,10 @@ package com.example.game.battle
 import com.example.game.model.*
 import com.example.game.model.BattlePhase.*
 
+private object BattleTuning {
+    const val CRIT_CHANCE = 0.1f
+}
+
 private data class DamageResult(
     val amount: Int,
     val isCrit: Boolean,
@@ -32,7 +36,7 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
         val readyHeroes = heroes.map {
             it.copy(
                 hp = it.maxHp,
-                shield = 0,
+                shield = it.shield,
                 gauge = 0,
                 isDefeated = false
             )
@@ -228,10 +232,10 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
             actionsRemaining--
             actionsTaken++
             val monster = state.monsters.firstOrNull { it.id == monsterId && !it.isDefeated } ?: break
-            val (preMonster, preEvents) = checkPhaseTriggers(monster)
-            state = state.withUpdatedMonster(monsterId) { preMonster }
+            val (preState, preEvents) = checkPhaseTriggers(state, monsterId)
+            state = preState
             events += preEvents
-            logs += preEvents.filterIsInstance<BattleEvent.PhaseTriggered>().map { "${preMonster.name} shifts the arena." }
+            logs += preEvents.filterIsInstance<BattleEvent.PhaseTriggered>().map { "${monster.name} shifts the arena." }
 
             val activeMonster = state.monsters.firstOrNull { it.id == monsterId && !it.isDefeated } ?: break
             val useSpecial = rng.nextFloat() < (activeMonster.aiBehavior?.specialChance ?: 0.3f) || activeMonster.turnsSinceLastSpecial >= 3
@@ -263,9 +267,10 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
 
             val postMonster = state.monsters.firstOrNull { it.id == monsterId && !it.isDefeated }
             if (postMonster != null) {
-                val (triggeredMonster, postEvents) = checkPhaseTriggers(postMonster)
+                val (afterTriggerState, postEvents) = checkPhaseTriggers(state, monsterId)
+                val triggeredMonster = afterTriggerState.monsters.firstOrNull { it.id == monsterId } ?: postMonster
                 val queued = triggeredMonster.extraActionsThisRound.coerceAtMost(maxActions - actionsTaken)
-                state = state.withUpdatedMonster(monsterId) { triggeredMonster.copy(extraActionsThisRound = 0) }
+                state = afterTriggerState.withUpdatedMonster(monsterId) { it.copy(extraActionsThisRound = 0) }
                 events += postEvents
                 logs += postEvents.filterIsInstance<BattleEvent.PhaseTriggered>().map { "${triggeredMonster.name} gathers momentum." }
                 actionsRemaining += queued
@@ -433,6 +438,7 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
         var totalShield = 0
         val perTarget = mutableMapOf<String, TargetResult>()
         val breakdown = mutableListOf<DamageBreakdown>()
+        val isCrit = rng.nextFloat() < BattleTuning.CRIT_CHANCE
 
         for (targetId in targets) {
             var tDmg = 0
@@ -467,7 +473,8 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
                             attackerElement = combatant.element,
                             defenderElement = defenderElement,
                             damageComponent = component,
-                            atkBuffMultiplier = atkBuff + (spdBuff * 0.1f)
+                            atkBuffMultiplier = atkBuff + (spdBuff * 0.1f),
+                            isCrit = isCrit
                         )
 
                         val finalAmount = (result.amount * (1f - dmgReduction)).toInt().coerceAtLeast(1)
@@ -510,6 +517,7 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
             outcome = ActionOutcome(
                 action = TurnAction.SKILL, actorId = combatant.id, skillUsed = skill, targets = targets,
                 damageDealt = totalDamage, healingDone = totalHeal, shieldApplied = totalShield,
+                wasCrit = isCrit,
                 damageTypeBreakdown = breakdown, perTargetResult = perTarget
             ),
             events = emptyList()
@@ -648,6 +656,7 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
         var totalDamage = 0
         val perTarget = mutableMapOf<String, TargetResult>()
         val breakdown = mutableListOf<DamageBreakdown>()
+        val isCrit = rng.nextFloat() < BattleTuning.CRIT_CHANCE
 
         for (targetId in targets) {
             val hero = state.heroes.find { it.id == targetId && !it.isDefeated } ?: continue
@@ -663,11 +672,18 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
             if (damageComponents.isNotEmpty()) {
                 repeat(skill.hits.coerceAtLeast(1)) {
                     for (component in damageComponents) {
-                        val elementMult = getElementMultiplier(monster.element, component.element ?: hero.element)
                         val dmgReduction = computeBuffMultiplier(state, hero.id, StatusEffectType.DAMAGE_REDUCTION)
-                        val dmg = (skill.baseDamage * elementMult * (1f - dmgReduction)).toInt().coerceAtLeast(1)
-                        tDmg += dmg
-                        breakdown.add(DamageBreakdown(component.type, component.element, dmg))
+                        val result = computeDamage(
+                            baseDamage = skill.baseDamage,
+                            attackerAtk = monster.attack,
+                            attackerElement = monster.element,
+                            defenderElement = hero.element,
+                            damageComponent = component,
+                            isCrit = isCrit
+                        )
+                        val finalAmount = (result.amount * (1f - dmgReduction)).toInt().coerceAtLeast(1)
+                        tDmg += finalAmount
+                        breakdown.add(DamageBreakdown(component.type, component.element, finalAmount))
                     }
                 }
             }
@@ -685,7 +701,8 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
         return SkillOutcomeResult(
             outcome = ActionOutcome(
                 action = TurnAction.SKILL, actorId = monster.id, skillUsed = skill, targets = targets,
-                damageDealt = totalDamage, damageTypeBreakdown = breakdown, perTargetResult = perTarget
+                damageDealt = totalDamage, wasCrit = isCrit,
+                damageTypeBreakdown = breakdown, perTargetResult = perTarget
             ),
             events = emptyList()
         )
@@ -720,6 +737,22 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
                     c = c.copy(shield = 0, hp = (c.hp - remaining).coerceAtLeast(0))
                 }
                 combatantUpdates[targetId] = c
+
+                val reflectStatus = state.statusEffects[targetId]?.firstOrNull { it.statusType == StatusEffectType.REFLECT }
+                if (reflectStatus != null && reflectStatus.value > 0f && outcome.actorId != targetId) {
+                    val reflectAmount = (dmg * reflectStatus.value).toInt().coerceAtLeast(1)
+                    val attacker = combatantUpdates[outcome.actorId] ?: state.heroes.find { it.id == outcome.actorId }
+                        ?: state.monsters.find { it.id == outcome.actorId }
+                    if (attacker != null) {
+                        val reflected = if (attacker.shield >= reflectAmount) {
+                            attacker.copy(shield = attacker.shield - reflectAmount)
+                        } else {
+                            val rem = reflectAmount - attacker.shield
+                            attacker.copy(shield = 0, hp = (attacker.hp - rem).coerceAtLeast(0))
+                        }
+                        combatantUpdates[outcome.actorId] = reflected
+                    }
+                }
             }
 
             if (shieldDmg > 0) {
@@ -823,13 +856,20 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
         )
     }
 
+    private fun BattleState.isMonsterUntargetable(monsterId: String): Boolean {
+        val monster = monsters.firstOrNull { it.id == monsterId } ?: return false
+        if (monster.activePhase < 0) return false
+        val phase = monster.phases.getOrNull(monster.activePhase)
+        return phase?.triggers?.any { it.type == PhaseTriggerType.BECOME_UNTARGETABLE } == true
+    }
+
     fun resolveTargets(
         skill: Skill,
         casterId: String,
         state: BattleState
     ): List<String> {
         val aliveHeroes = state.aliveHeroes
-        val aliveMonsters = state.aliveMonsters
+        val aliveMonsters = state.aliveMonsters.filter { !state.isMonsterUntargetable(it.id) }
         return when (skill.targetType) {
             TargetType.SELF -> listOf(casterId)
             TargetType.SINGLE_ALLY -> {
@@ -844,26 +884,60 @@ class BattleReducer(private val rng: RandomProvider = DefaultRandomProvider) {
     }
 
     private fun checkPhaseTriggers(
-        monster: CombatantState
-    ): Pair<CombatantState, List<BattleEvent>> {
+        state: BattleState,
+        monsterId: String
+    ): Pair<BattleState, List<BattleEvent>> {
         val events = mutableListOf<BattleEvent>()
-        var updated = monster
-        for (i in updated.phases.indices) {
-            val phase = updated.phases[i]
-            if (updated.hpPercent <= phase.hpThreshold && updated.activePhase < i) {
-                updated = updated.copy(activePhase = i)
+        var monster = state.monsters.firstOrNull { it.id == monsterId && !it.isDefeated }
+            ?: return Pair(state, emptyList())
+        var statusEffects = state.statusEffects
+        val addedMonsters = mutableListOf<CombatantState>()
+        for (i in monster.phases.indices) {
+            val phase = monster.phases[i]
+            if (monster.hpPercent <= phase.hpThreshold && monster.activePhase < i) {
+                monster = monster.copy(activePhase = i)
                 phase.triggers.forEach { trigger ->
-                    events.add(BattleEvent.PhaseTriggered(updated.id, i, trigger))
+                    events.add(BattleEvent.PhaseTriggered(monster.id, i, trigger))
                     when (trigger.type) {
-                        PhaseTriggerType.EXTRA_ACTION -> updated = updated.copy(extraActionsThisRound = updated.extraActionsThisRound + 1)
-                        PhaseTriggerType.DOUBLE_ACTIONS -> updated = updated.copy(extraActionsThisRound = 2)
-                        PhaseTriggerType.GAIN_SHIELD -> updated = updated.copy(shield = updated.shield + (updated.maxHp * trigger.value).toInt())
+                        PhaseTriggerType.EXTRA_ACTION -> monster = monster.copy(extraActionsThisRound = monster.extraActionsThisRound + 1)
+                        PhaseTriggerType.DOUBLE_ACTIONS -> monster = monster.copy(extraActionsThisRound = 2)
+                        PhaseTriggerType.GAIN_SHIELD -> monster = monster.copy(shield = monster.shield + (monster.maxHp * trigger.value).toInt())
+                        PhaseTriggerType.REFLECT_DAMAGE -> {
+                            val existing = statusEffects[monster.id] ?: emptyList()
+                            statusEffects = statusEffects + (monster.id to (existing + BattleStatus(monster.id, StatusEffectType.REFLECT, 999, trigger.value)))
+                        }
+                        PhaseTriggerType.BECOME_UNTARGETABLE -> {}
+                        PhaseTriggerType.SUMMON_ADD -> {
+                            val summonId = trigger.summonMonsterId ?: "summon_${monster.id}"
+                            val summon = CombatantState(
+                                id = summonId,
+                                side = CombatSide.MONSTER,
+                                name = summonId,
+                                element = monster.element,
+                                maxHp = 200,
+                                hp = 200,
+                                attack = 30,
+                                speed = 50,
+                                level = 1,
+                                phases = listOf(MonsterPhase(1f, emptyList())),
+                                aiBehavior = AIBehavior(specialChance = 0f)
+                            )
+                            addedMonsters.add(summon)
+                        }
                         else -> {}
                     }
                 }
             }
         }
-        return Pair(updated, events)
+        var newState = state.withUpdatedMonster(monsterId) { monster }
+        newState = newState.copy(statusEffects = statusEffects)
+        if (addedMonsters.isNotEmpty()) {
+            newState = newState.copy(
+                monsters = newState.monsters + addedMonsters,
+                turnOrder = newState.turnOrder + addedMonsters.map { BattleActor(it.id, it.name, it.speed, false, it.element) }
+            )
+        }
+        return Pair(newState, events)
     }
 
     private fun chooseMonsterTarget(

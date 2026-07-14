@@ -11,7 +11,8 @@ enum class StatusEffectType {
     DAMAGE_REDUCTION,
     TAUNT,
     STUN,
-    CONFUSE
+    CONFUSE,
+    REFLECT
 }
 
 data class StatusEffectInfliction(
