@@ -162,6 +162,7 @@ private fun HandOfCards(
     var isDragPopped by remember { mutableStateOf(false) }
     var popAnchorX by remember { mutableFloatStateOf(0f) }
     var dragFromSelected by remember { mutableStateOf(false) }
+    var dragStartCenterX by remember { mutableFloatStateOf(0f) }
 
     val actedHeroIds = remember(turnOrder, currentTurnIndex) {
         turnOrder
@@ -271,6 +272,7 @@ private fun HandOfCards(
                                     dragCardIndex = touchedIdx
                                     isDragPopped = alreadyPopped
                                     dragFromSelected = alreadyPopped
+                                    dragStartCenterX = boxWidth / 2f + (touchedIdx - centerIndex) * cardSpacingPx
                                     if (alreadyPopped) {
                                         popAnchorX = downPos.x
                                     }
@@ -292,7 +294,6 @@ private fun HandOfCards(
                                         if (!isDragPopped && dragOffsetY < -popThresholdPx) {
                                             isDragPopped = true
                                             popAnchorX = curPos.x
-                                            dragOffsetX = 0f
                                         }
                                         if (isDragPopped) {
                                             dragOffsetX = curPos.x - popAnchorX
@@ -337,6 +338,7 @@ private fun HandOfCards(
                             popAnchorX = 0f
                             isDragPopped = false
                             dragFromSelected = false
+                            dragStartCenterX = 0f
                             selectedCardIndex = -1
                             onCardDragEnd?.invoke()
                         }
@@ -354,6 +356,12 @@ private fun HandOfCards(
                     label = "cardAlpha_$index"
                 )
 
+                val popProgress by animateFloatAsState(
+                    targetValue = if (isSelected) 1f else 0f,
+                    animationSpec = if (isDragged) snap() else tween(250),
+                    label = "popProgress_$index"
+                )
+
                 val cardMod = Modifier
                     .alpha(cardAlpha)
                     .graphicsLayer {
@@ -361,25 +369,37 @@ private fun HandOfCards(
                             isDragged -> {
                                 val startTx = arcTx(index).dp.toPx()
                                 val startTy = arcTy(index).dp.toPx()
-                                if (dragFromSelected || isDragPopped) {
+                                if (dragFromSelected) {
                                     translationX = dragOffsetX
-                                    translationY = if (dragFromSelected) -popPositionPx + dragOffsetY else startTy + dragOffsetY
+                                    translationY = -popPositionPx + dragOffsetY
                                     rotationZ = 0f
                                     scaleX = 1.15f; scaleY = 1.15f
-                                } else {
-                                    val progress = (-dragOffsetY / popThresholdPx).coerceIn(0f, 1f)
-                                    translationX = startTx * (1f - progress)
-                                    translationY = startTy + min(dragOffsetY, 0f)
-                                    rotationZ = arcRotation(index) * (1f - progress)
+                                } else if (isDragPopped) {
+                                    val progress = (-dragOffsetY - popThresholdPx)
+                                        .coerceIn(0f, popThresholdPx) / popThresholdPx
+                                    translationX = dragStartCenterX * (1f - progress) + dragOffsetX
+                                    translationY = startTy + dragOffsetY
+                                    rotationZ = 0f
                                     scaleX = 1f + 0.15f * progress
                                     scaleY = 1f + 0.15f * progress
+                                } else {
+                                    val dragProgress = (-dragOffsetY / popThresholdPx).coerceIn(0f, 1f)
+                                    translationX = startTx * (1f - dragProgress)
+                                    translationY = startTy + min(dragOffsetY, 0f)
+                                    rotationZ = arcRotation(index) * (1f - dragProgress)
+                                    scaleX = 1f + 0.15f * dragProgress
+                                    scaleY = 1f + 0.15f * dragProgress
                                 }
                             }
                             isSelected -> {
-                                translationX = 0f
-                                translationY = -popPositionPx
-                                rotationZ = 0f
-                                scaleX = 1.15f; scaleY = 1.15f
+                                val startTx = arcTx(index).dp.toPx()
+                                val startTy = arcTy(index).dp.toPx()
+                                val comboOff = if (item is ComboSkill) 20f else 0f
+                                translationX = startTx * (1f - popProgress)
+                                translationY = startTy * (1f - popProgress) + (-popPositionPx) * popProgress - comboOff * (1f - popProgress)
+                                rotationZ = arcRotation(index) * (1f - popProgress)
+                                scaleX = 1f + 0.15f * popProgress
+                                scaleY = 1f + 0.15f * popProgress
                             }
                             else -> {
                                 translationX = arcTx(index).dp.toPx()
