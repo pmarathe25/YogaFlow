@@ -89,13 +89,37 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
                         )
                     }
                 }
+
+                Spacer(Modifier.width(8.dp))
+                Surface(
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "\uD83D\uDD2E",
+                            color = Color(0xFFAB47BC),
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            "${saveData.karmaXp}",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFAB47BC)
+                        )
+                    }
+                }
             }
 
             // Tier filter
             var selectedTierFilter by remember { mutableStateOf<EquipmentTier?>(null) }
 
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(listOf(null) + EquipmentTier.values().toList()) { tier ->
+                items(listOf(null, EquipmentTier.COMMON, EquipmentTier.UNCOMMON, EquipmentTier.RARE)) { tier ->
                     val label = tier?.name?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "All"
                     FilterChip(
                         selected = selectedTierFilter == tier,
@@ -112,6 +136,7 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
 
             val available = DataLoader.equipment.filter { eq ->
                 eq.slot == selectedCategory &&
+                eq.tier != EquipmentTier.UNIQUE &&
                 (selectedTierFilter == null || eq.tier == selectedTierFilter)
             }
 
@@ -139,8 +164,7 @@ fun ShopScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.naviga
                     val tierOrder = listOf(
                         EquipmentTier.COMMON,
                         EquipmentTier.UNCOMMON,
-                        EquipmentTier.RARE,
-                        EquipmentTier.UNIQUE
+                        EquipmentTier.RARE
                     )
                     for (tier in tierOrder) {
                         val tierItems = grouped[tier].orEmpty()

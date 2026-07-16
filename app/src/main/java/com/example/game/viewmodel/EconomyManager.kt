@@ -1,6 +1,7 @@
 package com.example.game.viewmodel
 
 import com.example.game.model.BattleState
+import com.example.game.model.EquipmentTier
 import com.example.game.model.GameProgress
 import com.example.game.persistence.DataLoader
 import com.example.game.persistence.GameSaveManager
@@ -19,6 +20,7 @@ internal class EconomyManager(
         if (data.yogaLevel < item.yogaLevelRequired) return false
         if (data.gold < item.goldCost) return false
         if (itemId in data.inventory) return false
+        if (item.tier == EquipmentTier.UNIQUE) return false
 
         _saveData.value = data.copy(
             gold = data.gold - item.goldCost,
