@@ -42,6 +42,7 @@ fun YogaDashboardScreen(
     val beginnerFlows = allFlows.filter { it.difficulty.equals("Beginner", ignoreCase = true) }
     val intermediateFlows = allFlows.filter { it.difficulty.equals("Intermediate", ignoreCase = true) }
     val advancedFlows = allFlows.filter { it.difficulty.equals("Advanced", ignoreCase = true) }
+    val intervalFlows = allFlows.filter { it.difficulty.equals("Interval", ignoreCase = true) }
     val allReminders by viewModel.allReminders.collectAsState(initial = emptyList())
 
     LazyColumn(
@@ -171,6 +172,27 @@ fun YogaDashboardScreen(
                 )
             }
             items(advancedFlows) { flowItem ->
+                val hasActiveReminders = allReminders.any { it.flowId == flowItem.id }
+                FlowCard(
+                    flowItem = flowItem,
+                    isFavorite = favoriteFlowIds.contains(flowItem.id),
+                    hasActiveReminders = hasActiveReminders,
+                    onToggleFavorite = { viewModel.toggleFavoriteFlow(flowItem.id) },
+                    onViewFlowDetails = onViewFlowDetails
+                )
+            }
+        }
+
+        // Interval Training Section
+        if (intervalFlows.isNotEmpty()) {
+            item {
+                CategoryHeader(
+                    title = "Interval Training",
+                    subtitle = "Science-backed HIIT protocols for any activity",
+                    badgeColor = Color(0xFFFF6B35)
+                )
+            }
+            items(intervalFlows) { flowItem ->
                 val hasActiveReminders = allReminders.any { it.flowId == flowItem.id }
                 FlowCard(
                     flowItem = flowItem,

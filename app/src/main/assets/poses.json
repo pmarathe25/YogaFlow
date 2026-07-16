@@ -265,6 +265,62 @@
         "Close your eyes and sink into complete stillness."
       ],
       "holdDurationSec": 30
+    },
+    {
+      "id": 401,
+      "sanskritName": "",
+      "englishName": "Warm Up",
+      "description": "Gradually raise your heart rate with light-to-moderate effort. Suitable for any activity.",
+      "benefits": "Prepares muscles and cardiovascular system for intense effort, reduces injury risk.",
+      "instructions": [
+        "Choose any activity: brisk walking, light jogging, easy cycling, dynamic stretches.",
+        "Start gently and gradually increase intensity over the interval.",
+        "Aim for 50-65% of your maximum heart rate.",
+        "Focus on smooth, controlled movements and steady breathing."
+      ],
+      "holdDurationSec": 180
+    },
+    {
+      "id": 402,
+      "sanskritName": "",
+      "englishName": "High Intensity",
+      "description": "Push hard at 85-95% of your max effort. This is the work interval.",
+      "benefits": "Improves VO2 max, cardiovascular endurance, and calorie burn.",
+      "instructions": [
+        "Choose any vigorous activity: running, cycling sprints, fast swimming, burpees, jump rope.",
+        "Maintain 85-95% of your maximum heart rate throughout.",
+        "You should be breathing hard and unable to hold a conversation.",
+        "Keep good form even as you push — quality over quantity."
+      ],
+      "holdDurationSec": 240
+    },
+    {
+      "id": 403,
+      "sanskritName": "",
+      "englishName": "Low Intensity / Recovery",
+      "description": "Active recovery at 60-70% max effort. Keep moving but let your body recuperate.",
+      "benefits": "Clears lactate, maintains blood flow, and prepares you for the next work interval.",
+      "instructions": [
+        "Choose any gentle activity: walking, slow cycling, easy swimming, light jogging.",
+        "Keep your heart rate at 60-70% of maximum.",
+        "Focus on controlled breathing to aid recovery.",
+        "Resist the urge to stop completely — active recovery is most effective."
+      ],
+      "holdDurationSec": 180
+    },
+    {
+      "id": 404,
+      "sanskritName": "",
+      "englishName": "Cool Down",
+      "description": "Gradually bring your heart rate down and stretch. End your session with intention.",
+      "benefits": "Prevents blood pooling, reduces muscle soreness, returns body to resting state.",
+      "instructions": [
+        "Choose any low-intensity activity: slow walking, gentle cycling, static stretching.",
+        "Gradually reduce effort until your breathing returns to normal.",
+        "Hold gentle stretches for any tight muscle groups.",
+        "Take a few deep breaths and reflect on your effort."
+      ],
+      "holdDurationSec": 180
     }
   ]
 }

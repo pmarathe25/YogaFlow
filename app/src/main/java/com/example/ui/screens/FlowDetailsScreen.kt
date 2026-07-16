@@ -39,6 +39,8 @@ fun YogaFlowDetailsScreen(
     val favoriteFlowIds by viewModel.favoriteFlowIds.collectAsState()
     val isFavorite = favoriteFlowIds.contains(flow.id)
     var expandedPoseIndex by remember { mutableStateOf<Int?>(null) }
+    var loopCount by remember { mutableIntStateOf(viewModel.getFlowLoopCount(flow.id)) }
+    val context = LocalContext.current
 
     LazyColumn(
         modifier = Modifier
@@ -72,8 +74,7 @@ fun YogaFlowDetailsScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                
-                val context = LocalContext.current
+
                 var showRemindersListDialog by remember { mutableStateOf(false) }
                 var showAddEditDialog by remember { mutableStateOf(false) }
                 var editingReminder by remember { mutableStateOf<com.example.db.ReminderEntity?>(null) }
@@ -211,8 +212,8 @@ fun YogaFlowDetailsScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
+                    Spacer(modifier = Modifier.height(20.dp))
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -222,7 +223,82 @@ fun YogaFlowDetailsScreen(
                         FlowStatBadge(icon = Icons.Default.Info, label = flow.difficulty)
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Repeat,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Loops",
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            FilledTonalButton(
+                                onClick = {
+                                    if (loopCount > 1) {
+                                        loopCount -= 1
+                                        viewModel.setFlowLoopCount(flow.id, loopCount)
+                                    }
+                                },
+                                modifier = Modifier.size(36.dp),
+                                shape = CircleShape,
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Remove,
+                                    contentDescription = "Decrease loops",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+
+                            Text(
+                                text = "$loopCount",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.widthIn(min = 24.dp)
+                            )
+
+                            FilledTonalButton(
+                                onClick = {
+                                    if (loopCount < 10) {
+                                        loopCount += 1
+                                        viewModel.setFlowLoopCount(flow.id, loopCount)
+                                    }
+                                },
+                                modifier = Modifier.size(36.dp),
+                                shape = CircleShape,
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "Increase loops",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(10.dp)

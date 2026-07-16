@@ -66,6 +66,12 @@ class SessionManager(
     private val _isSessionCompleted = MutableStateFlow(false)
     val isSessionCompleted: StateFlow<Boolean> = _isSessionCompleted.asStateFlow()
 
+    private val _currentLoop = MutableStateFlow(1)
+    val currentLoop: StateFlow<Int> = _currentLoop.asStateFlow()
+
+    private val _totalLoops = MutableStateFlow(1)
+    val totalLoops: StateFlow<Int> = _totalLoops.asStateFlow()
+
     private val _isCountdownActive = MutableStateFlow(false)
     val isCountdownActive: StateFlow<Boolean> = _isCountdownActive.asStateFlow()
 
@@ -108,6 +114,8 @@ class SessionManager(
         _isSessionCompleted.value = false
         _isPlaying.value = false
         _isCountdownActive.value = false
+        _currentLoop.value = 1
+        _totalLoops.value = SettingsManager.getFlowLoopCount(context, yogaFlow.id)
         countdownJob?.cancel()
         countdownJob = null
     }
@@ -160,7 +168,7 @@ class SessionManager(
                 triggerVoiceCueForCurrentPose()
             }
         } else {
-            completeSession()
+            onFlowLoopComplete()
         }
     }
 
@@ -234,9 +242,10 @@ class SessionManager(
         _currentPoseIndex.value = 0
         _remainingTimeSec.value = _flow.value.steps.firstOrNull()?.pose?.holdDurationSec ?: 30
         _isSessionCompleted.value = false
+        _currentLoop.value = 1
         timerJob?.cancel()
         timerJob = null
-        
+
         startCountdown()
     }
 
@@ -263,7 +272,7 @@ class SessionManager(
             _remainingTimeSec.value = _flow.value.steps[_currentPoseIndex.value].pose.holdDurationSec
             triggerVoiceCueForCurrentPose()
         } else {
-            completeSession()
+            onFlowLoopComplete()
         }
     }
 
@@ -275,7 +284,19 @@ class SessionManager(
         timerJob = null
         playWoodTap()
         ambientMusicManager.stop()
+        recordCurrentSession()
 
+        if (_isVoiceEnabled.value) {
+            val message = if (_preferredVoice.value == "sa") {
+                "अभिनन्दनम्। योगसाधना समाप्ता। ओम् शान्तिः शान्तिः शान्तिः।"
+            } else {
+                "Congratulations! You have completed your ${flow.value.name} practice. Namaste."
+            }
+            audioCueManager.speak(message, _preferredVoice.value)
+        }
+    }
+
+    private fun recordCurrentSession() {
         scope.launch {
             try {
                 repository.insertSession(
@@ -290,14 +311,26 @@ class SessionManager(
                 Log.e(tag, "Error saving session to Room database: ${e.message}")
             }
         }
+    }
 
-        if (_isVoiceEnabled.value) {
-            val message = if (_preferredVoice.value == "sa") {
-                "अभिनन्दनम्। योगसाधना समाप्ता। ओम् शान्तिः शान्तिः शान्तिः।"
-            } else {
-                "Congratulations! You have completed your ${flow.value.name} practice. Namaste."
+    private fun onFlowLoopComplete() {
+        val wasPlaying = _isPlaying.value
+
+        if (_currentLoop.value < _totalLoops.value) {
+            recordCurrentSession()
+            _currentLoop.value = _currentLoop.value + 1
+            _currentPoseIndex.value = 0
+            _remainingTimeSec.value = _flow.value.steps.firstOrNull()?.pose?.holdDurationSec ?: 30
+
+            playWoodTap()
+            if (wasPlaying) {
+                scope.launch {
+                    delay(1500L)
+                    triggerVoiceCueForCurrentPose()
+                }
             }
-            audioCueManager.speak(message, _preferredVoice.value)
+        } else {
+            completeSession()
         }
     }
 

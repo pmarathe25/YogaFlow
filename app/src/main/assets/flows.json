@@ -384,6 +384,65 @@
           "sanskritVoicePrompt": ""
         }
       ]
+    },
+    {
+      "id": "norwegian_4x4",
+      "name": "Norwegian 4x4",
+      "description": "A science-backed HIIT protocol \u2014 4 minutes of high-intensity work followed by 3 minutes of active recovery, repeated 4 times. Works with running, cycling, swimming, or any vigorous activity.",
+      "difficulty": "Interval",
+      "totalDurationMinutes": 34,
+      "steps": [
+        {
+          "poseId": 401,
+          "englishVoicePrompt": "Warm Up. Start with 3 minutes of light-to-moderate effort. Choose your activity \u2014 brisk walking, easy jogging, or dynamic stretches \u2014 and gradually raise your heart rate.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 402,
+          "englishVoicePrompt": "Round 1 High Intensity. Go hard for 4 minutes. Push at 85 to 95 percent of your maximum effort. You should be breathing heavily and unable to hold a conversation.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 403,
+          "englishVoicePrompt": "Round 1 Recovery. 3 minutes of active recovery. Slow down to a gentle pace \u2014 walk, cycle easily, or swim slowly. Keep moving and focus on controlled breathing.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 402,
+          "englishVoicePrompt": "Round 2 High Intensity. Push again for 4 minutes. Maintain your effort level. Dig deep \u2014 this is where the gains happen.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 403,
+          "englishVoicePrompt": "Round 2 Recovery. 3 minutes of active recovery. Let your heart rate come back down. Steady, gentle movement.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 402,
+          "englishVoicePrompt": "Round 3 High Intensity. You are halfway there. 4 minutes at 85 to 95 percent max effort. Trust your body and keep pushing.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 403,
+          "englishVoicePrompt": "Round 3 Recovery. 3 minutes of active recovery. One more round to go \u2014 use this time wisely to recover.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 402,
+          "englishVoicePrompt": "Round 4 High Intensity. Final push. 4 minutes. Leave everything out there. This is your last work interval \u2014 give it everything you have.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 403,
+          "englishVoicePrompt": "Round 4 Recovery. 3 minutes of active recovery. You have completed all 4 intervals. Great work. Keep moving gently as your breathing steadies.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 404,
+          "englishVoicePrompt": "Cool Down. 3 minutes. Gradually wind down \u2014 slow walking, gentle stretches, deep breaths. Reflect on your effort. You crushed it. Namaste.",
+          "sanskritVoicePrompt": ""
+        }
+      ]
     }
   ]
 }

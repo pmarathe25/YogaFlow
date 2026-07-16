@@ -70,6 +70,14 @@ class SettingsManager(private val context: Context) {
         saveString(context, "preferred_voice", voice)
     }
 
+    fun getFlowLoopCount(flowId: String): Int {
+        return getFlowLoopCount(context, flowId)
+    }
+
+    fun setFlowLoopCount(flowId: String, count: Int) {
+        setFlowLoopCount(context, flowId, count)
+    }
+
     companion object {
         private const val PREFS_NAME = "yoga_settings"
 
@@ -86,5 +94,11 @@ class SettingsManager(private val context: Context) {
         fun saveString(context: Context, key: String, value: String) = getPrefs(context).edit().putString(key, value).apply()
         fun saveBoolean(context: Context, key: String, value: Boolean) = getPrefs(context).edit().putBoolean(key, value).apply()
         fun saveInt(context: Context, key: String, value: Int) = getPrefs(context).edit().putInt(key, value).apply()
+
+        fun getFlowLoopCount(context: Context, flowId: String): Int =
+            getPrefs(context).getInt("flow_loop_$flowId", 1)
+
+        fun setFlowLoopCount(context: Context, flowId: String, count: Int) =
+            getPrefs(context).edit().putInt("flow_loop_$flowId", count).apply()
     }
 }

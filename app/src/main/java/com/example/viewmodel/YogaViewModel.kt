@@ -62,6 +62,8 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
     val speechState = sessionManager.speechState
     val currentPose = sessionManager.currentPose
     val tracks: List<com.example.model.AudioTrack> = sessionManager.tracks
+    val currentLoop = sessionManager.currentLoop
+    val totalLoops = sessionManager.totalLoops
 
     fun setThemeMode(mode: String) = settingsManager.setThemeMode(mode)
     fun setKeepScreenAwake(enabled: Boolean) = settingsManager.setKeepScreenAwake(enabled)
@@ -87,6 +89,9 @@ class YogaViewModel(application: Application) : AndroidViewModel(application) {
     fun updateReminder(reminder: ReminderEntity) = reminderManager.updateReminder(reminder)
     fun deleteReminder(reminder: ReminderEntity) = reminderManager.deleteReminder(reminder)
     fun toggleFavoriteFlow(flowId: String) = reminderManager.toggleFavoriteFlow(flowId)
+
+    fun getFlowLoopCount(flowId: String): Int = settingsManager.getFlowLoopCount(flowId)
+    fun setFlowLoopCount(flowId: String, count: Int) = settingsManager.setFlowLoopCount(flowId, count)
 
     fun clearAllCompletedSessions() = statsManager.clearAllCompletedSessions()
 

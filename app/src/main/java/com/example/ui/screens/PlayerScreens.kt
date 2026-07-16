@@ -46,7 +46,8 @@ fun YogaPlayerScreen(
     val currentPose by viewModel.currentPose.collectAsState()
     val remainingTimeSec by viewModel.remainingTimeSec.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
-    val speechState by viewModel.speechState.collectAsState()
+    val totalLoops by viewModel.totalLoops.collectAsState()
+    val currentLoop by viewModel.currentLoop.collectAsState()
 
     if (currentPose == null) return
 
@@ -83,6 +84,15 @@ fun YogaPlayerScreen(
             )
             // Empty placeholder for centering balance
             Spacer(modifier = Modifier.width(48.dp))
+        }
+
+        if (totalLoops > 1) {
+            Text(
+                text = "Loop $currentLoop of $totalLoops",
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -372,6 +382,8 @@ fun SessionCompleteScreen(
     val sessionXp = remember(flow) {
         XpCalculator.calculateSessionXp(flow.totalDurationMinutes, flow.id)
     }
+    val totalLoops by viewModel.totalLoops.collectAsState()
+    val totalSessionXp = sessionXp * totalLoops
 
     Column(
         modifier = Modifier
@@ -433,6 +445,14 @@ fun SessionCompleteScreen(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (totalLoops > 1) {
+                    Text(
+                        text = "Completed $totalLoops loops",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
             }
         }
 
@@ -451,7 +471,7 @@ fun SessionCompleteScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    RewardItem(value = "+$sessionXp", label = "XP Earned", color = Color(0xFF7C4DFF))
+                    RewardItem(value = "+$totalSessionXp", label = "XP Earned", color = Color(0xFF7C4DFF))
                     RewardItem(value = "$totalXp", label = "Total XP", color = Color(0xFF448AFF))
                     RewardItem(value = "$currentLevel", label = levelName, color = Color(0xFFFFA000))
                 }
@@ -542,6 +562,7 @@ fun CountdownStartScreen(
 ) {
     val countdownRemaining by viewModel.countdownRemaining.collectAsState()
     val preferredVoice by viewModel.preferredVoice.collectAsState()
+    val totalLoops by viewModel.totalLoops.collectAsState()
 
     // Animate the countdown number whenever it changes for a pulsing effect
     val scale = remember(countdownRemaining) { Animatable(0.5f) }
@@ -606,7 +627,17 @@ fun CountdownStartScreen(
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
 
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(32.dp))
+
+                if (totalLoops > 1) {
+                    Text(
+                        text = "Will repeat $totalLoops times",
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
                 // The pulsing countdown circle
                 Box(
