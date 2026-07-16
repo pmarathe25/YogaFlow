@@ -3,7 +3,9 @@ package com.example.game.persistence
 import android.content.Context
 import android.content.SharedPreferences
 import com.example.game.model.GameProgress
+import com.example.game.model.HeroSkin
 import com.example.game.model.PartyMemberData
+import com.example.game.model.SkinUnlockMethod
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
@@ -13,7 +15,7 @@ class GameSaveManager(private val context: Context) {
 
     private companion object {
         private val gson = Gson()
-        const val KEY_PROGRESS_BLOB = "progress_blob_v3"
+        const val KEY_PROGRESS_BLOB = "progress_blob_v4"
 
         const val KEY_PARTY = "party"
         const val KEY_UNLOCKED_HERO_IDS = "unlocked_hero_ids"
@@ -53,7 +55,7 @@ class GameSaveManager(private val context: Context) {
         val normalized = data.normalized()
         prefs.edit()
             .clear()
-            .putString(KEY_PROGRESS_BLOB, gson.toJson(normalized.copy(version = 3)))
+            .putString(KEY_PROGRESS_BLOB, gson.toJson(normalized.copy(version = 4)))
             .apply()
     }
 
@@ -69,7 +71,8 @@ class GameSaveManager(private val context: Context) {
         return try {
             val json = context.assets.open("game/default_save.json")
                 .bufferedReader().use { it.readText() }
-            gson.fromJson(json, GameProgress::class.java)?.normalized() ?: GameProgress().normalized()
+            val loaded = gson.fromJson(json, GameProgress::class.java) ?: GameProgress()
+            if (DataLoader.isInitialized) loaded.normalized() else loaded
         } catch (e: Exception) {
             GameProgress().normalized()
         }
@@ -88,6 +91,8 @@ class GameSaveManager(private val context: Context) {
             lastPlayedTimestamp = prefs.getLong(KEY_LAST_PLAYED_TIMESTAMP, 0L),
             totalYogaXp = xp,
             gold = xp / 10,
+            karmaXp = 0,
+            unlockedSkillIds = emptyMap(),
             defeatedMonsterIds = readJsonStringSet(KEY_DEFEATED_MONSTER_IDS)
         )
     }
@@ -96,7 +101,7 @@ class GameSaveManager(private val context: Context) {
         return try {
             val root = JsonParser.parseString(blob).asJsonObject
             val version = root.get("version")?.asInt ?: 0
-            if (version >= 3) return blob
+            if (version >= 4) return blob
 
             // Migrate party heroId from string to int
             root.getAsJsonArray("party")?.forEach { partyElem ->
@@ -130,7 +135,27 @@ class GameSaveManager(private val context: Context) {
                 root.add("unlockedHeroIds", newArray)
             }
 
-            root.addProperty("version", 3)
+            // v4 migration: skin fields
+            if (!root.has("heroSkins")) {
+                root.add("heroSkins", com.google.gson.JsonObject())
+            }
+            if (!root.has("unlockedSkinIds")) {
+                root.add("unlockedSkinIds", com.google.gson.JsonArray())
+            }
+            root.getAsJsonArray("party")?.forEach { partyElem ->
+                val partyObj = partyElem.asJsonObject
+                if (!partyObj.has("skinId")) {
+                    val heroId = partyObj.get("heroId")?.asInt ?: 0
+                    val defaultSkinId = if (DataLoader.isInitialized) {
+                        DataLoader.getDefaultSkin(heroId)?.skinId
+                    } else null
+                    if (defaultSkinId != null) {
+                        partyObj.addProperty("skinId", defaultSkinId)
+                    }
+                }
+            }
+
+            root.addProperty("version", 4)
             root.toString()
         } catch (e: Exception) {
             blob
@@ -151,7 +176,7 @@ class GameSaveManager(private val context: Context) {
 
     private fun GameProgress.normalized(): GameProgress {
         var result = copy(
-            version = 3,
+            version = 4,
             party = (party ?: emptyList()).map {
                 it.copy(
                     level = it.level ?: 1,
@@ -159,14 +184,58 @@ class GameSaveManager(private val context: Context) {
                 )
             },
             unlockedHeroIds = unlockedHeroIds ?: emptySet(),
-            defeatedMonsterIds = (defeatedMonsterIds ?: emptySet()).map(::normalizeMonsterId).toSet()
+            defeatedMonsterIds = (defeatedMonsterIds ?: emptySet()).map(::normalizeMonsterId).toSet(),
+            karmaXp = karmaXp ?: 0,
+            unlockedSkillIds = (unlockedSkillIds ?: emptyMap()).mapValues { (_, v) ->
+                (v ?: emptySet()).toSet()
+            }.toMutableMap(),
+            heroSkins = heroSkins ?: emptyMap(),
+            unlockedSkinIds = unlockedSkinIds ?: emptySet()
         )
+
+        // Ensure hero 1 is always unlocked
         if (1 !in result.unlockedHeroIds) {
             result = result.copy(unlockedHeroIds = result.unlockedHeroIds + 1)
         }
         if (result.party.none { it.heroId == 1 }) {
             result = result.copy(party = result.party + PartyMemberData(heroId = 1))
         }
+
+        // Auto-unlock starter offensive skills for all heroes in the party
+        if (DataLoader.isInitialized) {
+            val mutableSkills = result.unlockedSkillIds.toMutableMap()
+            result.party.forEach { pm ->
+                val heroDef = DataLoader.heroes.find { it.id == pm.heroId }
+                if (heroDef != null) {
+                    val existing = mutableSkills[pm.heroId] ?: emptySet()
+                    val starterSkills = heroDef.skills
+                        .filter { it.karmaXpCost == 0 && it.ultimateGain != 0 }
+                        .map { it.id }
+                        .toSet()
+                    mutableSkills[pm.heroId] = existing + starterSkills
+                }
+            }
+            result = result.copy(unlockedSkillIds = mutableSkills)
+        }
+
+        if (DataLoader.isInitialized) {
+            // Auto-unlock all DEFAULT skins
+            val defaultSkinIds = DataLoader.skins
+                .filter { it.unlockMethod == SkinUnlockMethod.DEFAULT }
+                .map { it.skinId }
+                .toSet()
+            if (defaultSkinIds.any { it !in result.unlockedSkinIds }) {
+                result = result.copy(unlockedSkinIds = result.unlockedSkinIds + defaultSkinIds)
+            }
+            // Auto-equip default skin for any hero missing one
+            result = result.copy(party = result.party.map { pm ->
+                if (pm.skinId == null) {
+                    val defaultSkin = DataLoader.getDefaultSkin(pm.heroId)
+                    pm.copy(skinId = defaultSkin?.skinId)
+                } else pm
+            })
+        }
+
         return result
     }
 

@@ -59,6 +59,10 @@ internal class GameSyncManager(
             if (newGoldEarned > 0) {
                 updated = updated.copy(gold = updated.gold + newGoldEarned)
             }
+            val newKarmaXpEarned = (xpSum - data.totalYogaXp) / 3
+            if (newKarmaXpEarned > 0) {
+                updated = updated.copy(karmaXp = updated.karmaXp + newKarmaXpEarned)
+            }
         }
         if (updated != data) {
             _saveData.value = updated

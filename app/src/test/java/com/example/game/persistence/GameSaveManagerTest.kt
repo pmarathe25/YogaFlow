@@ -25,7 +25,7 @@ class GameSaveManagerTest {
     @Test
     fun `default save loads with version 3`() {
         val data = saveManager.loadGame()
-        assertEquals(3, data.version)
+        assertEquals(4, data.version)
         assertEquals(1, data.party.size)
         assertTrue(data.party.any { it.heroId == 1 })
         assertTrue(data.unlockedHeroIds.contains(1))
@@ -36,7 +36,7 @@ class GameSaveManagerTest {
     @Test
     fun `save then load returns identical data`() {
         val original = GameProgress(
-            version = 3,
+            version = 4,
             party = listOf(
                 PartyMemberData(1, 3, listOf("training_blade")),
                 PartyMemberData(3, 5, listOf("ember_pendant"))
@@ -50,6 +50,8 @@ class GameSaveManagerTest {
             lastPlayedTimestamp = 1000000L,
             totalYogaXp = 5200,
             gold = 400,
+            karmaXp = 300,
+            unlockedSkillIds = mapOf(1 to setOf("shanti_basic", "shanti_skill1")),
             defeatedMonsterIds = setOf("bhaya", "tandra", "chinta")
         )
 
@@ -71,6 +73,8 @@ class GameSaveManagerTest {
         assertEquals(original.defeatedMonsterIds, loaded.defeatedMonsterIds)
         assertEquals(original.totalYogaXp, loaded.totalYogaXp)
         assertEquals(original.gold, loaded.gold)
+        assertEquals(original.karmaXp, loaded.karmaXp)
+        assertEquals(original.unlockedSkillIds, loaded.unlockedSkillIds)
     }
 
     @Test
@@ -118,7 +122,7 @@ class GameSaveManagerTest {
         saveManager.saveGame(original)
         val loaded = saveManager.loadGame()
 
-        assertEquals(3, loaded.version)
+        assertEquals(4, loaded.version)
         assertEquals(1, loaded.party.size)
         assertTrue(loaded.unlockedHeroIds.contains(1))
         assertEquals(0, loaded.sparks)
@@ -162,7 +166,7 @@ class GameSaveManagerTest {
         val loaded = saveManager.loadGame()
         assertEquals(300, loaded.sparks)
         assertEquals(15, loaded.totalBattlesWon)
-        assertEquals(3, loaded.version)
+        assertEquals(4, loaded.version)
     }
 
     @Test
@@ -202,7 +206,7 @@ class GameSaveManagerTest {
 
         val fresh = GameSaveManager(ctx)
         val data = fresh.loadGame()
-        assertEquals(3, data.version)
+        assertEquals(4, data.version)
         assertEquals(0, data.sparks)
         assertEquals(1, data.yogaLevel)
     }
@@ -210,7 +214,7 @@ class GameSaveManagerTest {
     @Test
     fun `versioned JSON blob roundtrip preserves all fields`() {
         val original = GameProgress(
-            version = 3,
+            version = 4,
             party = listOf(PartyMemberData(1, 3, listOf("blade"))),
             unlockedHeroIds = setOf(1),
             sparks = 200,
@@ -234,7 +238,7 @@ class GameSaveManagerTest {
     @Test
     fun `default save loaded from assets has expected structure`() {
         val data = saveManager.loadGame()
-        assertEquals(3, data.version)
+        assertEquals(4, data.version)
         assertEquals(1, data.party.size)
         assertTrue(data.party.any { it.heroId == 1 })
         assertTrue(data.unlockedHeroIds.contains(1))

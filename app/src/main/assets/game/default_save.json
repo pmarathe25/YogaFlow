@@ -1,6 +1,6 @@
 {
   "battleState": null,
-  "party": [{"heroId": 1}],
+  "party": [{"heroId": 1, "skinId": "shanti_default"}],
   "unlockedHeroIds": [1],
   "sparks": 0,
   "yogaLevel": 1,
@@ -10,5 +10,9 @@
   "lastPlayedTimestamp": 0,
   "totalYogaXp": 0,
   "gold": 0,
+  "karmaXp": 0,
+  "heroSkins": {},
+  "unlockedSkinIds": [],
+  "unlockedSkillIds": {},
   "defeatedMonsterIds": []
 }
