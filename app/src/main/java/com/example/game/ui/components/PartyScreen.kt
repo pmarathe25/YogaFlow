@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.game.model.*
+import com.example.game.model.HeroSkin
+import com.example.game.model.SkinUnlockMethod
 import com.example.game.persistence.DataLoader
 import com.example.game.viewmodel.GameViewModel
 import com.example.ui.components.GlassCard
@@ -38,7 +40,8 @@ fun PartyScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.navig
     val saveData by viewModel.saveData.collectAsState()
     val allHeroes = DataLoader.heroes
     
-    var detailHeroId by remember { mutableStateOf<Int?>(null) }
+        var detailHeroId by remember { mutableStateOf<Int?>(null) }
+        var showSkinSelect by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -77,6 +80,14 @@ fun PartyScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.navig
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                     color = Color(0xFFFFD700)
                 )
+                Spacer(Modifier.width(12.dp))
+                Text("\uD83D\uDD2E", fontSize = 14.sp)
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    "${saveData.karmaXp}",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    color = Color(0xFFAB47BC)
+                )
             }
             
             Spacer(Modifier.height(16.dp))
@@ -98,7 +109,8 @@ fun PartyScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.navig
                             hero = heroDef,
                             partyMember = partyMember,
                             isUnlocked = isUnlocked,
-                            onClick = { if (isUnlocked) detailHeroId = heroDef.id }
+                            onClick = { if (isUnlocked) detailHeroId = heroDef.id },
+                            viewModel = viewModel
                         )
                     }
                 }
@@ -115,27 +127,40 @@ fun PartyScreen(viewModel: GameViewModel, onBack: () -> Unit = { viewModel.navig
                     partyMember = partyMember,
                     saveData = saveData,
                     viewModel = viewModel,
-                    onDismiss = { detailHeroId = null }
+                    onDismiss = { detailHeroId = null },
+                    onOpenSkinSelect = { showSkinSelect = true }
+                )
+            }
+        }
+
+        if (showSkinSelect && detailHeroId != null) {
+            val skinSelectMember = party.find { it.heroId == detailHeroId }
+            if (skinSelectMember != null) {
+                SkinSelectDialog(
+                    heroId = detailHeroId!!,
+                    currentSkinId = skinSelectMember.skinId,
+                    viewModel = viewModel,
+                    onDismiss = { showSkinSelect = false }
                 )
             }
         }
     }
 }
 
-private data class HeroStats(val maxHp: Int, val atk: Int, val spd: Int)
+private data class HeroStats(val maxHp: Int, val atk: Int)
 
 private fun computeHeroStats(hero: Hero, level: Int): HeroStats {
     val mult = 1f + (level - 1) * 0.15f
     return HeroStats(
         maxHp = (hero.baseHp * mult).toInt(),
-        atk = (hero.baseAtk * mult).toInt(),
-        spd = (hero.baseSpd * mult).toInt()
+        atk = (hero.baseAtk * mult).toInt()
     )
 }
 
 @Composable
-private fun HeroListItem(hero: Hero, partyMember: PartyMemberData?, isUnlocked: Boolean, onClick: () -> Unit) {
+private fun HeroListItem(hero: Hero, partyMember: PartyMemberData?, isUnlocked: Boolean, onClick: () -> Unit, viewModel: GameViewModel? = null) {
     val heroColor = if (isUnlocked) hero.element.color else Color.Gray
+    val equippedSkin = viewModel?.getEquippedSkin(hero.id)
 
     GlassCard(
         modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp).alpha(if (isUnlocked) 1f else 0.5f).clickable(enabled = isUnlocked) { onClick() },
@@ -157,7 +182,13 @@ private fun HeroListItem(hero: Hero, partyMember: PartyMemberData?, isUnlocked: 
                 if (!isUnlocked) {
                     Icon(Icons.Default.Lock, contentDescription = "Locked", tint = Color.Gray)
                 } else {
-                    HeroPortrait(hero.id, heroColor, Modifier.size(48.dp))
+                    HeroPortrait(
+                        hero.id,
+                        heroColor,
+                        Modifier.size(48.dp),
+                        primaryColor = equippedSkin?.primaryColor?.let { Color(android.graphics.Color.parseColor(it)) },
+                        secondaryColor = equippedSkin?.secondaryColor?.let { Color(android.graphics.Color.parseColor(it)) }
+                    )
                 }
             }
             
@@ -251,12 +282,14 @@ fun HeroDetailsDialog(
     partyMember: PartyMemberData,
     saveData: GameProgress,
     viewModel: GameViewModel,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onOpenSkinSelect: () -> Unit = {}
 ) {
     val heroColor = hero.element.color
     val levelUpCost = viewModel.getHeroLevelUpCost(hero.id)
     val canLevelUp = saveData.sparks >= levelUpCost
     val stats = computeHeroStats(hero, partyMember.level)
+    val detailSkin = viewModel.getEquippedSkin(hero.id)
 
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -271,7 +304,13 @@ fun HeroDetailsDialog(
                         modifier = Modifier.size(64.dp).background(heroColor.copy(alpha = 0.1f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        HeroPortrait(hero.id, heroColor, Modifier.size(56.dp))
+                        HeroPortrait(
+                            hero.id,
+                            heroColor,
+                            Modifier.size(56.dp),
+                            primaryColor = detailSkin?.primaryColor?.let { Color(android.graphics.Color.parseColor(it)) },
+                            secondaryColor = detailSkin?.secondaryColor?.let { Color(android.graphics.Color.parseColor(it)) }
+                        )
                     }
                     Spacer(Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
@@ -290,12 +329,58 @@ fun HeroDetailsDialog(
                 )
                 
                 HorizontalDivider(Modifier.padding(vertical = 16.dp))
-                
+
+                // Skin section
+                val equippedSkin = viewModel.getEquippedSkin(hero.id)
+                if (equippedSkin != null) {
+                    HorizontalDivider(Modifier.padding(vertical = 12.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Skin", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.weight(1f))
+                    }
+                    Spacer(Modifier.height(8.dp))
+
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        modifier = Modifier.fillMaxWidth().clickable { onOpenSkinSelect() }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier.size(44.dp).clip(CircleShape)
+                                    .background(
+                                        try {
+                                            Color(android.graphics.Color.parseColor(equippedSkin.primaryColor))
+                                        } catch (_: Exception) { heroColor }
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                HeroPortrait(
+                                    hero.id,
+                                    heroColor,
+                                    Modifier.size(36.dp),
+                                    primaryColor = try { Color(android.graphics.Color.parseColor(equippedSkin.primaryColor)) } catch (_: Exception) { null },
+                                    secondaryColor = try { Color(android.graphics.Color.parseColor(equippedSkin.secondaryColor)) } catch (_: Exception) { null }
+                                )
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(equippedSkin.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                                Text(equippedSkin.description, style = MaterialTheme.typography.bodySmall, color = Color.Gray, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
+                            Icon(Icons.Default.ChevronRight, contentDescription = "Change", tint = Color.Gray)
+                        }
+                    }
+                }
+
                 // Stats
                 Column(modifier = Modifier.fillMaxWidth()) {
                     StatBar("HP", stats.maxHp, 500, Color.Red, "\u2764\uFE0F")
                     StatBar("ATK", stats.atk, 80, Color(0xFFFFA500), "\u2694\uFE0F")
-                    StatBar("SPD", stats.spd, 25, Color.Cyan, "\uD83D\uDCA8")
                 }
 
                 HorizontalDivider(Modifier.padding(vertical = 16.dp))
@@ -343,7 +428,13 @@ fun HeroDetailsDialog(
                         modifier = Modifier.size(120.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        HeroPortrait(hero.id, heroColor, Modifier.size(100.dp))
+                        HeroPortrait(
+                            hero.id,
+                            heroColor,
+                            Modifier.size(100.dp),
+                            primaryColor = detailSkin?.primaryColor?.let { Color(android.graphics.Color.parseColor(it)) },
+                            secondaryColor = detailSkin?.secondaryColor?.let { Color(android.graphics.Color.parseColor(it)) }
+                        )
                     }
 
                     Column(
@@ -401,6 +492,31 @@ fun HeroDetailsDialog(
 
                 // Skills section
                 var selectedSkill by remember { mutableStateOf<Skill?>(null) }
+                var confirmUnlockSkillId by remember { mutableStateOf<String?>(null) }
+
+                confirmUnlockSkillId?.let { skillId ->
+                    val skill = (hero.skills + hero.ultimate).find { it.id == skillId }
+                    if (skill != null) {
+                        AlertDialog(
+                            onDismissRequest = { confirmUnlockSkillId = null },
+                            title = { Text("Unlock ${skill.name}?") },
+                            text = { Text("Cost: ${skill.karmaXpCost} Karma XP\n\nYou have: ${saveData.karmaXp} Karma XP") },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    viewModel.unlockSkill(hero.id, skillId)
+                                    confirmUnlockSkillId = null
+                                }) {
+                                    Text("Unlock", color = Color(0xFFAB47BC))
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { confirmUnlockSkillId = null }) {
+                                    Text("Cancel")
+                                }
+                            }
+                        )
+                    }
+                }
 
                 selectedSkill?.let { skill ->
                     val isUltimateSkill = skill == hero.ultimate
@@ -432,9 +548,21 @@ fun HeroDetailsDialog(
                 Spacer(Modifier.height(8.dp))
 
                 hero.skills.forEach { skill ->
+                    val isUnlocked = viewModel.isSkillUnlocked(hero.id, skill.id)
                     HeroDetailSkillCard(
-                        skill = skill, hero = hero, level = partyMember.level, heroColor = heroColor,
-                        modifier = Modifier.clickable { selectedSkill = skill }
+                        skill = skill,
+                        hero = hero,
+                        level = partyMember.level,
+                        heroColor = heroColor,
+                        isLocked = !isUnlocked,
+                        karmaXpCost = skill.karmaXpCost,
+                        modifier = Modifier.clickable {
+                            if (isUnlocked) {
+                                selectedSkill = skill
+                            } else if (skill.karmaXpCost > 0) {
+                                confirmUnlockSkillId = skill.id
+                            }
+                        }
                     )
                 }
 
@@ -451,7 +579,16 @@ fun HeroDetailsDialog(
 }
 
 @Composable
-private fun HeroDetailSkillCard(skill: Skill, hero: Hero, level: Int, isUltimate: Boolean = false, heroColor: Color = Color.Gray, modifier: Modifier = Modifier) {
+private fun HeroDetailSkillCard(
+    skill: Skill,
+    hero: Hero,
+    level: Int,
+    isUltimate: Boolean = false,
+    heroColor: Color = Color.Gray,
+    isLocked: Boolean = false,
+    karmaXpCost: Int = 0,
+    modifier: Modifier = Modifier
+) {
     val typeColor = heroColor
 
     val typeLabel = when {
@@ -473,35 +610,58 @@ private fun HeroDetailSkillCard(skill: Skill, hero: Hero, level: Int, isUltimate
 
     Surface(
         shape = RoundedCornerShape(12.dp),
-        color = typeColor.copy(alpha = 0.08f),
-        border = BorderStroke(1.dp, typeColor.copy(alpha = 0.3f)),
-        modifier = modifier.fillMaxWidth().padding(vertical = 3.dp)
+        color = if (isLocked) Color.Gray.copy(alpha = 0.1f) else typeColor.copy(alpha = 0.08f),
+        border = BorderStroke(1.dp, if (isLocked) Color.Gray.copy(alpha = 0.3f) else typeColor.copy(alpha = 0.3f)),
+        modifier = modifier.fillMaxWidth().padding(vertical = 3.dp).then(
+            if (isLocked) Modifier.alpha(0.6f) else Modifier
+        )
     ) {
         Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.Top) {
             Box(
                 modifier = Modifier.size(8.dp, 36.dp)
-                    .background(typeColor, RoundedCornerShape(4.dp))
+                    .background(if (isLocked) Color.Gray else typeColor, RoundedCornerShape(4.dp))
             )
             Spacer(Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(skill.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = typeColor)
-                    Spacer(Modifier.width(8.dp))
-                    Surface(shape = RoundedCornerShape(4.dp), color = typeColor.copy(alpha = 0.15f)) {
-                        Text(typeLabel, style = MaterialTheme.typography.labelSmall, color = typeColor, modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp))
+                    Text(
+                        skill.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isLocked) Color.Gray else typeColor
+                    )
+                    if (isLocked) {
+                        Spacer(Modifier.width(6.dp))
+                        Icon(
+                            Icons.Default.Lock, contentDescription = "Locked",
+                            modifier = Modifier.size(16.dp), tint = Color.Gray
+                        )
+                    } else {
+                        Spacer(Modifier.width(8.dp))
+                        Surface(shape = RoundedCornerShape(4.dp), color = typeColor.copy(alpha = 0.15f)) {
+                            Text(typeLabel, style = MaterialTheme.typography.labelSmall, color = typeColor, modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp))
+                        }
+                        if (isUltimate) { Spacer(Modifier.width(4.dp)); Text("\u2B50", fontSize = 12.sp) }
                     }
-                    if (isUltimate) { Spacer(Modifier.width(4.dp)); Text("\u2B50", fontSize = 12.sp) }
                 }
                 Spacer(Modifier.height(4.dp))
-                Text(skill.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (damage > 0) Text("${damage} dmg", style = MaterialTheme.typography.labelSmall, color = typeColor)
-                    if (healAmount != null) Text("Heal $healAmount", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4CAF50))
-                    if (skill.cooldown > 0) Text("CD: ${skill.cooldown}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-                    if (skill.cleanse) Text("Cleanses", style = MaterialTheme.typography.labelSmall, color = Color(0xFFAB47BC))
+                if (isLocked) {
+                    Text(
+                        "Cost: $karmaXpCost \uD83D\uDD2E",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFFAB47BC)
+                    )
+                } else {
+                    Text(skill.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        if (damage > 0) Text("${damage} dmg", style = MaterialTheme.typography.labelSmall, color = typeColor)
+                        if (healAmount != null) Text("Heal $healAmount", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4CAF50))
+                        if (skill.cooldown > 0) Text("CD: ${skill.cooldown}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        if (skill.cleanse) Text("Cleanses", style = MaterialTheme.typography.labelSmall, color = Color(0xFFAB47BC))
+                    }
                 }
             }
-            if (!isUltimate) {
+            if (!isUltimate && !isLocked) {
                 Column(horizontalAlignment = Alignment.End) {
                     Text("+${skill.ultimateGain}", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                     Text("ult gauge", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
@@ -600,7 +760,6 @@ fun LevelUpDialog(
                 Spacer(Modifier.height(8.dp))
                 StatComparisonRow("HP", currentStats.maxHp, nextStats.maxHp, Color.Red)
                 StatComparisonRow("ATK", currentStats.atk, nextStats.atk, Color(0xFFFFA500))
-                StatComparisonRow("SPD", currentStats.spd, nextStats.spd, Color.Cyan)
 
                 Spacer(Modifier.height(16.dp))
 
@@ -833,6 +992,179 @@ private fun EquipItemRow(
             }
         }
     }
+}
+
+@Composable
+fun SkinSelectDialog(
+    heroId: Int,
+    currentSkinId: String?,
+    viewModel: GameViewModel,
+    onDismiss: () -> Unit
+) {
+    val allSkinsForHero = remember { DataLoader.getSkinsForHero(heroId) }
+    val unlockedSkinIds = viewModel.saveData.collectAsState().value.unlockedSkinIds
+    val saveData = viewModel.saveData.collectAsState().value
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().heightIn(max = 550.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(modifier = Modifier.padding(20.dp).verticalScroll(rememberScrollState())) {
+                Text("Select Skin", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(16.dp))
+
+                allSkinsForHero.forEach { skin ->
+                    val isUnlocked = skin.skinId in unlockedSkinIds
+                    val isEquipped = skin.skinId == currentSkinId
+                    val heroColor = try {
+                        Color(android.graphics.Color.parseColor(skin.primaryColor))
+                    } catch (_: Exception) { Color.Gray }
+                    val secondaryColor = try {
+                        Color(android.graphics.Color.parseColor(skin.secondaryColor))
+                    } catch (_: Exception) { Color.Gray }
+
+                    SkinCard(
+                        skin = skin,
+                        isUnlocked = isUnlocked,
+                        isEquipped = isEquipped,
+                        heroColor = heroColor,
+                        secondaryColor = secondaryColor,
+                        saveData = saveData,
+                        onSelect = {
+                            if (isUnlocked) {
+                                viewModel.equipSkin(heroId, skin.skinId)
+                                onDismiss()
+                            }
+                        },
+                        onUnlock = {
+                            if (!isUnlocked) {
+                                viewModel.unlockSkin(skin.skinId)
+                            }
+                        }
+                    )
+                }
+
+                Spacer(Modifier.height(12.dp))
+                OutlinedButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                    Text("Close")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SkinCard(
+    skin: HeroSkin,
+    isUnlocked: Boolean,
+    isEquipped: Boolean,
+    heroColor: Color,
+    secondaryColor: Color,
+    saveData: GameProgress,
+    onSelect: () -> Unit,
+    onUnlock: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = if (isEquipped)
+            heroColor.copy(alpha = 0.2f)
+        else
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+        border = if (isEquipped) BorderStroke(2.dp, heroColor) else null,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)
+            .then(if (isUnlocked) Modifier.clickable { onSelect() } else Modifier)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier.size(48.dp).clip(CircleShape)
+                    .background(heroColor)
+                    .padding(8.dp)
+            ) {
+                Box(
+                    modifier = Modifier.size(32.dp).clip(CircleShape)
+                        .background(secondaryColor.copy(alpha = 0.5f))
+                )
+            }
+
+            Spacer(Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        skin.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = if (isEquipped) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isUnlocked) MaterialTheme.colorScheme.onSurface else Color.Gray
+                    )
+                    if (isEquipped) {
+                        Spacer(Modifier.width(8.dp))
+                        Text("(Equipped)", style = MaterialTheme.typography.labelSmall, color = heroColor, fontWeight = FontWeight.Bold)
+                    }
+                }
+                Text(
+                    skin.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (!isUnlocked) {
+                    Spacer(Modifier.height(4.dp))
+                    UnlockRequirementLabel(skin, saveData)
+                }
+            }
+
+            if (!isUnlocked) {
+                val canAfford = when (skin.unlockMethod) {
+                    SkinUnlockMethod.PURCHASE -> saveData.gold >= skin.unlockCost
+                    SkinUnlockMethod.YOGA_LEVEL -> saveData.yogaLevel >= skin.unlockYogaLevel
+                    SkinUnlockMethod.ACHIEVEMENT -> skin.unlockAchievementId?.let { it in saveData.earnedTrophyIds } ?: false
+                    else -> false
+                }
+                FilledTonalButton(
+                    onClick = onUnlock,
+                    enabled = canAfford,
+                    modifier = Modifier.height(36.dp),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = heroColor.copy(alpha = 0.3f),
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text(
+                        if (canAfford) "Unlock" else "Locked",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UnlockRequirementLabel(skin: HeroSkin, saveData: GameProgress) {
+    val label = when (skin.unlockMethod) {
+        SkinUnlockMethod.PURCHASE -> "\uD83E\uDE99 ${skin.unlockCost} Gold"
+        SkinUnlockMethod.YOGA_LEVEL -> "Yoga Lv.${skin.unlockYogaLevel} required"
+        SkinUnlockMethod.ACHIEVEMENT -> "Achievement required"
+        SkinUnlockMethod.DEFAULT -> "Default"
+    }
+    val met = when (skin.unlockMethod) {
+        SkinUnlockMethod.PURCHASE -> saveData.gold >= skin.unlockCost
+        SkinUnlockMethod.YOGA_LEVEL -> saveData.yogaLevel >= skin.unlockYogaLevel
+        SkinUnlockMethod.ACHIEVEMENT -> skin.unlockAchievementId?.let { it in saveData.earnedTrophyIds } ?: false
+        SkinUnlockMethod.DEFAULT -> true
+    }
+    Text(
+        label,
+        style = MaterialTheme.typography.labelSmall,
+        color = if (met) MaterialTheme.colorScheme.primary else Color.Gray
+    )
 }
 
 @Composable

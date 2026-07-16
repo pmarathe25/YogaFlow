@@ -5,8 +5,6 @@ enum class StatusEffectType {
     SHIELD,
     ATK_UP,
     ATK_DOWN,
-    SPD_UP,
-    SPD_DOWN,
     DEF_DOWN,
     DAMAGE_REDUCTION,
     TAUNT,

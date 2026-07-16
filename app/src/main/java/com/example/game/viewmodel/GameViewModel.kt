@@ -5,6 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.game.battle.TurnManager
 import com.example.game.model.*
+import com.example.game.model.HeroSkin
+import com.example.game.model.BattlePhase.*
 import com.example.game.persistence.DataLoader
 import com.example.game.persistence.GameSaveManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -77,12 +79,23 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val data = saveManager.loadGame()
         _saveData.value = data
         _party.value = data.party
+        partyManager.initializeDefaultSkins()
     }
 
     fun startBattle(monsterId: String) = battleOrchestrator.startBattle(monsterId)
     fun onIntroComplete() = battleOrchestrator.onIntroComplete()
     fun skipTurn(heroId: String) = battleOrchestrator.skipTurn(heroId)
     fun cancelAction() = battleOrchestrator.cancelAction()
+    fun selectHero(heroId: String) {
+        val state = _battleState.value ?: return
+        if (state.phase != PLAYER_TURN) return
+        if (heroId in state.heroesActedThisRound) return
+        _battleState.value = state.copy(selectedHeroId = heroId, currentActorId = heroId)
+    }
+    fun deselectHero() {
+        val state = _battleState.value ?: return
+        _battleState.value = state.copy(selectedHeroId = "", currentActorId = "")
+    }
     fun executeSkill(heroId: String, skill: Skill, customTargets: List<String>? = null) =
         battleOrchestrator.executeSkill(heroId, skill, customTargets)
     fun executeUltimate(heroId: String) = battleOrchestrator.executeUltimate(heroId)
@@ -95,6 +108,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun equipItem(heroId: Int, itemId: String): Boolean = partyManager.equipItem(heroId, itemId)
     fun unequipItem(heroId: Int, itemId: String) = partyManager.unequipItem(heroId, itemId)
     fun getEquippedItems(heroId: Int): List<Equipment> = partyManager.getEquippedItems(heroId)
+    fun isSkillUnlocked(heroId: Int, skillId: String): Boolean = partyManager.isSkillUnlocked(heroId, skillId)
+    fun unlockSkill(heroId: Int, skillId: String): Boolean = partyManager.unlockSkill(heroId, skillId)
+    fun equipSkin(heroId: Int, skinId: String): Boolean = partyManager.equipSkin(heroId, skinId)
+    fun unlockSkin(skinId: String): Boolean = partyManager.unlockSkin(skinId)
+    fun getEquippedSkin(heroId: Int): HeroSkin? = partyManager.getEquippedSkin(heroId)
+    fun getUnlockedSkinsForHero(heroId: Int): List<HeroSkin> = partyManager.getUnlockedSkinsForHero(heroId)
 
     fun purchaseItem(itemId: String): Boolean = economyManager.purchaseItem(itemId)
     fun resetAllProgress() = economyManager.resetAllProgress()

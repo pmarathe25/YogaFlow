@@ -136,7 +136,6 @@ internal class MonsterAI(
                                 maxHp = 200,
                                 hp = 200,
                                 attack = 30,
-                                speed = 50,
                                 level = 1,
                                 phases = listOf(MonsterPhase(1f, emptyList())),
                                 aiBehavior = AIBehavior(specialChance = 0f)
@@ -153,7 +152,7 @@ internal class MonsterAI(
         if (addedMonsters.isNotEmpty()) {
             newState = newState.copy(
                 monsters = newState.monsters + addedMonsters,
-                turnOrder = newState.turnOrder + addedMonsters.map { BattleActor(it.id, it.name, it.speed, false, it.element) }
+                turnOrder = newState.turnOrder + addedMonsters.map { BattleActor(it.id, it.name, false, it.element) }
             )
         }
         return Pair(newState, events)

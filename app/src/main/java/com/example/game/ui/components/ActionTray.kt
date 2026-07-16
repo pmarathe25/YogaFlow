@@ -49,6 +49,7 @@ fun ActionTray(
     currentHero: CombatantState,
     turnOrder: List<BattleActor>,
     currentTurnIndex: Int,
+    heroesActedThisRound: Set<String>,
     skillCooldowns: Map<String, Int>,
     availableCombos: List<ComboSkill>,
     isTargeting: Boolean,
@@ -88,11 +89,12 @@ fun ActionTray(
         }
 
         // Hand of Cards (when not in targeting mode)
-        if (!isTargeting) {
+            if (!isTargeting) {
             HandOfCards(
                 currentHero = currentHero,
                 turnOrder = turnOrder,
                 currentTurnIndex = currentTurnIndex,
+                heroesActedThisRound = heroesActedThisRound,
                 skillCooldowns = skillCooldowns,
                 availableCombos = availableCombos,
                 onSkill = onSkill,
@@ -111,6 +113,7 @@ private fun HandOfCards(
     currentHero: CombatantState,
     turnOrder: List<BattleActor>,
     currentTurnIndex: Int,
+    heroesActedThisRound: Set<String>,
     skillCooldowns: Map<String, Int>,
     availableCombos: List<ComboSkill>,
     onSkill: (com.example.game.model.Skill) -> Unit,
@@ -158,12 +161,7 @@ private fun HandOfCards(
     var isDragPopped by remember { mutableStateOf(false) }
     var dragFromSelected by remember { mutableStateOf(false) }
 
-    val actedHeroIds = remember(turnOrder, currentTurnIndex) {
-        turnOrder
-            .filterIndexed { idx, _ -> idx < currentTurnIndex }
-            .mapNotNull { it.id.toIntOrNull() }
-            .toSet()
-    }
+    val actedHeroIds = heroesActedThisRound.mapNotNull { it.toIntOrNull() }.toSet()
 
     fun isCardUsable(item: Any): Boolean = when (item) {
         is com.example.game.model.Skill -> {

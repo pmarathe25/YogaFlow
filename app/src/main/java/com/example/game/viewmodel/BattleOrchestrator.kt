@@ -37,7 +37,8 @@ internal class BattleOrchestrator(
         val battleHeroes = partyMembers.mapNotNull { pm ->
             val heroDef = DataLoader.heroes.find { it.id == pm.heroId } ?: return@mapNotNull null
             val equipped = pm.equippedItemIds.mapNotNull { DataLoader.getEquipment(it) }
-            heroDef.toCombatantState(pm, equipped)
+            val skin = pm.skinId?.let { DataLoader.getSkin(it) }
+            heroDef.toCombatantState(pm, equipped, _saveData.value.unlockedSkillIds, skin)
         }
         val monsterCombatant = monster.toCombatantState()
 
@@ -56,17 +57,13 @@ internal class BattleOrchestrator(
 
     fun onIntroComplete() {
         val state = _battleState.value ?: return
-        val firstActor = state.turnOrder.firstOrNull() ?: return
-        val newState = if (firstActor.isHero) {
-            state.copy(phase = PLAYER_TURN, currentActorId = firstActor.id)
-        } else {
-            state.copy(phase = ENEMY_TURN, currentActorId = firstActor.id)
-        }
+        val firstMonster = state.monsters.firstOrNull { !it.isDefeated }
+        val newState = state.copy(phase = ENEMY_TURN, currentActorId = firstMonster?.id ?: "")
         _battleState.value = newState
-        if (!firstActor.isHero) {
+        if (firstMonster != null) {
             viewModelScope.launch {
                 delay(1200)
-                executeMonsterTurnLoop(firstActor.id)
+                executeMonsterTurnLoop(firstMonster.id)
             }
         }
     }
@@ -98,6 +95,7 @@ internal class BattleOrchestrator(
     fun executeSkill(heroId: String, skill: Skill, customTargets: List<String>? = null) {
         val state = _battleState.value ?: return
         if (state.phase != PLAYER_TURN || _isProcessingTurn.value) return
+        if (heroId in state.heroesActedThisRound) return
         val hero = state.heroes.find { it.id == heroId && !it.isDefeated } ?: return
 
         val targets = customTargets ?: turnManager.resolveTargets(skill, heroId, state)
@@ -143,6 +141,7 @@ internal class BattleOrchestrator(
     fun executeUltimate(heroId: String) {
         val state = _battleState.value ?: return
         if (state.phase != PLAYER_TURN || _isProcessingTurn.value) return
+        if (heroId in state.heroesActedThisRound) return
         val hero = state.heroes.find { it.id == heroId && !it.isDefeated } ?: return
         if (hero.gauge < 100) return
 
@@ -192,6 +191,17 @@ internal class BattleOrchestrator(
 
     private suspend fun advanceToNextTurn() {
         val state = _battleState.value ?: return
+        val aliveHeroIds = state.aliveHeroes.map { it.id }.toSet()
+
+        // If in player phase and not all heroes have acted, wait for the next hero selection.
+        if (state.phase == PLAYER_TURN &&
+            (aliveHeroIds.isEmpty() || !aliveHeroIds.all { it in state.heroesActedThisRound })
+        ) {
+            _battleState.value = state.copy(currentActorId = "", selectedHeroId = "")
+            _isProcessingTurn.value = false
+            return
+        }
+
         val result = turnManager.advanceTurn(state)
         _battleState.value = updateComboAvailability(result.newState)
         result.logMessages.forEach { addBattleLog(it) }
@@ -260,6 +270,14 @@ internal class BattleOrchestrator(
         }
         _goldEarned.value = goldReward
 
+        val karmaXpReward = when (monster.difficultyTier) {
+            DifficultyTier.EASY -> 20
+            DifficultyTier.MEDIUM -> 50
+            DifficultyTier.HARD -> 100
+            DifficultyTier.BOSS -> 200
+            DifficultyTier.SUPERBOSS -> 400
+        }
+
         val defeatedIds = data.defeatedMonsterIds + monster.id.lowercase()
         val finalState = _battleState.value
         val battleLog = _battleLog.value
@@ -313,6 +331,7 @@ internal class BattleOrchestrator(
             totalBattlesWon = data.totalBattlesWon + 1,
             defeatedMonsterIds = defeatedIds,
             gold = data.gold + goldReward,
+            karmaXp = data.karmaXp + karmaXpReward,
             inventory = inventory,
             earnedTrophyIds = existing.toSet(),
             lastPlayedTimestamp = System.currentTimeMillis()

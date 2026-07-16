@@ -2,7 +2,6 @@ package com.example.game.model
 
 import com.example.game.model.TargetType
 import com.example.game.model.Element
-import com.example.game.model.ActionSpeed
 
 enum class BattlePhase {
     INTRO, START_OF_BATTLE,
@@ -28,11 +27,12 @@ data class CombatantState(
     val maxHp: Int,
     val hp: Int,
     val attack: Int,
-    val speed: Int,
     val shield: Int = 0,
     val gauge: Int = 0,
     val isDefeated: Boolean = false,
     val level: Int = 1,
+    val skinPrimaryColor: String? = null,
+    val skinSecondaryColor: String? = null,
     val skills: List<Skill> = emptyList(),
     val ultimate: Skill? = null,
     val englishName: String? = null,
@@ -136,7 +136,9 @@ data class BattleState(
     val isComboAvailable: Boolean = false,
     val pendingSkill: Skill? = null,
     val showTargetSelection: Boolean = false,
-    val skillCooldowns: Map<String, Map<String, Int>> = emptyMap()
+    val skillCooldowns: Map<String, Map<String, Int>> = emptyMap(),
+    val selectedHeroId: String = "",
+    val heroesActedThisRound: Set<String> = emptySet()
 ) {
     val aliveHeroes: List<CombatantState> get() = heroes.filter { !it.isDefeated }
     val aliveMonsters: List<CombatantState> get() = monsters.filter { !it.isDefeated }
@@ -158,7 +160,7 @@ data class BattleState(
                 .filter { it.remainingTurns > 1 }
                 .map { it.copy(remainingTurns = it.remainingTurns - 1) }
         }.filterValues { it.isNotEmpty() }
-        return copy(round = round + 1, statusEffects = newStatusEffects)
+        return copy(round = round + 1, statusEffects = newStatusEffects, heroesActedThisRound = emptySet())
     }
 
     fun withUpdatedHero(heroId: String, update: (CombatantState) -> CombatantState): BattleState {
@@ -173,7 +175,6 @@ data class BattleState(
 data class BattleActor(
     val id: String,
     val name: String,
-    val speed: Int,
     val isHero: Boolean,
     val element: Element = Element.NEUTRAL
 )
