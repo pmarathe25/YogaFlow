@@ -20,16 +20,15 @@ val Element.color: Color
         Element.NEUTRAL -> Color(0xFF9E9E9E)
     }
 
+val Element.displayName: String
+    get() = name.lowercase().replaceFirstChar { it.uppercase() }
+
 enum class DamageType {
     PHYSICAL, ELEMENTAL
 }
 
 enum class TargetType {
     SELF, SINGLE_ALLY, SINGLE_ENEMY, ALL_ALLIES, ALL_ENEMIES, ALL
-}
-
-enum class ActionSpeed {
-    FAST, NORMAL, SLOW
 }
 
 data class DamageComponent(
@@ -61,7 +60,8 @@ data class Skill(
     val cleanse: Boolean = false,
     val revive: Boolean = false,
     val ultimateGain: Int = 20,
-    val cooldown: Int = 0
+    val cooldown: Int = 0,
+    val karmaXpCost: Int = 0
 ) {
     fun getMechanicsDescription(heroLevel: Int = 1): String {
         val sb = StringBuilder()

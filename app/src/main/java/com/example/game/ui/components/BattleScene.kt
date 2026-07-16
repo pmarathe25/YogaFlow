@@ -274,7 +274,8 @@ fun BattleScene(viewModel: GameViewModel) {
                                 MonsterHUD(
                                     monster = monster,
                                     statuses = state.getStatusesForTarget(monster.id),
-                                    modifier = Modifier.padding(bottom = 8.dp)
+                                    modifier = Modifier.padding(bottom = 8.dp),
+                                    heroElements = state.heroes.map { it.element }.distinct()
                                 )
                                 CombatantSprite(
                                     isMonster = true,
@@ -337,17 +338,33 @@ fun BattleScene(viewModel: GameViewModel) {
                             )
                             val density = LocalDensity.current
 
+                            val hasActed = hero.id in state.heroesActedThisRound
+                            val heroAlpha by animateFloatAsState(
+                                targetValue = if (hasActed) 0.4f else 1f,
+                                animationSpec = tween(300)
+                            )
+
+                            val isHeroSelectable = state.phase == PLAYER_TURN &&
+                                state.currentActorId.isEmpty() &&
+                                !state.heroesActedThisRound.contains(hero.id) &&
+                                !hero.isDefeated
+
                             val heroClickable = if (isTargeting && canTarget) {
                                 Modifier.clickable {
                                     val skill = state.pendingSkill ?: return@clickable
                                     viewModel.executeSkill(currentHero?.id ?: return@clickable, skill, listOf(hero.id))
                                 }
+                            } else if (isHeroSelectable) {
+                                Modifier.clickable { viewModel.selectHero(hero.id) }
                             } else Modifier
 
                             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier.graphicsLayer { translationY = with(density) { heroEntry.dp.toPx() } }
+                                    modifier = Modifier.graphicsLayer {
+                                        translationY = with(density) { heroEntry.dp.toPx() }
+                                        alpha = heroAlpha
+                                    }
                                         .then(heroClickable)
                                 ) {
                                     HeroHUD(
@@ -371,6 +388,8 @@ fun BattleScene(viewModel: GameViewModel) {
                                             isLowHp = hero.hpPercent < 0.3f && !hero.isDefeated,
                                             isCurrentTurn = isTurn,
                                             element = hero.element,
+                                            primaryColor = hero.skinPrimaryColor,
+                                            secondaryColor = hero.skinSecondaryColor,
                                             modifier = Modifier.size(120.dp).graphicsLayer {
                                                 if (isTargeted) { scaleX = 1.15f; scaleY = 1.15f }
                                             }
@@ -421,44 +440,48 @@ fun BattleScene(viewModel: GameViewModel) {
             }
 
             // Action Tray at bottom with card-deal slide-up animation
-            if (currentHero != null && state.phase == PLAYER_TURN) {
-                var showHand by remember { mutableStateOf(false) }
-                val slideFraction by animateFloatAsState(
-                    targetValue = if (showHand) 0f else 1f,
-                    animationSpec = spring(dampingRatio = 0.7f, stiffness = 200f)
-                )
-
-                LaunchedEffect(Unit) {
-                    showHand = false
-                    delay(50)
-                    showHand = true
-                }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .zIndex(1f)
-                        .align(Alignment.BottomCenter)
-                        .windowInsetsPadding(WindowInsets.navigationBars)
-                        .graphicsLayer { translationY = slideFraction * 200.dp.toPx() }
-                ) {
-                    ActionTray(
-                        currentHero = currentHero,
-                        turnOrder = state.turnOrder,
-                        currentTurnIndex = state.currentTurnIndex,
-                        skillCooldowns = state.skillCooldowns[currentHero.id] ?: emptyMap(),
-                        availableCombos = availableCombos,
-                        isTargeting = isTargeting,
-                        onSkill = { skill ->
-                            currentHero?.let { viewModel.executeSkill(it.id, skill) }
-                        },
-                        onComboById = { comboId ->
-                            viewModel.executeComboById(comboId)
-                        },
-                        onCardDragStart = { color -> dragOverlayColor = color },
-                        onCardDragEnd = { dragOverlayColor = null },
-                        modifier = Modifier.fillMaxWidth()
+            if (state.selectedHeroId.isNotEmpty() && state.phase == PLAYER_TURN) {
+                val selectedHero = state.heroes.find { it.id == state.selectedHeroId }
+                if (selectedHero != null) {
+                    var showHand by remember { mutableStateOf(false) }
+                    val slideFraction by animateFloatAsState(
+                        targetValue = if (showHand) 0f else 1f,
+                        animationSpec = spring(dampingRatio = 0.7f, stiffness = 200f)
                     )
+
+                    LaunchedEffect(Unit) {
+                        showHand = false
+                        delay(50)
+                        showHand = true
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .zIndex(1f)
+                            .align(Alignment.BottomCenter)
+                            .windowInsetsPadding(WindowInsets.navigationBars)
+                            .graphicsLayer { translationY = slideFraction * 200.dp.toPx() }
+                    ) {
+                        ActionTray(
+                            currentHero = selectedHero,
+                            turnOrder = state.turnOrder,
+                            currentTurnIndex = state.currentTurnIndex,
+                            heroesActedThisRound = state.heroesActedThisRound,
+                            skillCooldowns = state.skillCooldowns[selectedHero.id] ?: emptyMap(),
+                            availableCombos = availableCombos,
+                            isTargeting = isTargeting,
+                            onSkill = { skill ->
+                                selectedHero.let { viewModel.executeSkill(it.id, skill) }
+                            },
+                            onComboById = { comboId ->
+                                viewModel.executeComboById(comboId)
+                            },
+                            onCardDragStart = { color -> dragOverlayColor = color },
+                            onCardDragEnd = { dragOverlayColor = null },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }
@@ -509,7 +532,8 @@ fun BattleScene(viewModel: GameViewModel) {
 
         // Turn indicator banner (animated popup like intro text)
         TurnBanner(
-            actorName = state.turnOrder.find { it.id == state.currentActorId }?.name,
+            actorName = if (state.phase == PLAYER_TURN && state.currentActorId.isEmpty())
+                "CHOOSE A HERO" else state.turnOrder.find { it.id == state.currentActorId }?.name,
             visible = state.phase != BattlePhase.INTRO,
             modifier = Modifier.align(Alignment.Center)
         )
@@ -579,7 +603,11 @@ fun TurnOrderList(state: BattleState) {
             val isComboParticipant = actor.id in comboParticipantIds
             val isCurrentlyActive = isActive || isComboParticipant
             val actorIndex = state.turnOrder.indexOf(actor)
-            val hasActed = actorIndex >= 0 && actorIndex < state.currentTurnIndex
+            val hasActed = if (actor.isHero) {
+                actor.id in state.heroesActedThisRound
+            } else {
+                actorIndex < state.currentTurnIndex
+            }
             val color = actor.element.color
 
             Text(

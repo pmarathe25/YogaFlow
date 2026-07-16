@@ -2,6 +2,47 @@ package com.example.game.battle
 
 import com.example.game.model.*
 
+/**
+ * Elemental effectiveness chart — single source of truth.
+ * Outer key = attacker element. Inner key = defender element. Value = damage multiplier.
+ * 1.5f = super effective, 0.5f = not very effective, 1f = neutral (not listed).
+ */
+internal val elementalChart: Map<Element, Map<Element, Float>> = mapOf(
+    Element.FIRE to mapOf(Element.AIR to 1.5f, Element.WATER to 0.5f),
+    Element.WATER to mapOf(Element.FIRE to 1.5f, Element.EARTH to 0.5f),
+    Element.AIR to mapOf(Element.EARTH to 1.5f, Element.FIRE to 0.5f, Element.VOID to 1.5f),
+    Element.EARTH to mapOf(Element.WATER to 1.5f, Element.AIR to 0.5f, Element.LIGHT to 1.5f, Element.ELECTRIC to 1.5f),
+    Element.LIGHT to mapOf(Element.DARK to 1.5f, Element.SHADOW to 1.5f, Element.VOID to 0.5f, Element.EARTH to 0.5f),
+    Element.DARK to mapOf(Element.LIGHT to 1.5f, Element.VOID to 0.5f),
+    Element.SHADOW to mapOf(Element.LIGHT to 1.5f),
+    Element.ELECTRIC to mapOf(Element.WATER to 1.5f, Element.EARTH to 0.5f),
+    Element.VOID to mapOf(Element.LIGHT to 1.5f, Element.DARK to 1.5f, Element.AIR to 0.5f)
+)
+
+/**
+ * Returns all elements that deal 1.5x damage to the given [defender].
+ * Use to find which hero elements counter a monster element.
+ */
+fun countersFor(defender: Element): List<Element> {
+    return Element.entries.filter { attacker ->
+        (elementalChart[attacker]?.get(defender) ?: 1f) > 1f
+    }
+}
+
+/**
+ * Returns all elements that the given attacker deals 1.5x damage to.
+ */
+fun strongAgainst(attacker: Element): List<Element> {
+    return elementalChart[attacker]?.filter { it.value > 1f }?.keys?.toList() ?: emptyList()
+}
+
+/**
+ * Convenience: multiplier for a specific attacker-vs-defender matchup.
+ */
+fun matchupMultiplier(attacker: Element, defender: Element): Float {
+    return elementalChart[attacker]?.get(defender) ?: 1f
+}
+
 internal object BattleTuning {
     const val CRIT_CHANCE = 0.1f
 }
@@ -15,20 +56,8 @@ internal data class DamageResult(
 
 internal class DamageCalculator(private val rng: RandomProvider) {
 
-    private val elementChart: Map<Element, Map<Element, Float>> = mapOf(
-        Element.FIRE to mapOf(Element.AIR to 1.5f, Element.WATER to 0.5f),
-        Element.WATER to mapOf(Element.FIRE to 1.5f, Element.EARTH to 0.5f),
-        Element.AIR to mapOf(Element.EARTH to 1.5f, Element.FIRE to 0.5f),
-        Element.EARTH to mapOf(Element.WATER to 1.5f, Element.AIR to 0.5f),
-        Element.LIGHT to mapOf(Element.DARK to 1.5f, Element.SHADOW to 1.5f, Element.VOID to 0.5f),
-        Element.DARK to mapOf(Element.LIGHT to 1.5f, Element.VOID to 0.5f),
-        Element.SHADOW to mapOf(Element.LIGHT to 1.5f),
-        Element.ELECTRIC to mapOf(Element.WATER to 1.5f, Element.EARTH to 0.5f),
-        Element.VOID to mapOf(Element.LIGHT to 1.5f, Element.DARK to 1.5f)
-    )
-
     fun getElementMultiplier(attacker: Element, defender: Element): Float {
-        return elementChart[attacker]?.get(defender) ?: 1f
+        return elementalChart[attacker]?.get(defender) ?: 1f
     }
 
     fun computeDamage(

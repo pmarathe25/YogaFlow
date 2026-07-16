@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.game.model.*
+import com.example.game.battle.countersFor
+import com.example.game.battle.matchupMultiplier
 import com.example.game.persistence.DataLoader
 import androidx.compose.ui.window.Dialog
 import kotlin.math.PI
@@ -769,7 +771,90 @@ private fun MonsterConfirmDialog(
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     StatChip("HP", "${monster.baseHp}", Color(0xFF4CAF50))
                     StatChip("ATK", "${monster.baseAtk}", Color(0xFFF44336))
-                    StatChip("SPD", "${monster.baseSpd}", Color(0xFF2196F3))
+                }
+
+                // ── Element Effectiveness ──
+                val monsterCounters = remember(monster.element) {
+                    val allCounters = countersFor(monster.element)
+                    allCounters.filter { counter ->
+                        DataLoader.heroes.any { it.element == counter }
+                    }
+                }
+
+                if (monsterCounters.isNotEmpty()) {
+                    Text(
+                        "Element Effectiveness",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(Modifier.size(12.dp).background(monster.element.color, CircleShape))
+                        Text(
+                            monster.element.name.lowercase().replaceFirstChar { it.uppercase() },
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = monster.element.color
+                        )
+                        Text("is weak to", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                    }
+
+                    monsterCounters.forEach { counterElement ->
+                        val counterHeroes = DataLoader.heroes.filter { it.element == counterElement }
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(Modifier.size(10.dp).background(counterElement.color, CircleShape))
+                            Text(
+                                counterElement.name.lowercase().replaceFirstChar { it.uppercase() },
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = counterElement.color
+                            )
+                            Text(
+                                "◎",
+                                fontSize = 8.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                            )
+                            Text(
+                                counterHeroes.joinToString(", ") { it.name },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+
+                    // Also show what the monster is strong against (heroes weak to monster)
+                    val strongAgainstHeroes = DataLoader.heroes.filter { hero ->
+                        val mult = com.example.game.battle.matchupMultiplier(monster.element, hero.element)
+                        mult > 1f
+                    }
+                    if (strongAgainstHeroes.isNotEmpty()) {
+                        Spacer(Modifier.height(4.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(Modifier.size(10.dp).background(monster.element.color, CircleShape))
+                            Text(
+                                "Deals bonus damage to:",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                            Text(
+                                strongAgainstHeroes.joinToString(", ") { it.name },
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFFEF5350)
+                            )
+                        }
+                    }
                 }
 
                 // ── Party heroes ──

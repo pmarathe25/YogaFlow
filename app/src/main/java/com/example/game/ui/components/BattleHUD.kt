@@ -2,7 +2,9 @@ package com.example.game.ui.components
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.game.battle.countersFor
 import com.example.game.model.*
 
 private val hpGreen = Color(0xFF66BB6A)
@@ -182,8 +185,6 @@ fun StatusIcon(type: StatusEffectType, iconSize: Int = 12) {
     val (label, color) = when (type) {
         StatusEffectType.ATK_UP -> "ATK↑" to Color(0xFFEF5350)
         StatusEffectType.ATK_DOWN -> "ATK↓" to Color.Gray
-        StatusEffectType.SPD_UP -> "SPD↑" to Color(0xFF66BB6A)
-        StatusEffectType.SPD_DOWN -> "SPD↓" to Color.Gray
         StatusEffectType.BURN -> "BRN" to Color(0xFFFFA500)
         StatusEffectType.STUN -> "STN" to Color.Yellow
         StatusEffectType.TAUNT -> "TNT" to Color.Red
@@ -221,6 +222,58 @@ fun HeroHUD(hero: CombatantState, statuses: List<BattleStatus>, isCurrentTurn: B
 }
 
 @Composable
-fun MonsterHUD(monster: CombatantState, statuses: List<BattleStatus>, modifier: Modifier = Modifier) {
-    FloatingHUD(monster.name, monster.hp, monster.maxHp, modifier, monster.shield, null, monster.element, statuses, false, width = 100, hpBarColor = Color.Red)
+fun MonsterHUD(
+    monster: CombatantState,
+    statuses: List<BattleStatus>,
+    modifier: Modifier = Modifier,
+    heroElements: List<Element> = emptyList()
+) {
+    val counters = remember(monster.element, heroElements) {
+        countersFor(monster.element).filter { it in heroElements }
+    }
+
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        FloatingHUD(monster.name, monster.hp, monster.maxHp, Modifier, monster.shield, null, monster.element, statuses, false, width = 100, hpBarColor = Color.Red)
+
+        ElementBadge(
+            element = monster.element,
+            counters = counters,
+            modifier = Modifier.padding(top = 2.dp)
+        )
+    }
+}
+
+@Composable
+fun ElementBadge(
+    element: Element,
+    counters: List<Element> = emptyList(),
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(element.color, CircleShape)
+        )
+
+        if (counters.isNotEmpty()) {
+            Text(
+                text = "←",
+                color = Color.White.copy(alpha = 0.5f),
+                fontSize = 8.sp,
+                fontWeight = FontWeight.Light
+            )
+            counters.forEach { counterElement ->
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .background(counterElement.color, CircleShape)
+                )
+            }
+        }
+    }
 }
