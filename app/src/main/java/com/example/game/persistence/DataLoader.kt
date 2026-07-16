@@ -41,13 +41,15 @@ object DataLoader {
         setBonuses
     }
 
-    fun getHero(id: Int): Hero = heroes.first { it.id == id }
+    // Safe lookups: never throw (which would otherwise crash the whole app on a
+    // missing id). Fall back to the first entry so callers always get a valid object.
+    fun getHero(id: Int): Hero = heroes.firstOrNull { it.id == id } ?: heroes.first()
 
-    fun getMonster(id: String): Monster = monsters.first { it.id == id }
+    fun getMonster(id: String): Monster = monsters.firstOrNull { it.id == id } ?: monsters.first()
 
-    fun getEquipment(id: String): Equipment = equipment.first { it.id == id }
+    fun getEquipment(id: String): Equipment = equipment.firstOrNull { it.id == id } ?: equipment.first()
 
-    fun getCombo(id: String): ComboSkill = combos.first { it.id == id }
+    fun getCombo(id: String): ComboSkill = combos.firstOrNull { it.id == id } ?: combos.first()
 
     fun findCombo(heroIds: List<String>): ComboSkill? =
         combos.firstOrNull { combo ->

@@ -11,6 +11,7 @@ data class GameProgress(
     val totalYogaXp: Int = 0,
     val gold: Int = 0,
     val totalBattlesWon: Int = 0,
+    val syncedYogaSparks: Int = 0,
     val earnedTrophyIds: Set<String> = emptySet(),
     val lastPlayedTimestamp: Long = 0L
 )

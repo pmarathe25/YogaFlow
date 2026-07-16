@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -38,6 +39,9 @@ import com.example.game.persistence.DataLoader
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.pow
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -117,7 +121,9 @@ private fun HandOfCards(
     val allCards: List<Any> = buildList {
         currentHero.skills.forEach { add(it) }
         if (currentHero.ultimate != null) add(currentHero.ultimate!!)
-        availableCombos.forEach { add(it) }
+        availableCombos
+            .filter { currentHero.id.toIntOrNull() in it.requiredHeroes }
+            .forEach { add(it) }
     }
     val cardCount = allCards.size
     if (cardCount == 0) return
@@ -140,15 +146,17 @@ private fun HandOfCards(
         val minOff = -(cardCount - 1 - center) * cardSpacingPx
         minOff to maxOff
     }
+    val trayScope = rememberCoroutineScope()
+    var flingJob by remember { mutableStateOf<Job?>(null) }
+    var flingVelocity by remember { mutableFloatStateOf(0f) }
+    var lastScrollTime by remember { mutableLongStateOf(0L) }
 
     var selectedCardIndex by remember { mutableIntStateOf(-1) }
     var dragCardIndex by remember { mutableIntStateOf(-1) }
     var dragOffsetY by remember { mutableFloatStateOf(0f) }
     var dragOffsetX by remember { mutableFloatStateOf(0f) }
     var isDragPopped by remember { mutableStateOf(false) }
-    var popAnchorX by remember { mutableFloatStateOf(0f) }
     var dragFromSelected by remember { mutableStateOf(false) }
-    var dragStartCenterX by remember { mutableFloatStateOf(0f) }
 
     val actedHeroIds = remember(turnOrder, currentTurnIndex) {
         turnOrder
@@ -206,6 +214,10 @@ private fun HandOfCards(
 
                         val centerIndex = (cardCount - 1) / 2f
 
+                        flingJob?.cancel()
+                        flingVelocity = 0f
+                        lastScrollTime = System.currentTimeMillis()
+
                         fun hitTestCard(touchX: Float, touchY: Float): Int {
                             if (selectedCardIndex >= 0) {
                                 val selCenterX = boxWidth / 2f
@@ -245,11 +257,16 @@ private fun HandOfCards(
                                 hasMoved = true
                                 val absDx = abs(delta.x)
                                 val absDy = abs(delta.y)
+                                val isHorizontal = absDx > absDy
 
-                                if (touchedIdx >= 0 &&
-                                    isCardUsable(allCards[touchedIdx]) &&
-                                    (touchedIdx == selectedCardIndex || absDy > absDx)
-                                ) {
+                                // Horizontal intent always scrolls the hand, even when the
+                                // touch starts on a card (the fan has no empty gaps to grab).
+                                if (isHorizontal) {
+                                    gestureAction = "scroll"
+                                    if (selectedCardIndex >= 0) {
+                                        selectedCardIndex = -1
+                                    }
+                                } else if (touchedIdx >= 0 && isCardUsable(allCards[touchedIdx])) {
                                     val alreadyPopped = touchedIdx == selectedCardIndex
                                     if (selectedCardIndex >= 0 && !alreadyPopped) {
                                         selectedCardIndex = -1
@@ -258,18 +275,9 @@ private fun HandOfCards(
                                     dragCardIndex = touchedIdx
                                     isDragPopped = alreadyPopped
                                     dragFromSelected = alreadyPopped
-                                    dragStartCenterX = boxWidth / 2f + (touchedIdx - centerIndex) * cardSpacingPx
-                                    if (alreadyPopped) {
-                                        popAnchorX = downPos.x
-                                    }
                                     dragOffsetY = 0f
                                     dragOffsetX = 0f
                                     onCardDragStart?.invoke(getCardColor(allCards[touchedIdx]))
-                                } else {
-                                    gestureAction = "scroll"
-                                    if (selectedCardIndex >= 0) {
-                                        selectedCardIndex = -1
-                                    }
                                 }
                             }
 
@@ -277,15 +285,16 @@ private fun HandOfCards(
                                 when (gestureAction) {
                                     "cardDrag" -> {
                                         dragOffsetY = curPos.y - downPos.y
+                                        dragOffsetX = curPos.x - downPos.x
                                         if (!isDragPopped && dragOffsetY < -popThresholdPx) {
                                             isDragPopped = true
-                                            popAnchorX = curPos.x
-                                        }
-                                        if (isDragPopped) {
-                                            dragOffsetX = curPos.x - popAnchorX
                                         }
                                     }
                                     "scroll" -> {
+                                        val now = System.currentTimeMillis()
+                                        val dt = (now - lastScrollTime).coerceAtLeast(1).toFloat() / 1000f
+                                        flingVelocity = (delta.x / dt).coerceIn(-8000f, 8000f)
+                                        lastScrollTime = now
                                         scrollOffset = (scrollOffset + delta.x)
                                             .coerceIn(minScrollOffset, maxScrollOffset)
                                     }
@@ -321,12 +330,24 @@ private fun HandOfCards(
                             dragCardIndex = -1
                             dragOffsetY = 0f
                             dragOffsetX = 0f
-                            popAnchorX = 0f
                             isDragPopped = false
                             dragFromSelected = false
-                            dragStartCenterX = 0f
                             selectedCardIndex = -1
                             onCardDragEnd?.invoke()
+                            } else if (gestureAction == "scroll") {
+                            val initialVelocity = flingVelocity
+                            flingJob = trayScope.launch {
+                                var v = initialVelocity
+                                while (abs(v) > 50f) {
+                                    val step = v * (16f / 1000f)
+                                    val next = (scrollOffset + step)
+                                        .coerceIn(minScrollOffset, maxScrollOffset)
+                                    scrollOffset = next
+                                    if (next == minScrollOffset || next == maxScrollOffset) break
+                                    v *= 0.94f
+                                    delay(16)
+                                }
+                            }
                         }
                     }
                 },
@@ -355,27 +376,18 @@ private fun HandOfCards(
                             isDragged -> {
                                 val startTx = arcTx(index).dp.toPx()
                                 val startTy = arcTy(index).dp.toPx()
+                                val armed = if (isDragPopped) 1f else 0f
                                 if (dragFromSelected) {
                                     translationX = dragOffsetX
                                     translationY = -popPositionPx + dragOffsetY
                                     rotationZ = 0f
-                                    scaleX = 1.15f; scaleY = 1.15f
-                                } else if (isDragPopped) {
-                                    val progress = (-dragOffsetY - popThresholdPx)
-                                        .coerceIn(0f, popThresholdPx) / popThresholdPx
-                                    translationX = dragStartCenterX * (1f - progress) + dragOffsetX
+                                } else {
+                                    translationX = startTx + dragOffsetX
                                     translationY = startTy + dragOffsetY
                                     rotationZ = 0f
-                                    scaleX = 1f + 0.15f * progress
-                                    scaleY = 1f + 0.15f * progress
-                                } else {
-                                    val dragProgress = (-dragOffsetY / popThresholdPx).coerceIn(0f, 1f)
-                                    translationX = startTx * (1f - dragProgress)
-                                    translationY = startTy + min(dragOffsetY, 0f)
-                                    rotationZ = arcRotation(index) * (1f - dragProgress)
-                                    scaleX = 1f + 0.15f * dragProgress
-                                    scaleY = 1f + 0.15f * dragProgress
                                 }
+                                scaleX = 1f + 0.15f * armed
+                                scaleY = 1f + 0.15f * armed
                             }
                             isSelected -> {
                                 val startTx = arcTx(index).dp.toPx()
@@ -452,9 +464,9 @@ internal fun ComboCard(
 
     Card(
         modifier = modifier
-            .alpha(if (disabled) 0.5f else 1f),
+            .alpha(if (disabled) 0.55f else 1f),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = lerp(Color(0xFFF5EEDC), Color(0xFF4A148C), 0.15f)),
+        colors = CardDefaults.cardColors(containerColor = if (disabled) Color(0xFF37474F) else Color(0xFF4A148C)),
         elevation = CardDefaults.cardElevation(defaultElevation = if (suspendAnimations) 0.dp else 4.dp)
     ) {
         Box(
@@ -463,36 +475,33 @@ internal fun ComboCard(
                 .padding(8.dp)
                 .border(
                     width = 3.dp,
-                    color = if (disabled) Color.Gray.copy(alpha = 0.4f) else Color(0xFF9C27B0).copy(alpha = glowAlpha),
+                    color = if (disabled) Color.Gray.copy(alpha = 0.5f) else Color(0xFFCE93D8).copy(alpha = glowAlpha),
                     shape = RoundedCornerShape(12.dp)
                 )
         ) {
             Column(
                 modifier = Modifier.padding(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text("\uD83D\uDCA5", fontSize = 28.sp)
-
-                Spacer(Modifier.height(4.dp))
+                Text("✨", fontSize = 30.sp)
 
                 Text(
                     text = combo.name,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFFCE93D8),
+                    color = Color.White,
                     textAlign = TextAlign.Center
                 )
-
-                Spacer(Modifier.height(4.dp))
 
                 Text(
                     text = combo.description,
                     style = MaterialTheme.typography.labelSmall,
-                    fontSize = 9.sp,
-                    color = Color(0xFFE1BEE7).copy(alpha = 0.7f),
+                    fontSize = 11.sp,
+                    color = Color(0xFFE1BEE7),
                     textAlign = TextAlign.Center,
-                    lineHeight = 11.sp,
-                    maxLines = 3
+                    lineHeight = 13.sp,
+                    maxLines = 4
                 )
 
                 Spacer(Modifier.weight(1f))
@@ -502,8 +511,9 @@ internal fun ComboCard(
                         DataLoader.heroes.find { it.id == id }?.name ?: "Hero $id"
                     },
                     style = MaterialTheme.typography.labelSmall,
-                    fontSize = 8.sp,
-                    color = Color(0xFFCE93D8).copy(alpha = 0.6f),
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFFFF176),
                     textAlign = TextAlign.Center
                 )
             }

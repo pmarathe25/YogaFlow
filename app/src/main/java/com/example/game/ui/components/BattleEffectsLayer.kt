@@ -158,7 +158,7 @@ fun BattleEffectsLayer(
                         }
                     }
 
-                    // Sound effects
+                    // Sound effects — chosen per skill by its prevailing damage kind
                     when {
                         event.skill.ultimateGain == 0 && event.skill.damageComponents.isNotEmpty() -> {
                             soundManager.playUltimate()
@@ -166,13 +166,22 @@ fun BattleEffectsLayer(
                         event.skill.healScaling != null -> {
                             soundManager.playHeal()
                         }
+                        event.skill.shieldScaling != null || event.skill.buffs.isNotEmpty() -> {
+                            soundManager.playBuff()
+                        }
                         event.skill.damageComponents.isNotEmpty() -> {
-                            val primaryElement = event.skill.damageComponents
-                                .firstNotNullOfOrNull { it.element } ?: Element.NEUTRAL
-                            soundManager.playElementSound(primaryElement)
+                            soundManager.playForSkill(event.skill)
+                            val isMultiHit = event.skill.hits > 1
                             scope.launch {
-                                delay(300)
-                                soundManager.playHit()
+                                if (isMultiHit) {
+                                    repeat(event.skill.hits.coerceAtMost(4)) {
+                                        delay(140)
+                                        soundManager.playHit()
+                                    }
+                                } else {
+                                    delay(300)
+                                    soundManager.playHit()
+                                }
                             }
                         }
                         else -> soundManager.playWhoosh()
@@ -207,6 +216,12 @@ fun BattleEffectsLayer(
                     )
                     scope.launch {
                         shakeHandle.shake(intensity = 12f, durationMs = 500)
+                    }
+                    // Combo sound by its prevailing damage kind (ultimate-class flourish)
+                    soundManager.playForCombo(event.combo)
+                    scope.launch {
+                        delay(280)
+                        soundManager.playHit()
                     }
                 }
                 is BattleEvent.MonsterDown -> {

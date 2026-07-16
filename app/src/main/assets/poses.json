@@ -251,6 +251,20 @@
         "Close your eyes and sink into complete stillness."
       ],
       "holdDurationSec": 30
+    },
+    {
+      "id": 305,
+      "sanskritName": "Savasana",
+      "englishName": "Corpse Pose",
+      "description": "Lie flat on your back, feet wide, arms relaxed with palms up.",
+      "benefits": "Reduces heart rate, deeply integrates physical practice, calms central nervous system.",
+      "instructions": [
+        "Lie fully flat on your back.",
+        "Let your feet turn out naturally.",
+        "Bring arms slightly away from the body with palms up.",
+        "Close your eyes and sink into complete stillness."
+      ],
+      "holdDurationSec": 30
     }
   ]
 }

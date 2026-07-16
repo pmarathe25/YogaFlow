@@ -102,6 +102,288 @@
           "sanskritVoicePrompt": "बालासनम्। नितम्बौ पादपृष्ठे स्थापयन्तु। शिरो भूमौ नमन्तु।"
         }
       ]
+    },
+    {
+      "id": "restorative_yin",
+      "name": "Deep Restorative Yin",
+      "description": "A relaxing, low-intensity series of holds designed to release deep connective tissues and soothe the nervous system.",
+      "difficulty": "Beginner",
+      "totalDurationMinutes": 4,
+      "steps": [
+        {
+          "poseId": 301,
+          "englishVoicePrompt": "Yin Step 1: Child's Pose, Balasana. Bring your knees wide, sink your hips back, and relax your forehead on the mat. Feel the breath soothing your back.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 302,
+          "englishVoicePrompt": "Yin Step 2: Sphinx Pose. Prop yourself onto your forearms, relaxing your lower body completely. Lift your chest gently and enjoy this mild back-bend.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 303,
+          "englishVoicePrompt": "Yin Step 3: Butterfly Pose, Baddha Konasana. Bring the soles of your feet together, letting your knees open wide. Fold forward slightly to release the hips.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 304,
+          "englishVoicePrompt": "Yin Step 4: Reclined Spinal Twist. Lay on your back and drop your knees to the side. Open your chest flat toward the sky, breathing ease into your spine.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 305,
+          "englishVoicePrompt": "Yin Step 5: Corpse Pose, Savasana. Lie completely flat on your back, letting your whole body surrender. Close your eyes, be absolutely still, and rest. Namaste.",
+          "sanskritVoicePrompt": ""
+        }
+      ]
+    },
+    {
+      "id": "morning_energizer",
+      "name": "Morning Energizer",
+      "description": "Start your day with a gentle, refreshing sequence to awaken your senses, stretch your limbs, and bring vibrant focus to your morning.",
+      "difficulty": "Beginner",
+      "totalDurationMinutes": 5,
+      "steps": [
+        {
+          "poseId": 201,
+          "englishVoicePrompt": "Energizer Step 1: Mountain Pose, or Tadasana. Wake up your body by standing tall and breathing deeply. Ground your feet and prepare your mind for the day.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 2,
+          "englishVoicePrompt": "Energizer Step 2: Raised Arms Pose. Sweep your arms high to greet the morning. Stretch toward the sky and lift your heart.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 3,
+          "englishVoicePrompt": "Energizer Step 3: Forward Bend. Exhale and hinge from your hips. Fold forward, letting your neck relax completely and releasing any stiffness from sleep.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 8,
+          "englishVoicePrompt": "Energizer Step 4: Downward Dog. Step back and press your hips up and back. Stretch your spine and awaken your hamstrings with a gentle pedaling motion.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 205,
+          "englishVoicePrompt": "Energizer Step 5: Child's Pose. Bring your knees wide and sink your hips to your heels. Breathe deeply and feel a sense of calm gratitude for the day ahead.",
+          "sanskritVoicePrompt": ""
+        }
+      ]
+    },
+    {
+      "id": "bedtime_wind_down",
+      "name": "Bedtime Wind Down",
+      "description": "A slow, calming sequence of grounded holds to release the tension of the day and prepare your mind and body for a deep, restful sleep.",
+      "difficulty": "Beginner",
+      "totalDurationMinutes": 5,
+      "steps": [
+        {
+          "poseId": 301,
+          "englishVoicePrompt": "Wind Down Step 1: Child's Pose. Rest your body on the mat. Take slow, soothing breaths and feel the busyness of the day fade away.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 303,
+          "englishVoicePrompt": "Wind Down Step 2: Butterfly Pose. Bring your feet together and let your knees relax outward. Lean forward slightly and release any tension in your hips.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 304,
+          "englishVoicePrompt": "Wind Down Step 3: Reclined Spinal Twist. Lay back and let your knees drift to the side. Breathe deeply into your back, letting your body decompress.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 305,
+          "englishVoicePrompt": "Wind Down Step 4: Savasana, or Corpse Pose. Lie completely flat, letting every muscle go limp. Close your eyes, sink into the mat, and drift into a peaceful rest.",
+          "sanskritVoicePrompt": ""
+        }
+      ]
+    },
+    {
+      "id": "core_balance",
+      "name": "Core & Balance Builder",
+      "description": "Focus your energy on stability and core strength with this sequence that challenges your balance and tones your core muscles.",
+      "difficulty": "Intermediate",
+      "totalDurationMinutes": 5,
+      "steps": [
+        {
+          "poseId": 201,
+          "englishVoicePrompt": "Step 1: Mountain Pose. Find your balance and establish a strong, tall stance. Ground your feet into the earth.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 202,
+          "englishVoicePrompt": "Step 2: Warrior 1. Step your left leg back, reach high, and lift your chest. Stand solid and strong.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 203,
+          "englishVoicePrompt": "Step 3: Warrior 2. Open your arms and body to the side. Look forward past your hand, finding absolute stability.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 5,
+          "englishVoicePrompt": "Step 4: Plank Pose. Lower into a strong plank posture. Pull your belly button in tight and support your body with core power.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 8,
+          "englishVoicePrompt": "Step 5: Downward-Facing Dog. Elevate your hips and release your heels downward. Let your back lengthen and take deep, centering breaths.",
+          "sanskritVoicePrompt": ""
+        }
+      ]
+    },
+    {
+      "id": "heart_opening",
+      "name": "Heart Opening Vinyasa",
+      "description": "An uplifting flow centering on backbends and chest expansion to open your heart, release upper body stiffness, and boost your energy.",
+      "difficulty": "Intermediate",
+      "totalDurationMinutes": 5,
+      "steps": [
+        {
+          "poseId": 201,
+          "englishVoicePrompt": "Opening Step 1: Mountain Pose. Stand tall and ground yourself, feeling the space around your chest expand.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 2,
+          "englishVoicePrompt": "Opening Step 2: Raised Arms Pose. Reach up and arch back slightly, stretching your chest toward the light.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 302,
+          "englishVoicePrompt": "Opening Step 3: Sphinx Pose. Rest on your forearms, lift your chest gently, and feel your collarbones broaden.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 7,
+          "englishVoicePrompt": "Opening Step 4: Cobra Pose. Press into your palms and roll your shoulders back. Lift your heart and breathe energy into your upper back.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 205,
+          "englishVoicePrompt": "Opening Step 5: Child's Pose. Relax down completely. Absorb the openness of your chest and rest your heart on the mat.",
+          "sanskritVoicePrompt": ""
+        }
+      ]
+    },
+    {
+      "id": "power_vinyasa",
+      "name": "Power Vinyasa Ascent",
+      "description": "An intense, fast-paced advanced vinyasa flow that builds stamina, muscle strength, and deep athletic concentration.",
+      "difficulty": "Advanced",
+      "totalDurationMinutes": 6,
+      "steps": [
+        {
+          "poseId": 5,
+          "englishVoicePrompt": "Vinyasa Step 1: Plank Pose. Ignite your core immediately. Hold this posture strong, building heat in your belly and arms.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 6,
+          "englishVoicePrompt": "Vinyasa Step 2: Eight-Limbed Pose. Lower with control, keeping your elbows close to your chest and your focus sharp.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 7,
+          "englishVoicePrompt": "Vinyasa Step 3: Cobra Pose. Inhale and lift up, opening your front body. Feel the strength of your spine working.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 8,
+          "englishVoicePrompt": "Vinyasa Step 4: Downward Dog. Push back and breathe deeply. Use this pose to center yourself and stretch out your spine.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 202,
+          "englishVoicePrompt": "Vinyasa Step 5: Warrior 1. Step up with power. Reach high, bend your front knee, and sink into your hips with complete focus.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 203,
+          "englishVoicePrompt": "Vinyasa Step 6: Warrior 2. Open up with strength. Direct your energy through both hands, standing solid as a rock.",
+          "sanskritVoicePrompt": ""
+        }
+      ]
+    },
+    {
+      "id": "ashtanga_core",
+      "name": "Ashtanga Core Power",
+      "description": "An advanced, core-centric sequence of strong postures requiring intense muscle activation, breath control, and persistent focus.",
+      "difficulty": "Advanced",
+      "totalDurationMinutes": 6,
+      "steps": [
+        {
+          "poseId": 5,
+          "englishVoicePrompt": "Step 1: Plank Pose. Establish a firm core. Breathe steadily and let your muscles engage.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 202,
+          "englishVoicePrompt": "Step 2: Warrior 1. Step up with determination. Press your feet down, lift your arms, and center your focus.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 203,
+          "englishVoicePrompt": "Step 3: Warrior 2. Open into a powerful stance. Gaze forward and find absolute clarity.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 7,
+          "englishVoicePrompt": "Step 4: Cobra Pose. Slide onto your belly and lift your chest, engaging your entire back body.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 8,
+          "englishVoicePrompt": "Step 5: Downward Dog. Push back, stretching your legs and centering your mind for the final hold.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 205,
+          "englishVoicePrompt": "Step 6: Child's Pose. Relax and surrender. Let your heartbeat slow down and enjoy the sweet release.",
+          "sanskritVoicePrompt": ""
+        }
+      ]
+    },
+    {
+      "id": "balance_mastery",
+      "name": "Advanced Balance Mastery",
+      "description": "Push the boundaries of your stability and deep focus with a sequence of challenging standing balances and grounding postures.",
+      "difficulty": "Advanced",
+      "totalDurationMinutes": 7,
+      "steps": [
+        {
+          "poseId": 201,
+          "englishVoicePrompt": "Mastery Step 1: Mountain Pose. Stand tall and completely still. Ground your mind and body.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 202,
+          "englishVoicePrompt": "Mastery Step 2: Warrior 1. Ground your back foot firmly. Elevate your spine and settle your hips deep.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 203,
+          "englishVoicePrompt": "Mastery Step 3: Warrior 2. Stretch wide and stay steady, focusing your gaze forward with intent.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 204,
+          "englishVoicePrompt": "Mastery Step 4: Triangle Pose. Hinge forward and open your heart to the side. Maintain absolute balance.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 205,
+          "englishVoicePrompt": "Mastery Step 5: Child's Pose. Rest and breathe, releasing all physical effort.",
+          "sanskritVoicePrompt": ""
+        },
+        {
+          "poseId": 305,
+          "englishVoicePrompt": "Mastery Step 6: Savasana. Complete your balance practice with pure relaxation. Rest deeply.",
+          "sanskritVoicePrompt": ""
+        }
+      ]
     }
   ]
 }

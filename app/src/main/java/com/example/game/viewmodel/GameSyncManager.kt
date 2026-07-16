@@ -19,8 +19,6 @@ internal class GameSyncManager(
     private val application: Application,
     private val viewModelScope: CoroutineScope
 ) {
-    private var lastSyncedMainSparks: Int = 0
-
     fun refreshSync() {
         viewModelScope.launch { syncWithMainApp() }
     }
@@ -47,12 +45,15 @@ internal class GameSyncManager(
         if (data.yogaLevel != computedLevel) {
             updated = updated.copy(yogaLevel = computedLevel)
         }
-        val delta = mainSparks - lastSyncedMainSparks
+        val delta = mainSparks - data.syncedYogaSparks
         if (delta > 0) {
             updated = updated.copy(sparks = updated.sparks + delta)
         }
-        lastSyncedMainSparks = mainSparks
-        updated = updated.copy(totalYogaXp = xpSum)
+        val newSyncedSparks = if (data.syncedYogaSparks > mainSparks) data.syncedYogaSparks else mainSparks
+        updated = updated.copy(
+            syncedYogaSparks = newSyncedSparks,
+            totalYogaXp = xpSum
+        )
         if (xpSum > data.totalYogaXp) {
             val newGoldEarned = (xpSum - data.totalYogaXp) / 10
             if (newGoldEarned > 0) {

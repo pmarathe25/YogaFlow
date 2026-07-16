@@ -97,9 +97,9 @@ class StatsManager(
                     Achievement(
                         id = "tri_fold_harmony",
                         title = "Tri-Fold Harmony",
-                        description = "Practice 2 different yoga flows.",
-                        isUnlocked = uniqueFlowsCount >= 2,
-                        progressText = "$uniqueFlowsCount/2"
+                        description = "Practice 3 different yoga flows.",
+                        isUnlocked = uniqueFlowsCount >= 3,
+                        progressText = "$uniqueFlowsCount/3"
                     ),
                     Achievement(
                         id = "yogi_adept",
