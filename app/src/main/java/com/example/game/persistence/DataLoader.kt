@@ -10,7 +10,11 @@ object DataLoader {
     private lateinit var context: Context
     private val gson = Gson()
 
+    val isInitialized: Boolean
+        get() = ::context.isInitialized
+
     val heroes: List<Hero> by lazy { loadList("heroes.json") }
+    val skins: List<HeroSkin> by lazy { loadList("skins.json") }
     val monsters: List<Monster> by lazy { loadList("monsters.json") }
     val equipment: List<Equipment> by lazy {
         val text = context.assets.open("game/equipment.json").bufferedReader().use { it.readText() }
@@ -50,6 +54,12 @@ object DataLoader {
     fun getEquipment(id: String): Equipment = equipment.firstOrNull { it.id == id } ?: equipment.first()
 
     fun getCombo(id: String): ComboSkill = combos.firstOrNull { it.id == id } ?: combos.first()
+
+    fun getSkin(skinId: String): HeroSkin? = skins.firstOrNull { it.skinId == skinId }
+
+    fun getSkinsForHero(heroId: Int): List<HeroSkin> = skins.filter { it.heroId == heroId }
+
+    fun getDefaultSkin(heroId: Int): HeroSkin? = skins.firstOrNull { it.heroId == heroId && it.unlockMethod == SkinUnlockMethod.DEFAULT }
 
     fun findCombo(heroIds: List<String>): ComboSkill? =
         combos.firstOrNull { combo ->

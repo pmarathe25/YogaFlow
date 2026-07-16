@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -31,7 +32,9 @@ fun CombatantSprite(
     isTargeted: Boolean = false,
     isLowHp: Boolean = false,
     isCurrentTurn: Boolean = false,
-    element: Element = Element.NEUTRAL
+    element: Element = Element.NEUTRAL,
+    primaryColor: String? = null,
+    secondaryColor: String? = null
 ) {
     val smoothOffsetX by animateFloatAsState(
         targetValue = animState.offsetX,
@@ -59,6 +62,8 @@ fun CombatantSprite(
     )
 
     val tint = if (!isActive) elementColor.copy(alpha = 0.4f) else elementColor
+    val skinPrimary = remember(primaryColor) { primaryColor?.toComposeColor() }
+    val skinSecondary = remember(secondaryColor) { secondaryColor?.toComposeColor() }
 
     Canvas(modifier = modifier) {
         val cx = size.width / 2f + smoothOffsetX
@@ -116,7 +121,7 @@ fun CombatantSprite(
             if (isMonster) {
                 drawMonsterShape(drawCx, drawCy, s, name, elementColor.copy(alpha = smoothAlpha))
             } else {
-                drawSilhouette(drawCx, drawCy, s, heroId, tint.copy(alpha = smoothAlpha))
+                drawSilhouette(drawCx, drawCy, s, heroId, tint.copy(alpha = smoothAlpha), skinPrimary, skinSecondary)
             }
 
             // Flash overlay

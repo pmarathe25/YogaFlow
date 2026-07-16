@@ -10,9 +10,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import com.example.game.model.Element
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.math.PI
+import kotlin.math.*
 
 // ─── Sprite Animation State ───────────────────────────────────────────
 
@@ -372,14 +370,14 @@ private fun DrawScope.drawPillar(x: Float, baseY: Float, width: Float, height: F
 
 // ─── Silhouette Drawers (unchanged from original) ──────────────────────
 
-fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: Color) {
+fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: Color, primaryColor: Color? = null, secondaryColor: Color? = null) {
     val path = Path()
 
     when (heroId) {
         1 -> {
             // 1. Watery Halo (Aura)
-            drawCircle(tint.copy(alpha = 0.15f), s * 0.45f, Offset(cx, cy - s * 0.7f))
-            drawCircle(tint.copy(alpha = 0.1f), s * 0.55f, Offset(cx, cy - s * 0.7f))
+            drawCircle((primaryColor ?: tint).copy(alpha = 0.15f), s * 0.45f, Offset(cx, cy - s * 0.7f))
+            drawCircle((primaryColor ?: tint).copy(alpha = 0.1f), s * 0.55f, Offset(cx, cy - s * 0.7f))
 
             // 2. Flowing Gown (Body)
             path.reset()
@@ -388,7 +386,7 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: 
             path.lineTo(cx + s * 0.45f, cy + s * 0.7f)
             path.cubicTo(cx + s * 0.5f, cy + s * 0.4f, cx + s * 0.4f, cy - s * 0.1f, cx + s * 0.15f, cy - s * 0.5f)
             path.close()
-            drawPath(path, tint.copy(alpha = 0.8f))
+            drawPath(path, (primaryColor ?: tint).copy(alpha = 0.8f))
 
             // 3. Hair (Flowing Waves)
             val hairPath = Path()
@@ -396,10 +394,10 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: 
             hairPath.cubicTo(cx - s * 0.35f, cy - s * 0.7f, cx - s * 0.3f, cy - s * 0.4f, cx - s * 0.4f, cy - s * 0.1f)
             hairPath.moveTo(cx + s * 0.18f, cy - s * 0.85f)
             hairPath.cubicTo(cx + s * 0.35f, cy - s * 0.7f, cx + s * 0.3f, cy - s * 0.4f, cx + s * 0.4f, cy - s * 0.1f)
-            drawPath(hairPath, tint, style = Stroke(width = 2f * s / 50f))
+            drawPath(hairPath, secondaryColor ?: tint, style = Stroke(width = 2f * s / 50f))
 
             // 4. Head & Face
-            drawCircle(tint.copy(alpha = 0.9f), s * 0.22f, Offset(cx, cy - s * 0.72f))
+            drawCircle((primaryColor ?: tint).copy(alpha = 0.9f), s * 0.22f, Offset(cx, cy - s * 0.72f))
 
             // 5. Hands in Prayer (Anjali Mudra)
             val handPath = Path()
@@ -408,12 +406,12 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: 
             handPath.lineTo(cx, cy - s * 0.15f)
             handPath.lineTo(cx + s * 0.08f, cy - s * 0.25f)
             handPath.close()
-            drawPath(handPath, tint, style = Stroke(width = 1.5f * s / 50f))
+            drawPath(handPath, secondaryColor ?: tint, style = Stroke(width = 1.5f * s / 50f))
 
             // 6. Prayer Beads (Mala)
             for (i in 0..5) {
                 val bx = cx - s * 0.1f + i * s * 0.04f
-                val by = cy - s * 0.35f + kotlin.math.sin(i * 0.8f) * s * 0.02f
+                val by = cy - s * 0.35f + sin(i * 0.8f) * s * 0.02f
                 drawCircle(Color.White.copy(alpha = 0.6f), s * 0.025f, Offset(bx, by))
             }
         }
@@ -426,20 +424,20 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: 
             path.lineTo(cx + s * 0.55f, cy - s * 0.4f)
             path.quadraticTo(cx, cy - s * 0.55f, cx - s * 0.55f, cy - s * 0.4f)
             path.close()
-            drawPath(path, tint.copy(alpha = 0.7f))
+            drawPath(path, (primaryColor ?: tint).copy(alpha = 0.7f))
 
             // 2. Inner Shield Decoration
-            drawPath(path, tint, style = Stroke(width = 3f * s / 50f))
+            drawPath(path, secondaryColor ?: tint, style = Stroke(width = 3f * s / 50f))
 
             // 3. Sturdy Figure
-            drawCircle(tint.copy(alpha = 0.9f), s * 0.25f, Offset(cx, cy - s * 0.7f))
+            drawCircle((primaryColor ?: tint).copy(alpha = 0.9f), s * 0.25f, Offset(cx, cy - s * 0.7f))
             val bodyPath = Path()
             bodyPath.moveTo(cx - s * 0.25f, cy - s * 0.5f)
             bodyPath.lineTo(cx - s * 0.35f, cy + s * 0.2f)
             bodyPath.lineTo(cx + s * 0.35f, cy + s * 0.2f)
             bodyPath.lineTo(cx + s * 0.25f, cy - s * 0.5f)
             bodyPath.close()
-            drawPath(bodyPath, tint.copy(alpha = 0.85f))
+            drawPath(bodyPath, (primaryColor ?: tint).copy(alpha = 0.85f))
 
             // 4. Grounding Cracks
             val crackPath = Path()
@@ -447,15 +445,15 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: 
             crackPath.lineTo(cx - s * 0.6f, cy + s * 0.8f)
             crackPath.moveTo(cx + s * 0.4f, cy + s * 0.6f)
             crackPath.lineTo(cx + s * 0.6f, cy + s * 0.8f)
-            drawPath(crackPath, tint.copy(alpha = 0.5f), style = Stroke(width = 2f))
+            drawPath(crackPath, (secondaryColor ?: tint).copy(alpha = 0.5f), style = Stroke(width = 2f))
         }
         3 -> {
             // 1. Flame Aura
             for (i in 0..12) {
-                val angle = i * 2f * kotlin.math.PI.toFloat() / 12f
-                val fx = cx + s * 0.4f * kotlin.math.cos(angle)
-                val fy = cy + s * 0.4f * kotlin.math.sin(angle) - s * 0.2f
-                drawCircle(tint.copy(alpha = 0.2f), s * 0.15f, Offset(fx, fy))
+                val angle = i * 2f * PI.toFloat() / 12f
+                val fx = cx + s * 0.4f * cos(angle)
+                val fy = cy + s * 0.4f * sin(angle) - s * 0.2f
+                drawCircle((primaryColor ?: tint).copy(alpha = 0.2f), s * 0.15f, Offset(fx, fy))
             }
 
             // 2. Dynamic Pose
@@ -466,14 +464,14 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: 
             path.lineTo(cx + s * 0.4f, cy + s * 0.1f)
             path.lineTo(cx + s * 0.2f, cy + s * 0.6f)
             path.close()
-            drawPath(path, tint.copy(alpha = 0.9f))
+            drawPath(path, (primaryColor ?: tint).copy(alpha = 0.9f))
 
             // 3. Flame Hair
             val firePath = Path()
             firePath.moveTo(cx - s * 0.15f, cy - s * 0.5f)
             firePath.quadraticTo(cx - s * 0.3f, cy - s * 0.9f, cx, cy - s * 1.1f)
             firePath.quadraticTo(cx + s * 0.3f, cy - s * 0.9f, cx + s * 0.15f, cy - s * 0.5f)
-            drawPath(firePath, tint)
+            drawPath(firePath, secondaryColor ?: tint)
 
             // 4. Glowing Core
             drawCircle(Color.White.copy(alpha = 0.7f), s * 0.08f, Offset(cx, cy - s * 0.1f))
@@ -486,28 +484,28 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: 
             path.quadraticTo(cx, cy + s * 0.65f, cx + s * 0.5f, cy + s * 0.5f)
             path.lineTo(cx + s * 0.1f, cy - s * 0.6f)
             path.close()
-            drawPath(path, tint.copy(alpha = 0.4f))
+            drawPath(path, (primaryColor ?: tint).copy(alpha = 0.4f))
 
             // 2. Noble Figure
-            drawCircle(tint.copy(alpha = 0.95f), s * 0.2f, Offset(cx, cy - s * 0.75f))
+            drawCircle((primaryColor ?: tint).copy(alpha = 0.95f), s * 0.2f, Offset(cx, cy - s * 0.75f))
             val armorPath = Path()
             armorPath.moveTo(cx - s * 0.25f, cy - s * 0.55f)
             armorPath.lineTo(cx - s * 0.2f, cy + s * 0.4f)
             armorPath.lineTo(cx + s * 0.2f, cy + s * 0.4f)
             armorPath.lineTo(cx + s * 0.25f, cy - s * 0.55f)
             armorPath.close()
-            drawPath(armorPath, tint)
+            drawPath(armorPath, primaryColor ?: tint)
 
             // 3. Battle Standard (Lance)
             val lancePath = Path()
             lancePath.moveTo(cx + s * 0.3f, cy + s * 0.5f)
             lancePath.lineTo(cx + s * 0.3f, cy - s * 0.9f)
-            drawPath(lancePath, tint, style = Stroke(width = 3f))
+            drawPath(lancePath, secondaryColor ?: tint, style = Stroke(width = 3f))
             val flagPath = Path()
             flagPath.moveTo(cx + s * 0.3f, cy - s * 0.9f)
             flagPath.lineTo(cx + s * 0.6f, cy - s * 0.8f)
             flagPath.lineTo(cx + s * 0.3f, cy - s * 0.7f)
-            drawPath(flagPath, tint.copy(alpha = 0.6f))
+            drawPath(flagPath, (secondaryColor ?: tint).copy(alpha = 0.6f))
         }
         5 -> {
             // 1. Gentle Winds (Spinning paths)
@@ -516,7 +514,7 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: 
                 val offset = i * 40f
                 windPath.moveTo(cx - s * 0.6f, cy - s * 0.3f + offset)
                 windPath.quadraticTo(cx, cy - s * 0.8f + offset, cx + s * 0.6f, cy - s * 0.3f + offset)
-                drawPath(windPath, tint.copy(alpha = 0.2f), style = Stroke(width = 4f, cap = StrokeCap.Round))
+                drawPath(windPath, (secondaryColor ?: tint).copy(alpha = 0.2f), style = Stroke(width = 4f, cap = StrokeCap.Round))
             }
 
             // 2. Ascended Form
@@ -526,7 +524,7 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: 
             path.lineTo(cx + s * 0.2f, cy + s * 0.5f)
             path.quadraticTo(cx, cy + s * 0.7f, cx - s * 0.2f, cy + s * 0.5f)
             path.close()
-            drawPath(path, tint.copy(alpha = 0.8f))
+            drawPath(path, (primaryColor ?: tint).copy(alpha = 0.8f))
 
             // 3. Heart Emblem
             val heartPath = Path()
@@ -541,7 +539,7 @@ fun DrawScope.drawSilhouette(cx: Float, cy: Float, s: Float, heroId: Int, tint: 
             sleevePath.lineTo(cx - s * 0.6f, cy + s * 0.3f)
             sleevePath.moveTo(cx + s * 0.3f, cy - s * 0.2f)
             sleevePath.lineTo(cx + s * 0.6f, cy + s * 0.3f)
-            drawPath(sleevePath, tint, style = Stroke(width = 5f * s / 50f))
+            drawPath(sleevePath, secondaryColor ?: tint, style = Stroke(width = 5f * s / 50f))
         }
         else -> {
             path.moveTo(cx - s * 0.3f, cy + s * 0.5f)
@@ -715,3 +713,5 @@ private fun lerp(a: Color, b: Color, t: Float): Color {
         a.alpha + (b.alpha - a.alpha) * clamped
     )
 }
+
+fun String.toComposeColor(): Color = Color(android.graphics.Color.parseColor(this))

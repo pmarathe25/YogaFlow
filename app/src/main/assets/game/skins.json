@@ -1,0 +1,167 @@
+[
+  {
+    "skinId": "shanti_default",
+    "heroId": 1,
+    "name": "Serene Tide",
+    "description": "Shanti's classic serene form, flowing with water energy.",
+    "primaryColor": "#1E88E5",
+    "secondaryColor": "#B3E5FC",
+    "unlockMethod": "DEFAULT",
+    "unlockCost": 0,
+    "unlockYogaLevel": 0
+  },
+  {
+    "skinId": "shanti_night",
+    "heroId": 1,
+    "name": "Moonlit Calm",
+    "description": "A tranquil night form, bathed in soft lunar light.",
+    "primaryColor": "#311B92",
+    "secondaryColor": "#CE93D8",
+    "unlockMethod": "PURCHASE",
+    "unlockCost": 200,
+    "unlockYogaLevel": 0
+  },
+  {
+    "skinId": "shanti_radiant",
+    "heroId": 1,
+    "name": "Radiant Grace",
+    "description": "A luminous skin unlocked through deep yoga practice.",
+    "primaryColor": "#FFF176",
+    "secondaryColor": "#FFAB91",
+    "unlockMethod": "YOGA_LEVEL",
+    "unlockCost": 0,
+    "unlockYogaLevel": 10
+  },
+  {
+    "skinId": "santosha_default",
+    "heroId": 2,
+    "name": "Earth's Embrace",
+    "description": "Santosha's grounded, earthen form.",
+    "primaryColor": "#795548",
+    "secondaryColor": "#A1887F",
+    "unlockMethod": "DEFAULT",
+    "unlockCost": 0,
+    "unlockYogaLevel": 0
+  },
+  {
+    "skinId": "santosha_iron",
+    "heroId": 2,
+    "name": "Iron Resolve",
+    "description": "A hardened steel form of unshakable will.",
+    "primaryColor": "#607D8B",
+    "secondaryColor": "#CFD8DC",
+    "unlockMethod": "PURCHASE",
+    "unlockCost": 200,
+    "unlockYogaLevel": 0
+  },
+  {
+    "skinId": "santosha_wild",
+    "heroId": 2,
+    "name": "Wild Root",
+    "description": "A verdant skin grown from the wild earth.",
+    "primaryColor": "#2E7D32",
+    "secondaryColor": "#A5D6A7",
+    "unlockMethod": "YOGA_LEVEL",
+    "unlockCost": 0,
+    "unlockYogaLevel": 12
+  },
+  {
+    "skinId": "virya_default",
+    "heroId": 3,
+    "name": "Blazing Core",
+    "description": "Virya's classic blazing warrior form.",
+    "primaryColor": "#E53935",
+    "secondaryColor": "#FF9800",
+    "unlockMethod": "DEFAULT",
+    "unlockCost": 0,
+    "unlockYogaLevel": 0
+  },
+  {
+    "skinId": "virya_inferno",
+    "heroId": 3,
+    "name": "Inferno Soul",
+    "description": "A roaring inferno skin of pure fire.",
+    "primaryColor": "#B71C1C",
+    "secondaryColor": "#FFEB3B",
+    "unlockMethod": "PURCHASE",
+    "unlockCost": 250,
+    "unlockYogaLevel": 0
+  },
+  {
+    "skinId": "virya_azure",
+    "heroId": 3,
+    "name": "Azure Flame",
+    "description": "A rare azure flame skin of icy fire.",
+    "primaryColor": "#01579B",
+    "secondaryColor": "#40C4FF",
+    "unlockMethod": "PURCHASE",
+    "unlockCost": 300,
+    "unlockYogaLevel": 0
+  },
+  {
+    "skinId": "dhairya_default",
+    "heroId": 4,
+    "name": "Golden Courage",
+    "description": "Dhairya's noble golden form.",
+    "primaryColor": "#FFD54F",
+    "secondaryColor": "#FFA000",
+    "unlockMethod": "DEFAULT",
+    "unlockCost": 0,
+    "unlockYogaLevel": 0
+  },
+  {
+    "skinId": "dhairya_onyx",
+    "heroId": 4,
+    "name": "Onyx Knight",
+    "description": "A dark onyx armor skin of silent resolve.",
+    "primaryColor": "#424242",
+    "secondaryColor": "#BDBDBD",
+    "unlockMethod": "PURCHASE",
+    "unlockCost": 200,
+    "unlockYogaLevel": 0
+  },
+  {
+    "skinId": "dhairya_royal",
+    "heroId": 4,
+    "name": "Royal Standard",
+    "description": "A regal skin earned through valor.",
+    "primaryColor": "#4A148C",
+    "secondaryColor": "#FFD700",
+    "unlockMethod": "YOGA_LEVEL",
+    "unlockCost": 0,
+    "unlockYogaLevel": 15
+  },
+  {
+    "skinId": "maitri_default",
+    "heroId": 5,
+    "name": "Whispering Wind",
+    "description": "Maitri's gentle, breezy form.",
+    "primaryColor": "#B0BEC5",
+    "secondaryColor": "#E1F5FE",
+    "unlockMethod": "DEFAULT",
+    "unlockCost": 0,
+    "unlockYogaLevel": 0
+  },
+  {
+    "skinId": "maitri_spring",
+    "heroId": 5,
+    "name": "Spring Bloom",
+    "description": "A blossoming skin of fresh spring growth.",
+    "primaryColor": "#4CAF50",
+    "secondaryColor": "#C8E6C9",
+    "unlockMethod": "PURCHASE",
+    "unlockCost": 200,
+    "unlockYogaLevel": 0
+  },
+  {
+    "skinId": "maitri_celestial",
+    "heroId": 5,
+    "name": "Celestial Light",
+    "description": "A radiant celestial skin of the heavens.",
+    "primaryColor": "#7C4DFF",
+    "secondaryColor": "#B388FF",
+    "unlockMethod": "PURCHASE",
+    "unlockCost": 300,
+    "unlockYogaLevel": 0
+  }
+]
